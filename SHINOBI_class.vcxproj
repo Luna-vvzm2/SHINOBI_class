@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{528cff62-2e96-4ef5-a150-e6959d8dfd75}</ProjectGuid>
+    <RootNamespace>SHINOBIclass</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(IncludePath)</IncludePath>
+    <ExternalIncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(IncludePath)</IncludePath>
+    <ExternalIncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Actor.cpp" />
+    <ClCompile Include="AnimationComponent.cpp" />
+    <ClCompile Include="ArmorEnemyEntity.cpp" />
+    <ClCompile Include="ArrowEnemyEntity.cpp" />
+    <ClCompile Include="BackGroundUI.cpp" />
+    <ClCompile Include="BlockActor.cpp" />
+    <ClCompile Include="BossEntity.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CollisionComponent.cpp" />
+    <ClCompile Include="Component.cpp" />
+    <ClCompile Include="EffectActor.cpp" />
+    <ClCompile Include="EnemyBullet.cpp" />
+    <ClCompile Include="EnemyEntity.cpp" />
+    <ClCompile Include="GunnerEnemyEntity.cpp" />
+    <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="SekienkiBossEntity.cpp" />
+    <ClCompile Include="WhiteEnemyEntity.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="EntityActor.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GravityComponent.cpp" />
+    <ClCompile Include="GroundBlock.cpp" />
+    <ClCompile Include="HitEffect.cpp" />
+    <ClCompile Include="HPBerUI.cpp" />
+    <ClCompile Include="HPComponent.cpp" />
+    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="Joypad.cpp" />
+    <ClCompile Include="Key.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MapData.cpp" />
+    <ClCompile Include="PlayerEntity.cpp" />
+    <ClCompile Include="PlayScene.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SpriteComponent.cpp" />
+    <ClCompile Include="TextureManager.cpp" />
+    <ClCompile Include="TitleScene.cpp" />
+    <ClCompile Include="TitleUI.cpp" />
+    <ClCompile Include="TransformComponent.cpp" />
+    <ClCompile Include="UIActor.cpp" />
+    <ClCompile Include="VelocityComponent.cpp" />
+    <ClCompile Include="YellowEnemyEntity.cpp" />
+    <ClCompile Include="YoroiBossEntity.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Actor.h" />
+    <ClInclude Include="AnimationComponent.h" />
+    <ClInclude Include="ArmorEnemyEntity.h" />
+    <ClInclude Include="ArrowEnemyEntity.h" />
+    <ClInclude Include="BackGroundUI.h" />
+    <ClInclude Include="BlockActor.h" />
+    <ClInclude Include="BossEntity.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="CollisionComponent.h" />
+    <ClInclude Include="Color.h" />
+    <ClInclude Include="Component.h" />
+    <ClInclude Include="EffectActor.h" />
+    <ClInclude Include="EnemyBullet.h" />
+    <ClInclude Include="EnemyEntity.h" />
+    <ClInclude Include="GunnerEnemyEntity.h" />
+    <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="SekienkiBossEntity.h" />
+    <ClInclude Include="WhiteEnemyEntity.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="EntityActor.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="GravityComponent.h" />
+    <ClInclude Include="GroundBlock.h" />
+    <ClInclude Include="HitEffect.h" />
+    <ClInclude Include="HPBarUI.h" />
+    <ClInclude Include="HPComponent.h" />
+    <ClInclude Include="Input.h" />
+    <ClInclude Include="Joypad.h" />
+    <ClInclude Include="Key.h" />
+    <ClInclude Include="MapData.h" />
+    <ClInclude Include="PlayerEntity.h" />
+    <ClInclude Include="PlayScene.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SpriteComponent.h" />
+    <ClInclude Include="TextureManager.h" />
+    <ClInclude Include="TitleScene.h" />
+    <ClInclude Include="TitleUI.h" />
+    <ClInclude Include="TransformComponent.h" />
+    <ClInclude Include="UIActor.h" />
+    <ClInclude Include="Vector2d.h" />
+    <ClInclude Include="VelocityComponent.h" />
+    <ClInclude Include="YellowEnemyEntity.h" />
+    <ClInclude Include="YoroiBossEntity.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\maps\stage1\map.csv" />
+    <None Include="assets\maps\stage1\obj.csv" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\images\blocks\ground.png" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
