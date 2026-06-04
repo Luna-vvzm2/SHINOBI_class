@@ -12,7 +12,13 @@ public:
 	std::string GetTexturePath() const override;
 
 private:
-	int m_bulletCount;
-	int m_attackOnce[3];
-};
+	void StartShurikenAttack();
+	void StartSwordAttack();
 
+	float GetDirSign() const;
+
+private:
+	int m_bulletCount;
+	bool m_attackOnce;
+	int m_whiteState;
+};
