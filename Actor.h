@@ -39,19 +39,19 @@ public:
 
 	Scene* GetScene() { return m_scene; }
 
-	// ó‘ÔŠÇ—
+	// çŠ¶æ…‹ç®¡ç†
 	State GetState() const { return m_state; }
 	void SetState(State state) { m_state = state; }
 
-	// €–S”»’è
+	// æ­»äº¡åˆ¤å®š
 	bool IsDead() const { return m_state == State::Dead; }
 
-	// ¯•Ê—p
+	// è­˜åˆ¥ç”¨
 	void SetName(const std::string& name) { m_name = name; }
 	const std::string& GetName() const { return m_name; }
 	void SpawnEffect(Actor* effect);
 
-	//	ƒRƒ“ƒ|[ƒlƒ“ƒgŠÇ—
+	//	ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆç®¡ç†
 	template<typename T, typename... Args>
 	T* AddComponent(Args&&... args);
 
@@ -67,22 +67,22 @@ protected:
 	std::vector<Component*> m_components;
 };
 
-// ƒOƒ[ƒoƒ‹ŠÖ”ŒQ
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«é–¢æ•°ç¾¤
 void updateActors(std::vector<Actor*>& actors, float deltaTime);
 void drawActors(std::vector<Actor*>& actors);
 void releaseActors(std::vector<Actor*>& actors);
 void removeActors(std::vector<Actor*>& actors);
 
-//	ƒeƒ“ƒvƒŒ[ƒgÀ‘•
+//	ãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆå®Ÿè£…
 template<typename T, typename... Args>
 T* Actor::AddComponent(Args&&... args) {
 	static_assert(std::is_base_of<Component, T>::value, "T must be derived from Component");
 
-	// ƒRƒ“ƒ|[ƒlƒ“ƒg¶¬
+	// ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆç”Ÿæˆ
 	T* comp = new T(this, std::forward<Args>(args)...);
 
 	if (!comp->Init()) {
-		std::cerr << "[ERROE]ƒRƒ“ƒ|[ƒlƒ“ƒg‰Šú‰»¸”s: " << typeid(T).name() << std::endl;
+		std::cerr << "[ERROE]ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆåˆæœŸåŒ–å¤±æ•—: " << typeid(T).name() << std::endl;
 		delete comp;
 		return nullptr;
 	}
