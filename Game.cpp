@@ -19,9 +19,6 @@ Game::Game()
 }
 
 Game::~Game() {
-
-
-
 	End();
 }
 
@@ -57,8 +54,6 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 
 	m_input.Init();
 
-
-
 	SetDrawScreen(DX_SCREEN_BACK);
 	m_winWidth = width;
 	m_winHeight = height;
@@ -78,7 +73,6 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 
 	std::cout << "アプリ初期化成功\n";
 	return true;
-
 }
 
 bool Game::Run() {
@@ -92,70 +86,22 @@ bool Game::Run() {
 			Draw();
 			if (!m_scene) return false;
 			if (!m_scene->IsRunning()) return false;
-
-
 		}
-
 	}
-
 	return m_scene->IsRunning();
 }
 
 void Game::Update(float deltaTime) {
-	//	ESCキーで終了
-
-	if (m_input.IsTrigger(Action::ESCAPE)) {
-		switch (m_scene->GetType())
-		{
-		case Scene::Type::Title:
-			m_running = false;
-			break;
-
-		case Scene::Type::Play:
-			m_scene = std::make_unique<TitleScene>(this);
-			m_scene->Init();
-			break;
-		}
-	}
-
-
-	//	シーン遷移
-	if (m_input.IsTrigger(Action::ENTER)) {
-		switch (m_scene->GetType())
-		{
-		case Scene::Type::Title:
-			m_scene = std::make_unique<PlayScene>(this);
-			m_scene->Init();
-			break;
-
-		case Scene::Type::Play:
-			auto playScene = static_cast<PlayScene*>(m_scene.get());
-
-			//	Ball の HP が 0（＝リザルト中）のときだけ反応
-			if (playScene->IsResult()) {
-				m_scene = std::make_unique<PlayScene>(this);
-				m_scene->Init();
-
-			}
-			break;
-		}
-
-	}
-
-
+	// ★修正：一画的な一律キー遷移を削除し、シーン独自のメニュー入力を活かせるようにしました
 	// シーン更新
 	if (m_scene) { m_scene->Update(deltaTime); }
-
-	//	以後処理を書く
 }
 
 void Game::Draw() {
 	ClearDrawScreen();
-	//	以後描画処理を書く
 	if (m_scene) m_scene->Draw();
 
 #ifdef _DEBUG
-
 	Vector2d ls = m_input.GetPad().GetStickL();
 	Vector2d rs = m_input.GetPad().GetStickR();
 	// FPS描画
@@ -167,7 +113,6 @@ void Game::Draw() {
 		{ rs.y, 1 }
 	};
 	m_renderer->DrawNumberFormatW(Vector2d(m_winWidth - 150.0f, 0), Color(255, 255, 0), m_debugFont, 20, "\nFPS: {0}\nLX: {1}\nLY: {2}\nRX: {3}\nRY: {4}", GameInfo, false);
-
 
 	if (m_input.GetPad().IsDown(Joypad::UP)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "UP", Color(255, 64, 0), m_debugFont, 24, false);
 	if (m_input.GetPad().IsDown(Joypad::DOWN)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "DOWN", Color(255, 64, 0), m_debugFont, 24, false);
@@ -190,50 +135,46 @@ void Game::Draw() {
 		{ m_input.GetPad().GetStickLT(), 1},
 		{ m_input.GetPad().GetStickRT(), 1 }
 	};
-
 	m_renderer->DrawNumberFormatW(Vector2d(m_winWidth - 150.0f, 110), Color(255, 255, 0), m_debugFont, 20, "\nLT: {0}\nRT: {1} ", stickIndex, false);
-
 #endif // _DEBUG
 
 	ScreenFlip();
 }
 
-void Game::End() {
-	if (m_ended)
-	{
-		return;
-	}
+void Game::ChangeScene(Scene::Type type) {
+	m_scene.reset(); // 現在のシーンを安全に破棄
 
-	m_ended = true;
+	if (type == Scene::Type::Title) {
+		m_scene = std::make_unique<TitleScene>(this);
+	}
+	else if (type == Scene::Type::Play) {
+		m_scene = std::make_unique<PlayScene>(this);
+	}
 
 	if (m_scene) {
-		m_scene.reset();
+		m_scene->Init(); // 新しいシーンの初期化を実行
 	}
-	if (m_renderer) {
-		m_renderer.reset();
-	}
-	//SpriteComponent::ReleaseTextures();
+}
+
+void Game::End() {
+	if (m_ended) return;
+	m_ended = true;
+
+	if (m_scene) { m_scene.reset(); }
+	if (m_renderer) { m_renderer.reset(); }
 	DxLib_End();	//	DxLib終了処理
 	std::cout << "アプリ終了" << std::endl;
 }
 
 void Game::InitConsole() {
-	// すでにコンソールが存在する場合は何もしない
 	if (GetConsoleWindow()) return;
-	//	コンソール作成
 	AllocConsole();
-	//	標準出力とエラー出力と標準入力をコンソールから受け取る
 	FILE* fp;
 	freopen_s(&fp, "CONOUT$", "w", stdout);
 	freopen_s(&fp, "CONOUT$", "w", stderr);
 	freopen_s(&fp, "CONIN$", "r", stdin);
-
-	//	日本語表示対応
 	SetConsoleOutputCP(932);
-
 	std::cout << "コンソール初期化完了" << std::endl;
-
-
 }
 
 bool Game::tick(float& deltaTime, int targetFPS, float maxDeltaTime) {
@@ -243,7 +184,7 @@ bool Game::tick(float& deltaTime, int targetFPS, float maxDeltaTime) {
 	deltaTime = float(currentTime.QuadPart - m_prevTime.QuadPart) / float(m_freq.QuadPart);
 
 	float minDelta = 1.0f / targetFPS;
-	if (deltaTime < minDelta) return false; // FPS制御
+	if (deltaTime < minDelta) return false;
 
 	if (deltaTime > maxDeltaTime) deltaTime = maxDeltaTime;
 

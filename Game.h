@@ -30,7 +30,7 @@ public:
 	const std::string& GatGameFont() const { return m_gameFont; }
 	const std::string& GatDebugFont() const { return m_debugFont; }
 
-
+	void ChangeScene(Scene::Type type);
 
 private:
 
