@@ -22,11 +22,6 @@ void HPComponent::Update(float deltaTime)
 
 void HPComponent::Damage(int amount)
 {
-    if (IsInvincible()) {
-        std::cout << "ダメージ無効：無敵時間中" << std::endl;
-        return;
-    }
-
     std::cout << "Damage 呼ばれた: " << amount << std::endl;
 
     int old = m_hp;

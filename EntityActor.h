@@ -41,7 +41,6 @@ public:
 
     CollisionComponent* GetCollision() const { return m_collision; }
 
-
 protected:
 
     TransformComponent* m_transform;
