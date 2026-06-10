@@ -104,7 +104,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
                     vel.y = 0;
                 }
                 else { // ã‚Éæ‚Á‚½
-                    m_collision->SetRect(85, 192);
+                    
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 

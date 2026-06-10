@@ -5,6 +5,7 @@
 
 WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos) : EnemyEntity(scene, pos, Vector2d(96, 190)) ,m_bulletCount(0), m_attackOnce{}
 {
+
 }
 
 bool WhiteEnemyEntity::Init() {
