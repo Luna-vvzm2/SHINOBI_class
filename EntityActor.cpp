@@ -65,12 +65,13 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // === Y方向移動 ===
+    // === Y譁ｹ蜷醍ｧｻ蜍 ===
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === Y方向衝突処理 ===
+    // === Y譁ｹ蜷題｡晉ｪ∝�逅 ===
     for (auto actor : m_scene->GetActors()) {
+
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
         BlockActor* block = nullptr;
@@ -80,6 +81,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
             block = static_cast<BlockActor*>(actor);
             actorCol = block->GetCollision();
             actorPos = block->GetPos();
+            if (std::abs(actorPos.x - pos.x) > 500)
+                continue;
+
+            if (std::abs(actorPos.y - pos.y) > 300)
+                continue;
             break;
         default:
             continue;
@@ -99,12 +105,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapY > 0 && overlapX > 0) {
             if (overlapY < overlapX) {
-                if (diffY > 0) { // 下から当たった
+                if (diffY > 0) { // 荳九°繧牙ｽ薙◆縺｣縺
                     playerPos.y = actorPos.y + aHalfH + halfH;
                     vel.y = 0;
                 }
                 else { // 上に乗った
-                    m_collision->SetRect(85, 192);
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 
@@ -115,12 +120,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         }
     }
 
-    // === X方向移動 ===
+    // === X譁ｹ蜷醍ｧｻ蜍 ===
     pos = m_transform->GetPosition();
     pos.x += vel.x * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === X方向衝突処理 ===
+    // === X譁ｹ蜷題｡晉ｪ∝�逅 ===
     for (auto actor : m_scene->GetActors()) {
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
@@ -149,13 +154,14 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapX > 0 && overlapY > 0) {
             // === X方向補正 ===
-            if (diffX > 0) { // ブロック右側（左に押し戻す）
-                playerPos.x = actorPos.x + aHalfW + halfW;
+            if (overlapX < overlapY) {
+                if (diffX > 0) { // ブロック右側（左に押し戻す）
+                    playerPos.x = actorPos.x + aHalfW + halfW;
+                }
+                else { // 左側（右に押し戻す）
+                    playerPos.x = actorPos.x - aHalfW - halfW;
+                }
             }
-            else { // 左側（右に押し戻す）
-                playerPos.x = actorPos.x - aHalfW - halfW;
-            }
-
             vel.x = 0;
             m_transform->SetPosition(playerPos);
         }

@@ -58,14 +58,14 @@ void HPBarUI::Draw() {
 
     // スクリーン座標描画（カメラ影響なし）
     m_scene->GetGame()->GetRenderer()->DrawSpriteEx(
-        pos, ScaleX, ScaleY, 0.0f, m_backBar->GetHandle(),
+        pos, (float)ScaleX, (float)ScaleY, 0.0f, m_backBar->GetHandle(),
         true, Vector2d(0, 0), 255, false, false, false
     );
 
     ScaleX = static_cast<int>(ScaleX * 63 * ratio);
 
     m_scene->GetGame()->GetRenderer()->DrawSpriteEx(
-        { 110, 29 }, ScaleX, ScaleY, 0.0f, m_sprite->GetHandle(),
+        { 110, 29 }, (float)ScaleX, (float)ScaleY, 0.0f, m_sprite->GetHandle(),
         true, Vector2d(0, 0), 255, false, false, false
     );
 }

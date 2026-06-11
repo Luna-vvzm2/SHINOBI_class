@@ -18,6 +18,8 @@ public:
     bool Init() override;
     void Update(float deltaTime) override;
 
+    void UpdateInvincible(float deltaTime);
+
     void UpdateMove(float deltaTime);
     void UpdateJump(float deltaTime);
     void UpdateGravity(float deltaTime);
@@ -33,6 +35,16 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
 
+    void TakeDamage(int damage, const Vector2d& knockback);
+    void CheckCanStand();
+    void EnterSquat();
+    void ExitSquat();
+
+    enum class AttackType {
+        WEAK_ATTACK,
+        STRONG_ATTACK,
+        
+    };
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -48,16 +60,20 @@ private:
     float m_maxJumpTime;
 
     bool m_attack;
-    int m_attackType;
+    AttackType m_attackType;
 
     int m_weakAttackIdx;
     int m_strongAttackIdx;
 
     float m_attackTimer;
 
+    float m_hitTimer;
+    float m_invincibleTime;
+
     bool m_canMove;       // ˆÚ“®‰Â”Û
+    bool m_squat;         // ‚µ‚á‚ª‚Ý
+    bool m_canStand;      // ‚µ‚á‚ª‚Ý‰Â”Û
     bool m_canCharge;
-    ActionState m_state;
 
     std::string GetTexturePath() const override;
 

@@ -57,7 +57,7 @@ void BackGroundUI::Draw() {
 	//	ƒJƒƒ‰–³‹ifalsej‚Å•`‰æ
 	game->GetRenderer()->DrawSpriteEx(
 		drawPos,
-		scale, scale,
+		(float)scale, (float)scale,
 		0.0f,
 		m_sprite->GetHandle(),
 		true,

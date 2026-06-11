@@ -57,78 +57,75 @@ bool PlayScene::Init() {
 
 	// マップのタイルを配置する
 	const float tileSize = static_cast<float>(m_mapData.tileSize);
-	for (const auto& layer : stage.layers) {
-		if (!layer.visible) continue;
-		const Layer& mapLayer = stage.layers[0];
+	const Layer& mapLayer = stage.layers[0];
 
-		for (int y = 0; y < stage.height; ++y) {
-			for (int x = 0; x < stage.width; ++x) {
-				int tileID = mapLayer.tiles[y * stage.width + x];
-				if (tileID == 0) continue; // 空タイル
+	for (int y = 0; y < stage.height; ++y) {
+		for (int x = 0; x < stage.width; ++x) {
+			int tileID = mapLayer.tiles[y * stage.width + x];
+			if (tileID == 0) continue; // 空タイル
 
-				Vector2d pos(x * tileSize, y * tileSize);
+			Vector2d pos(x * tileSize, y * tileSize);
 
-				// ここでタイルIDに応じてブロック生成
-				// 例：GrassBlock と IceBlock を仮に切り替え
-				switch (tileID) {
-				case 1:
-					AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
-					break;
-				}
-			}
-		}
-
-		const Layer& objLayer = stage.layers[1];
-
-		for (int y = 0; y < stage.height; y++)
-		{
-			for (int x = 0; x < stage.width; x++)
-			{
-				int objID =
-					objLayer.tiles[y * stage.width + x];
-
-				Vector2d pos(x * tileSize, y * tileSize);
-
-				switch (objID)
-				{
-				case 1:
-					AddActor(new WhiteEnemyEntity(this, pos));
-					break;
-
-				case 2:
-					AddActor(new YellowEnemyEntity(this, pos));
-					break;
-
-				case 3:
-					AddActor(new ArrowEnemyEntity(this, pos));
-					break;
-
-				case 4:
-					AddActor(new HealerEnemyEntity(this, pos));
-					break;
-
-				case 5:
-					AddActor(new ArmorEnemyEntity(this, pos));
-					break;
-
-				case 6:
-					AddActor(new GunnerEnemyEntity(this, pos));
-					break;
-
-				case 7:
-					AddActor(new YoroiBossEntity(this, pos,Vector2d(192, 192)));
-					break;
-
-				case 8:
-					AddActor(new SekienkiBossEntity(this,pos,Vector2d(192, 192)));
-					break;
-				}
+			// ここでタイルIDに応じてブロック生成
+			// 例：GrassBlock と IceBlock を仮に切り替え
+			switch (tileID) {
+			case 1:
+				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
+				break;
 			}
 		}
 	}
+
+	const Layer& objLayer = stage.layers[1];
+
+	for (int y = 0; y < stage.height; y++)
+	{
+		for (int x = 0; x < stage.width; x++)
+		{
+			int objID =
+				objLayer.tiles[y * stage.width + x];
+
+			Vector2d pos(x * tileSize, y * tileSize);
+
+			switch (objID)
+			{
+			case 1:
+				AddActor(new WhiteEnemyEntity(this, pos));
+				break;
+
+			case 2:
+				AddActor(new YellowEnemyEntity(this, pos));
+				break;
+
+			case 3:
+				AddActor(new ArrowEnemyEntity(this, pos));
+				break;
+
+			case 4:
+				AddActor(new HealerEnemyEntity(this, pos));
+				break;
+
+			case 5:
+				AddActor(new ArmorEnemyEntity(this, pos));
+				break;
+
+			case 6:
+				AddActor(new GunnerEnemyEntity(this, pos));
+				break;
+
+			case 7:
+				AddActor(new YoroiBossEntity(this, pos,Vector2d(192, 192)));
+				break;
+
+			case 8:
+				AddActor(new SekienkiBossEntity(this,pos,Vector2d(192, 192)));
+				break;
+			}
+			
+		}
+	}
 	
-	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64
-		}));
+	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64}));
 	AddActor(m_player);
 	
 	// ---- HP UI 作成 ----
