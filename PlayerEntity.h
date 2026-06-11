@@ -36,6 +36,9 @@ public:
     HPComponent* GetHP() const { return m_hp; }
 
     void TakeDamage(int damage, const Vector2d& knockback);
+    void CheckCanStand();
+    void EnterSquat();
+    void ExitSquat();
 
     enum class AttackType {
         WEAK_ATTACK,
@@ -69,6 +72,7 @@ private:
 
     bool m_canMove;       // ˆÚ“®‰Â”Û
     bool m_squat;         // ‚µ‚á‚ª‚Ý
+    bool m_canStand;      // ‚µ‚á‚ª‚Ý‰Â”Û
     bool m_canCharge;
 
     std::string GetTexturePath() const override;

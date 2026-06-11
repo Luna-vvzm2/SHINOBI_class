@@ -37,6 +37,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
 
     , m_canMove(true)
     , m_squat(false)
+    , m_canStand(true)
     , m_canCharge(true)
 {
 }
@@ -114,6 +115,9 @@ void PlayerEntity::Update(float deltaTime) {
     UpdateMove(deltaTime);
     UpdateJump(deltaTime);
     UpdateGravity(deltaTime);
+
+    CheckCanStand();
+
     UpdateAttack(deltaTime);
     UpdateState();
 
@@ -130,23 +134,20 @@ void PlayerEntity::UpdateInvincible(float deltaTime)
     {
         m_invincibleTime -= deltaTime;
     }
-    printf("HP: %d\n", m_hp->GetHP());
 }
 
 void PlayerEntity::UpdateMove(float deltaTime) {
     const Input& input = m_scene->GetGame()->GetInput();
 
-    Vector2d move(0, 0);
+    Vector2d move(0.0f, 0.0f);
     if (m_canMove) {
         if (input.IsDown(Action::DOWN)) {
-            if (input.IsDown(Action::LEFT))  move.x -= 0.5;
-            if (input.IsDown(Action::RIGHT)) move.x += 0.5;
-            m_squat = true;
+            if (input.IsDown(Action::LEFT))  move.x -= 0.5f;
+            if (input.IsDown(Action::RIGHT)) move.x += 0.5f;
         }
         else {
-            if (input.IsDown(Action::LEFT))  move.x -= 1;
-            if (input.IsDown(Action::RIGHT)) move.x += 1;
-            m_squat = false;
+            if (input.IsDown(Action::LEFT))  move.x -= 1.0f;
+            if (input.IsDown(Action::RIGHT)) move.x += 1.0f;
         }
     }
     move.normalize();
@@ -171,6 +172,10 @@ void PlayerEntity::UpdateMove(float deltaTime) {
 }
 
 void PlayerEntity::UpdateJump(float deltaTime) {
+    if (!m_canStand) {
+        return;
+    }
+
     const Input& input = m_scene->GetGame()->GetInput();
 
     Vector2d vel = m_velocity->Get();
@@ -204,8 +209,82 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     
     if (m_isGround) {
         m_jumpCount = 0;
-        m_collision->SetRect(85, 192);
+        if (!m_squat)
+        {
+            m_collision->SetRect(85, 192);
+        }
     }
+}
+
+void PlayerEntity::CheckCanStand()
+{
+    m_canStand = true;
+
+    if (!m_squat)
+        return;
+
+    Vector2d standPos = m_transform->GetPosition();
+
+    float squatHeight = m_collision->GetHeight();
+    float standHeight = 192.0f;
+
+    standPos.y -= (standHeight - squatHeight) * 0.5f;
+
+    float halfW = 85.0f * 0.5f;
+    float halfH = standHeight * 0.5f;
+
+    for (auto actor : m_scene->GetActors())
+    {
+        if (actor->GetType() != ActorType::Block)
+            continue;
+
+        auto block = static_cast<BlockActor*>(actor);
+
+        CollisionComponent* blockCol = block->GetCollision();
+
+        Vector2d blockPos = block->GetPos();
+
+        float blockHalfW = blockCol->GetWidth() * 0.5f;
+        float blockHalfH = blockCol->GetHeight() * 0.5f;
+
+        float diffX = standPos.x - blockPos.x;
+        float diffY = standPos.y - blockPos.y;
+
+        float overlapX = (halfW + blockHalfW) - std::abs(diffX);
+        float overlapY = (halfH + blockHalfH) - std::abs(diffY);
+
+        if (overlapX > 0 && overlapY > 0)
+        {
+            m_canStand = false;
+            return;
+        }
+    }
+}
+
+void PlayerEntity::EnterSquat()
+{
+    float oldHeight = m_collision->GetHeight();
+    float newHeight = 95.0f;
+
+    Vector2d pos = m_transform->GetPosition();
+
+    pos.y += (oldHeight - newHeight) * 0.5f;
+
+    m_transform->SetPosition(pos);
+    m_collision->SetRect(90, 95);
+}
+
+void PlayerEntity::ExitSquat()
+{
+    float oldHeight = m_collision->GetHeight();
+    float newHeight = 192.0f;
+
+    Vector2d pos = m_transform->GetPosition();
+
+    pos.y -= (newHeight - oldHeight) * 0.5f;
+
+    m_transform->SetPosition(pos);
+    m_collision->SetRect(85, 192);
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
@@ -242,7 +321,14 @@ void PlayerEntity::UpdateState() {
         return;
     }
 
+    const Input& input = m_scene->GetGame()->GetInput();
+
     if (m_attack) {
+        if (input.IsDown(Action::DOWN)) {
+            m_state = ActionState::SQUAT_ATTACK;
+            m_anim->Play("squatAttack");
+            m_collision->SetRect(90, 95);
+        }
         m_state = ActionState::ATTACK;
         m_anim->Play("attack");
         return;
@@ -263,9 +349,12 @@ void PlayerEntity::UpdateState() {
         return;
     }
 
-    const Input& input = m_scene->GetGame()->GetInput();
-
     if (input.IsDown(Action::DOWN)) {
+        if (!m_squat)
+        {
+            EnterSquat();
+            m_squat = true;
+        }
         m_state = ActionState::SQUAT;
         if (vel.x == 0) {
             m_anim->Play("squat");
@@ -273,8 +362,16 @@ void PlayerEntity::UpdateState() {
         else {
             m_anim->Play("squatWalk");
         }
-        m_collision->SetRect(90,95);
         return;
+    }
+
+    if (m_squat)
+    {
+        if (m_canStand)
+        {
+            ExitSquat();
+            m_squat = false;
+        }
     }
 
     if (vel.x != 0) {

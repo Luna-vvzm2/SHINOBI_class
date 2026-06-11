@@ -1,6 +1,7 @@
 #include "Game.h"
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 #include "TitleScene.h"
 #include "PlayScene.h"
 #include "SpriteComponent.h"
@@ -11,6 +12,7 @@ Game::Game()
 	m_winHeight(0),
 	m_winColor(0),
 	m_fps(0.0f),
+	m_accumulator(0.0f),
 	m_freq{},
 	m_prevTime{},
 	m_running(true),
@@ -32,7 +34,7 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 	//	画面モード設定
 	SetGraphMode(width, height, color);
 	SetBackgroundColor(0, 0, 0);
-	SetWaitVSyncFlag(FALSE);
+	SetWaitVSyncFlag(TRUE);
 
 	// ウィンドウタイトル設定
 	SetWindowTextA(m_window, title.c_str());
@@ -82,20 +84,35 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 }
 
 bool Game::Run() {
+	const float FIXED_DT = 1.0f / 60.0f;
+
 	while (ProcessMessage() == 0 && m_running) {
-		float deltaTime = 0.0f;
-		if (tick(deltaTime, 60)) {
-			m_fps = 1.0f / deltaTime;
+		LARGE_INTEGER currentTime;
+		QueryPerformanceCounter(&currentTime);
+
+		float frameTime =
+			float(currentTime.QuadPart - m_prevTime.QuadPart)
+			/ float(m_freq.QuadPart);
+
+		m_prevTime = currentTime;
+
+		frameTime = min(frameTime, 0.25f);
+
+		m_accumulator += frameTime;
+
+		while (m_accumulator >= FIXED_DT)
+		{
 			m_input.Update();
-
-			Update(deltaTime);
-			Draw();
-			if (!m_scene) return false;
-			if (!m_scene->IsRunning()) return false;
-
-
+			Update(FIXED_DT);
+			m_accumulator -= FIXED_DT;
 		}
 
+		Draw();
+
+		m_fps =
+			(frameTime > 0.0f)
+			? 1.0f / frameTime
+			: 0.0f;
 	}
 
 	return m_scene->IsRunning();
@@ -236,17 +253,17 @@ void Game::InitConsole() {
 
 }
 
-bool Game::tick(float& deltaTime, int targetFPS, float maxDeltaTime) {
-	LARGE_INTEGER currentTime;
-	QueryPerformanceCounter(&currentTime);
-
-	deltaTime = float(currentTime.QuadPart - m_prevTime.QuadPart) / float(m_freq.QuadPart);
-
-	float minDelta = 1.0f / targetFPS;
-	if (deltaTime < minDelta) return false; // FPS制御
-
-	if (deltaTime > maxDeltaTime) deltaTime = maxDeltaTime;
-
-	m_prevTime = currentTime;
-	return true;
-}
+//bool Game::tick(float& deltaTime, int targetFPS, float maxDeltaTime) {
+//	LARGE_INTEGER currentTime;
+//	QueryPerformanceCounter(&currentTime);
+//
+//	deltaTime = float(currentTime.QuadPart - m_prevTime.QuadPart) / float(m_freq.QuadPart);
+//
+//	float minDelta = 1.0f / targetFPS;
+//	if (deltaTime < minDelta) return false; // FPS制御
+//
+//	if (deltaTime > maxDeltaTime) deltaTime = maxDeltaTime;
+//
+//	m_prevTime = currentTime;
+//	return true;
+//}

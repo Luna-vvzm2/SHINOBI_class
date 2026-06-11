@@ -19,6 +19,7 @@ public:
         JUMP,
         FALL,
         ATTACK,
+        SQUAT_ATTACK,
         HIT,
         DODGE,
         CHASE,
