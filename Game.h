@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "Input.h"
 #include "Scene.h"
+#include "Shop.h"
 #include <memory>
 
 class Game
@@ -42,6 +43,7 @@ private:
 	Input m_input;
 
 	std::unique_ptr<Scene> m_scene;
+	std::unique_ptr<Shop> m_shop;
 
 	bool m_running;
 	bool m_ended;

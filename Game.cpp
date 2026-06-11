@@ -36,7 +36,7 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 
 	// ウィンドウタイトル設定
 	SetWindowTextA(m_window, title.c_str());
-	//	DirectInput系コントローラなどXInput系を使う設定
+	//	DirectInputハンドルコントローラーなしXInputハンドル設定
 	SetUseXInputFlag(TRUE);
 	//	初期化
 	//	DxLib初期化
@@ -57,6 +57,8 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 
 	m_input.Init();
 
+	// Shop初期化
+	m_shop = std::make_unique<Shop>();
 
 
 	SetDrawScreen(DX_SCREEN_BACK);
@@ -76,7 +78,7 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 	QueryPerformanceFrequency(&m_freq);
 	QueryPerformanceCounter(&m_prevTime);
 
-	std::cout << "アプリ初期化成功\n";
+	std::cout << "アプリが起動しました\n";
 	return true;
 
 }
@@ -102,6 +104,16 @@ bool Game::Run() {
 }
 
 void Game::Update(float deltaTime) {
+	// Shop更新（最初に）
+	if (m_shop) {
+		m_shop->Update();
+	}
+
+	// ショップが開いている場合はゲーム処理をスキップ
+	if (m_shop && m_shop->IsOpen()) {
+		return;
+	}
+
 	//	ESCキーで終了
 
 	if (m_input.IsTrigger(Action::ESCAPE)) {
@@ -119,7 +131,8 @@ void Game::Update(float deltaTime) {
 	}
 
 
-	//	シーン遷移
+
+	//	シーン開始
 	if (m_input.IsTrigger(Action::ENTER)) {
 		switch (m_scene->GetType())
 		{
@@ -131,7 +144,7 @@ void Game::Update(float deltaTime) {
 		case Scene::Type::Play:
 			auto playScene = static_cast<PlayScene*>(m_scene.get());
 
-			//	Ball の HP が 0（＝リザルト中）のときだけ反応
+			//	Ball の HP が 0（敵撃破）のときリスタート
 			if (playScene->IsResult()) {
 				m_scene = std::make_unique<PlayScene>(this);
 				m_scene->Init();
@@ -142,17 +155,21 @@ void Game::Update(float deltaTime) {
 
 	}
 
-
 	// シーン更新
 	if (m_scene) { m_scene->Update(deltaTime); }
 
-	//	以後処理を書く
+	//	以下処理追加可能
 }
 
 void Game::Draw() {
 	ClearDrawScreen();
-	//	以後描画処理を書く
+	//	以下描画処理を追加
 	if (m_scene) m_scene->Draw();
+
+	// Shop描画
+	if (m_shop) {
+		m_shop->Draw();
+	}
 
 #ifdef _DEBUG
 
@@ -209,6 +226,9 @@ void Game::End() {
 	if (m_scene) {
 		m_scene.reset();
 	}
+	if (m_shop) {
+		m_shop.reset();
+	}
 	if (m_renderer) {
 		m_renderer.reset();
 	}
@@ -218,20 +238,20 @@ void Game::End() {
 }
 
 void Game::InitConsole() {
-	// すでにコンソールが存在する場合は何もしない
+	// すでにコンソール開いていた場合は何もしない
 	if (GetConsoleWindow()) return;
 	//	コンソール作成
 	AllocConsole();
-	//	標準出力とエラー出力と標準入力をコンソールから受け取る
+	//	標準出力とエラー出力と標準入力をコンソール受け入れる
 	FILE* fp;
 	freopen_s(&fp, "CONOUT$", "w", stdout);
 	freopen_s(&fp, "CONOUT$", "w", stderr);
 	freopen_s(&fp, "CONIN$", "r", stdin);
 
-	//	日本語表示対応
+	//	日本語対応
 	SetConsoleOutputCP(932);
 
-	std::cout << "コンソール初期化完了" << std::endl;
+	std::cout << "コンソール作成完了" << std::endl;
 
 
 }
