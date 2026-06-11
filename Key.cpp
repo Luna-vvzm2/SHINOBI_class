@@ -15,6 +15,8 @@ void Key::Init() {
 	m_keyMap[ESCAPE] = KEY_INPUT_ESCAPE;
 	m_keyMap[SPACE] = KEY_INPUT_SPACE;
 	m_keyMap[ENTER] = KEY_INPUT_RETURN;
+	m_keyMap[NUM_4] = KEY_INPUT_4;  // デバッグ用の4キー
+
 
 	for (int i = 0; i < KEY_COUNT; i++) {
 		m_nowKeys[i] = CheckHitKey(m_keyMap[i]) != 0;

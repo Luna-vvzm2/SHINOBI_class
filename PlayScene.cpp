@@ -1,5 +1,9 @@
 #define NOMINMAX
 #include "PlayScene.h"
+#include "TransformComponent.h"
+#include "VelocityComponent.h"
+#include "HPComponent.h"
+#include "GameOverMenuUI.h"
 #include "Game.h"
 #include "Renderer.h"
 #include "Input.h"
@@ -28,7 +32,11 @@ PlayScene::PlayScene(Game* game)
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
 	m_stageIndex(0),
 	m_comboCount(0),
-	m_currentStage(1)
+	m_currentStage(1),
+	m_respawnPos(200, 800),
+	m_gameOverMenu(nullptr),
+	m_isGameOver(false),
+	m_isPaused(false)
 {
 
 }
@@ -127,7 +135,10 @@ bool PlayScene::Init() {
 		}
 	}
 	
-	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64
+	// リスポーン位置を初期位置として保存
+	m_respawnPos = Vector2d(200, 800);
+
+	m_player = new PlayerEntity(this, m_respawnPos, Vector2d({ 192, 64
 		}));
 	AddActor(m_player);
 	
@@ -137,6 +148,10 @@ bool PlayScene::Init() {
 		m_player->GetHP()
 	);
 	AddUIActor(hpBar);
+
+	// ---- ゲームオーバーメニューUI 作成 ----
+	m_gameOverMenu = new GameOverMenuUI(this);
+	AddUIActor(m_gameOverMenu);
 
 	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
 	AddBackActor(back);
@@ -157,10 +172,47 @@ bool PlayScene::Init() {
 }
 
 void PlayScene::Update(float deltaTime) {
-	updateActors(m_backactors, deltaTime);
-	updateActors(m_actors, deltaTime);
+	// ゲームオーバー中はゲーム更新を停止
+	if (!m_isPaused) {
+		updateActors(m_backactors, deltaTime);
+		updateActors(m_actors, deltaTime);
+	}
 	updateActors(m_UIactors, deltaTime);
-	RemoveDeadActors(); 
+
+	if (!m_isPaused) {
+		RemoveDeadActors();
+	}
+
+	// ゲームオーバーメニューの処理
+	if (m_gameOverMenu && m_gameOverMenu->IsActive()) {
+		if (m_gameOverMenu->IsDecided()) {
+			m_gameOverMenu->ResetDecided();
+
+			switch (m_gameOverMenu->GetSelectedItem()) {
+			case GameOverMenuUI::MenuItem::CONTINUE:
+				// コンティニュー：リスポーン
+				m_isPaused = false;
+				m_isGameOver = false;
+				m_gameOverMenu->SetActive(false);
+				RespawnPlayer();
+				break;
+
+			case GameOverMenuUI::MenuItem::WORLD_MAP:
+				// ワールドマップ画面へ移動
+				// TODO: ワールドマップシーンへの遷移処理を追加
+				std::cout << "Transition to World Map (not implemented yet)" << std::endl;
+				break;
+
+			case GameOverMenuUI::MenuItem::TITLE:
+				// タイトル画面へ移動
+				m_isRunning = false;  // PlaySceneを終了
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
 	if (m_player) {
 		Vector2d playerPos = m_player->GetComponent<TransformComponent>()->GetPosition();
 
@@ -239,4 +291,37 @@ void PlayScene::SpawnHitEffect(const Vector2d& pos) {
 void PlayScene::AddCombo() {
 	m_comboCount++;
 	std::cout << "Combo: " << m_comboCount << std::endl;
+}
+
+void PlayScene::RespawnPlayer() {
+	if (!m_player) return;
+
+	// プレイヤーの位置をリスポーン位置に戻す
+	TransformComponent* transform = m_player->GetComponent<TransformComponent>();
+	if (transform) {
+		transform->SetPosition(m_respawnPos);
+	}
+
+	// プレイヤーの速度をリセット
+	VelocityComponent* velocity = m_player->GetComponent<VelocityComponent>();
+	if (velocity) {
+		velocity->Set(Vector2d::Zero());
+	}
+
+	// HPを最大値に回復
+	HPComponent* hp = m_player->GetHP();
+	if (hp) {
+		hp->Heal(hp->GetMaxHP());
+	}
+
+	std::cout << "Player respawned at: " << m_respawnPos.x << ", " << m_respawnPos.y << std::endl;
+}
+void PlayScene::ShowGameOverMenu() {
+	m_isGameOver = true;
+	m_isPaused = true;
+
+	if (m_gameOverMenu) {
+		m_gameOverMenu->SetActive(true);
+		std::cout << "Game Over Menu displayed" << std::endl;
+	}
 }

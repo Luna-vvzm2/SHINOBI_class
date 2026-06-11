@@ -7,6 +7,10 @@
 
 class PlayerEntity;
 class HitEffect;
+class TransformComponent;
+class VelocityComponent;
+class HPComponent;
+class GameOverMenuUI;
 
 
 
@@ -40,6 +44,11 @@ public:
 	// 最初の地面のY座標を取得
 	float GetInitialGroundY() const { return m_initialGroundY; }
 
+	// プレイヤーをリスポーン位置に戻す
+	void RespawnPlayer();
+	// ゲームオーバー時の処理
+	void ShowGameOverMenu();
+
 private:
 
 	PlayerEntity* m_player;
@@ -52,6 +61,14 @@ private:
 	int m_comboCount;
 	int m_currentStage;
 	bool m_resultShown = false;
+
+	// リスポーン位置（初期位置）
+	Vector2d m_respawnPos;
+
+	// ゲームオーバーメニュー
+	GameOverMenuUI* m_gameOverMenu;
+	bool m_isGameOver;
+	bool m_isPaused;  // ゲームが一時停止中か
 
     // 最初に配置された地面のY座標
 	float m_initialGroundY = 0.0f;

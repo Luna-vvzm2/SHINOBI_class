@@ -171,6 +171,12 @@
     <ClCompile Include="YoroiBossEntity.cpp">
       <Filter>ソース ファイル\Actor\Entity\EnemyEntity\BossEntity</Filter>
     </ClCompile>
+    <ClCompile Include="GameOverMenuUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>ソース ファイル\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -300,6 +306,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="YoroiBossEntity.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="GameOverMenuUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
