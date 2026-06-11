@@ -166,7 +166,7 @@ void PlayScene::Update(float deltaTime) {
 
 		// 中間点をカメラ位置に
 		Vector2d camPos = playerPos;
-		camPos.y -= 150;
+		camPos.y -= 200;
 		m_camera.SetCenter(camPos);
 
 		// 距離に応じたズーム
@@ -182,7 +182,16 @@ void PlayScene::Update(float deltaTime) {
 		float zoomSpeed = 5.0f;
 		float newZoom = currentZoom + (targetZoom - currentZoom) * std::min(zoomSpeed * deltaTime, 1.0f);
 		*/
-		m_camera.SetZoom(1.0f);
+		m_camera.SetZoom(0.8f);
+
+		float fixedCameraY = 400.0f;  // スクロール開始位置の上限
+
+		if (playerPos.y < fixedCameraY) {
+			camPos.y = playerPos.y - 200;  // 上に移動したらカメラもスクロール
+		}
+		else {
+			camPos.y = fixedCameraY - 200;  // それ以外はカメラ固定
+		}
 	}
 }
 

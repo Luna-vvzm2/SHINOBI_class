@@ -37,6 +37,9 @@ public:
 	Camera& GetCamera() { return m_camera; }
 	const Camera& GetCamera() const { return m_camera; }
 
+	// 最初の地面のY座標を取得
+	float GetInitialGroundY() const { return m_initialGroundY; }
+
 private:
 
 	PlayerEntity* m_player;
@@ -50,5 +53,6 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
-
+    // 最初に配置された地面のY座標
+	float m_initialGroundY = 0.0f;
 };
