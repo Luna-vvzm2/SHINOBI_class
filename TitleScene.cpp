@@ -295,7 +295,7 @@ void TitleScene::Draw() {
 		DrawBox(0, 0, 1280, 720, GetColor(20, 10, 10), TRUE);
 		SetFontSize(48);
 		DrawString(100, 80, "エクストラ", GetColor(255, 50, 50));
-		DrawBox(100, 140, 1180, 142, GetColor(150, 50, 50), TRUE);
+		DrawBox(100, 140, 1180, 142, GetColor(150, 150, 50), TRUE);
 
 		if (extraSelect == 0) {
 			SetFontSize(40);
