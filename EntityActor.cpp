@@ -65,11 +65,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // === Y•ûŒüˆÚ“® ===
+    // === Yè­ï½¹èœ·é†ï½§ï½»èœ ===
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === Y•ûŒüÕ“Ëˆ— ===
+    // === Yè­ï½¹èœ·é¡Œï½¡æ™‰ï½ªâˆï¿½é€… ===
     for (auto actor : m_scene->GetActors()) {
 
         Vector2d actorPos;
@@ -105,11 +105,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapY > 0 && overlapX > 0) {
             if (overlapY < overlapX) {
-                if (diffY > 0) { // ‰º‚©‚ç“–‚½‚Á‚½
+                if (diffY > 0) { // è³ä¹Â°ç¹§ç‰™ï½½è–™â—†ç¸ºï½£ç¸º
                     playerPos.y = actorPos.y + aHalfH + halfH;
                     vel.y = 0;
                 }
-                else { // ã‚Éæ‚Á‚½
+                else { // ä¸Šã«ä¹—ã£ãŸ
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 
@@ -120,12 +120,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         }
     }
 
-    // === X•ûŒüˆÚ“® ===
+    // === Xè­ï½¹èœ·é†ï½§ï½»èœ ===
     pos = m_transform->GetPosition();
     pos.x += vel.x * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === X•ûŒüÕ“Ëˆ— ===
+    // === Xè­ï½¹èœ·é¡Œï½¡æ™‰ï½ªâˆï¿½é€… ===
     for (auto actor : m_scene->GetActors()) {
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
@@ -153,12 +153,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         float overlapY = (halfH + aHalfH) - std::abs(diffY);
 
         if (overlapX > 0 && overlapY > 0) {
-            // === X•ûŒü•â³ ===
+            // === Xæ–¹å‘è£œæ­£ ===
             if (overlapX < overlapY) {
-                if (diffX > 0) { // ƒuƒƒbƒN‰E‘¤i¶‚É‰Ÿ‚µ–ß‚·j
+                if (diffX > 0) { // ãƒ–ãƒ­ãƒƒã‚¯å³å´ï¼ˆå·¦ã«æŠ¼ã—æˆ»ã™ï¼‰
                     playerPos.x = actorPos.x + aHalfW + halfW;
                 }
-                else { // ¶‘¤i‰E‚É‰Ÿ‚µ–ß‚·j
+                else { // å·¦å´ï¼ˆå³ã«æŠ¼ã—æˆ»ã™ï¼‰
                     playerPos.x = actorPos.x - aHalfW - halfW;
                 }
             }
@@ -169,3 +169,4 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     }
     m_velocity->Set(vel);
 }
+

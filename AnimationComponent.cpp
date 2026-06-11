@@ -50,22 +50,44 @@ void AnimationComponent::Update(float deltaTime)
 {
     if (!m_currentClip || !m_sprite) return;
 
+    const auto& frames = m_currentClip->frames;
+    if (frames.empty()) return;
+
+    int currentIndex = static_cast<int>(m_frameIndex);
+    float duration = m_currentClip->speed;
+
+    if (currentIndex >= 0 && currentIndex < static_cast<int>(m_currentClip->frameDurations.size()))
+    {
+        duration = m_currentClip->frameDurations[currentIndex];
+    }
+
     m_timer += deltaTime;
 
-    if (m_timer >= m_currentClip->speed) {
-        m_timer -= m_currentClip->speed;
+    while (m_timer >= duration) {
+        m_timer -= duration;
         m_frameIndex++;
 
-        const auto& frames = m_currentClip->frames;
         int last = static_cast<int>(frames.size()) - 1;
 
         if (m_frameIndex > last) {
             if (m_currentClip->loop)
                 m_frameIndex = 0;
             else
-                m_frameIndex = last; // ループなしは最後のフレーム
+                m_frameIndex = static_cast<float>(last); // loop false keeps last frame
         }
 
-        m_sprite->SetFrame(frames[m_frameIndex]);
+        currentIndex = static_cast<int>(m_frameIndex);
+        m_sprite->SetFrame(frames[currentIndex]);
+
+        duration = m_currentClip->speed;
+        if (currentIndex >= 0 && currentIndex < static_cast<int>(m_currentClip->frameDurations.size()))
+        {
+            duration = m_currentClip->frameDurations[currentIndex];
+        }
+
+        if (!m_currentClip->loop && currentIndex == last)
+        {
+            break;
+        }
     }
 }
