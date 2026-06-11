@@ -22,7 +22,8 @@ SekienkiBossEntity::SekienkiBossEntity(
     , m_fallStartY(0.0f)
     , m_hoverY(0.0f)
     , m_secondJump(false)
-{
+    , m_tornadoDistanceLeft(0.0f)
+{   
 }
 
 bool SekienkiBossEntity::Init()
@@ -32,6 +33,10 @@ bool SekienkiBossEntity::Init()
 
     return true;
 }
+
+//---------------------------------
+// 飛び上がり攻撃管理
+//---------------------------------
 
 void SekienkiBossEntity::StartJumpAttack()
 {
@@ -49,9 +54,30 @@ void SekienkiBossEntity::StartJumpAttack()
     m_hoverY = pos.y;
 }
 
+//---------------------------------
+// 形態移行管理
+//---------------------------------
+
+void SekienkiBossEntity::PhaseChange()
+{
+    float hpRate = (float)m_hp->GetHP() / GetMaxHP();
+
+    if (m_phase < 2 && hpRate <= 0.5f)
+    {
+        m_phase = 2;
+        m_attackStep = 12;
+    }
+    else if (m_phase < 1 && hpRate <= 0.7f)
+    {
+        m_phase = 1;
+        m_attackStep = 11;
+    }
+}
+
+
+
 void SekienkiBossEntity::UpdateAI(float deltaTime)
 {
-
     auto* player =
         static_cast<PlayScene*>(GetScene())->GetPlayer();
 
@@ -80,32 +106,59 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
     // 行動選択
     //---------------------------------
 
+    if (m_attackStep != 0)
+        return;
+
+    int r = rand() % 100;
+
+    float hp70 = GetMaxHP() * 0.7f;
+    float hp50 = GetMaxHP() * 0.5f;
+
+    //---------------------------------
+    // HP50%
+    //---------------------------------
+    if (m_hp->GetHP() <= hp50)
+    {
+        if (r < 50)
+        {
+            m_attackStep = 8;
+            SetVel({ -dir * 600.0f, GetVel().y });
+            m_rollDistanceLeft = 500.0f;
+            return;
+        }
+        else if (r < 90)
+        {
+            m_attackStep = 3;
+            return;
+        }
+    }
+
+    //---------------------------------
+    // HP70%
+    //---------------------------------
+    else if (m_hp->GetHP() <= hp70)
+    {
+        if (r < 40)
+        {
+            m_attackStep = 3;
+            return;
+        }
+    }
+
+    //---------------------------------
+    // 基本行動
+    //---------------------------------
     if (absDistance >= farDistance)
     {
         m_attackStep = 1;
     }
     else
     {
-        m_attackStep =
-            (rand() % 100 < 80) ? 2 : 1;
-    }
-
-    if (m_hp->GetHP() <= GetMaxHP() * 0.5f)
-    {
-        if (rand() % 100 < 30)
-        {
-            m_attackStep = 8;
-
-            SetVel( { -dir * 600.0f,GetVel().y});
-
-            m_rollDistanceLeft = 500.0f;
-
-            return;
-        }
+        m_attackStep = (r < 80) ? 2 : 1;
     }
 
     //---------------------------------
-    // ローリング
+    // 前転攻撃
     //---------------------------------
 
     if (m_attackStep == 1)
@@ -326,7 +379,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     if (m_attackStep == 6 &&
         m_attackTimer <= 0.0f)
     {
-        if (m_hp->GetHP() <= GetMaxHP() * 0.5f && !m_secondJump) 
+        if (m_phase == 2 && !m_secondJump) 
         {
             m_attackStep = 7;
 
@@ -334,7 +387,6 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
             SetVel({ 0.0f, 0.0f });
 
-            printf("STEP7 START\n");
         }
         else
         {
@@ -344,7 +396,6 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
             m_jumpAttackCooldown = 8.0f;
 
-            printf("STEP6 END\n");
         }
     }
 
@@ -364,6 +415,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     if (m_attackStep == 8 &&
         m_rollDistanceLeft > 0.0f)
     {
+        printf("STEP8 START\n");
         float moveStep =
             fabsf(GetVel().x) * deltaTime;
 
@@ -384,12 +436,80 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     // ダークアタック
     //---------------------------------
 
+    if (m_attackStep == 9)
+    {
+        SetVel({ 0.0f, 0.0f });
 
+        if (m_attackTimer <= 0.0f)
+        {
+            printf("STEP9 START\n");
+            m_bulletActive = true;
 
+            m_bulletPos =
+            {
+                GetPos().x,
+                GetPos().y - 120.0f
+            };
+
+            m_attackStep = 10;
+            m_tornadoDistanceLeft = 600.0f;
+        }
+    }
+
+    if (m_attackStep == 10 &&
+        m_bulletActive)
+    {
+        m_bulletPos.x +=
+            m_bulletVel.x * deltaTime;
+
+        float moveStep =
+            fabsf(m_bulletVel.x) * deltaTime;
+
+        m_tornadoDistanceLeft -= moveStep;
+
+        if (m_tornadoDistanceLeft <= 0.0f)
+        {
+            m_bulletActive = false;
+
+            m_attackStep = 0;
+
+            m_attackTimer = 1.0f;
+
+            m_jumpAttackCooldown = 7.0f;
+        }
+    }
     //---------------------------------
-    // 形態移行
+    // 形態移行管理
     //---------------------------------
+    switch (m_attackStep)
+    {
+    case 11:
+        // Phase1移行演出
+        SetVel({ 0.0f, 0.0f });
+        if (!m_hp->IsInvincible())
+            m_hp->SetInvincible(999.0f);
+        m_attackTimer = 2.0f;
+        break;
 
+    case 12:
+        // Phase2移行演出
+        SetVel({ 0.0f, 0.0f });
+        if (!m_hp->IsInvincible())
+            m_hp->SetInvincible(999.0f);
+        m_attackTimer = 2.5f;
+        break;
+    }
 
+    if (m_attackStep == 11 || m_attackStep == 12)
+    {
+        m_attackTimer -= deltaTime;
+
+        if (m_attackTimer <= 0.0f)
+        {
+            m_hp->SetInvincible(0.0f);
+            m_attackStep = 0; 
+        }
+        return; 
+    }
 
 }

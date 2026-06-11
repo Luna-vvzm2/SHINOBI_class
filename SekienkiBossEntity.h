@@ -8,8 +8,9 @@ public:
     SekienkiBossEntity(Scene* scene, const Vector2d& pos, const Vector2d& size);
 
     bool Init() override;
-    void StartJumpAttack();
     int GetMaxHP() const override { return 1000; }
+    void StartJumpAttack();
+    void PhaseChange();
 protected:
 
     void UpdateAI(float deltaTime) override;
@@ -29,6 +30,7 @@ private:
     float m_fallStartY;
     float m_hoverY;
     bool m_secondJump;
+    float m_tornadoDistanceLeft;
 
     Vector2d m_bulletPos;
     Vector2d m_bulletVel;
