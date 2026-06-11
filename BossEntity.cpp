@@ -19,8 +19,9 @@ bool BossEntity::Init()
 
 void BossEntity::Update(float deltaTime)
 {
-    EntityActor::Update(deltaTime);
+    EnemyEntity::Update(deltaTime);
 
     UpdateAI(deltaTime);
     UpdateAttack(deltaTime);
 }
+
