@@ -91,10 +91,22 @@ void SpriteComponent::Draw() {
     Vector2d pos = transform->GetPosition();
     // š Transform ‚Ì scale ‚ð‚»‚Ì‚Ü‚ÜŽg‚¤
     Vector2d scale = transform->GetScale();
+    if (m_drawH > 0.0f && texH > 0)
+    {
+        float drawScale = m_drawH / static_cast<float>(texH);
+        scale.x *= drawScale;
+        scale.y *= drawScale;
+    }
+    else if (m_drawW > 0.0f && texW > 0)
+    {
+        float drawScale = m_drawW / static_cast<float>(texW);
+        scale.x *= drawScale;
+        scale.y *= drawScale;
+    }
 
     renderer->DrawSpriteEx(
         pos, scale.x, scale.y, 0.0f, m_handle,
-        true, Vector2d(texW, texH) * 0.5f, 255, false, false
+        true, Vector2d(static_cast<float>(texW), static_cast<float>(texH)) * 0.5f, 255, m_flipH, false
     );
 }
 
