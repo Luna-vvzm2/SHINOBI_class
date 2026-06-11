@@ -12,6 +12,14 @@ public:
 	std::string GetTexturePath() const override;
 
 private:
+	bool TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playerHp) const;
+	void PlayMotion(
+		const std::string& motionName,
+		const std::string& texturePath,
+		int frameCount,
+		float frameSpeed,
+		bool loop
+	);
 	void StartShurikenAttack();
 	void StartSwordAttack();
 
@@ -21,4 +29,5 @@ private:
 	int m_bulletCount;
 	bool m_attackOnce;
 	int m_whiteState;
+	std::string m_currentTexturePath;
 };

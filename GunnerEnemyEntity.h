@@ -12,7 +12,21 @@ public:
 	std::string GetTexturePath() const override;
 
 private:
-	int m_bulletCount;
-	int m_attackOnce[3];
-};
+	bool TryGetPlayerInfo(Vector2d& playerPos) const;
+	void PlayMotion(
+		const std::string& motionName,
+		const std::string& texturePath,
+		int frameCount,
+		float frameSpeed,
+		bool loop
+	);
+	void StartGunAttack(const Vector2d& playerPos);
+	float GetDirSign() const;
 
+private:
+	int m_bulletCount;
+	bool m_attackOnce[3];
+	int m_attackDir;
+	int m_gunnerState;
+	std::string m_currentTexturePath;
+};

@@ -1,7 +1,12 @@
 #include "WhiteEnemyEntity.h"
+#include "Scene.h"
+#include "Actor.h"
+#include "EnemyBullet.h"
 #include "VelocityComponent.h"
 #include "TransformComponent.h"
 #include "HPComponent.h"
+#include "SpriteComponent.h"
+#include "AnimationComponent.h"
 #include "Vector2d.h"
 
 WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
@@ -9,12 +14,16 @@ WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
 	, m_bulletCount(0)
 	, m_attackOnce(false)
 	, m_whiteState(0)
+	, m_currentTexturePath("")
 {
 }
 
 bool WhiteEnemyEntity::Init()
 {
 	if (!EnemyEntity::Init()) return false;
+
+	m_anim = AddComponent<AnimationComponent>();
+	m_anim->SetSprite(m_sprite);
 
 	return true;
 }
@@ -39,17 +48,91 @@ static const float WHITE_RECHECK_TIME = 0.2f;//行動を再判定するまでの
 static const float WHITE_SWORD_ATTACK_RANGE = 120.0f;//剣攻撃の横範囲
 static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;//剣攻撃の縦範囲
 static const int WHITE_SWORD_DAMAGE = 10;//剣攻撃のダメージ
+static const int WHITE_SHURIKEN_DAMAGE = 5;//手裏剣攻撃のダメージ
 
-static const float WHITE_SHURIKEN_SHOT_TIME = 0.7f;//手裏剣を投げる時間
-static const float WHITE_SHURIKEN_END_TIME = 0.8f;//手裏剣攻撃終了時間
+static const float WHITE_SHURIKEN_SHOT_TIME = 0.7f; // shuriken shot time
+static const float WHITE_SHURIKEN_END_TIME = 0.8f;  // shuriken end time
 
-static const float WHITE_SWORD_PRE_TIME = 0.5f;//前硬直
-static const float WHITE_SWORD_ATTACK_TIME = 0.3f;//攻撃時間
-static const float WHITE_SWORD_AFTER_TIME = 0.3f;//後硬直
+static const float WHITE_SWORD_PRE_TIME = 0.5f;     // sword pre motion
+static const float WHITE_SWORD_ATTACK_TIME = 0.3f;  // sword active motion
+static const float WHITE_SWORD_AFTER_TIME = 0.3f;   // sword after motion
+
+static const char* WHITE_TEXTURE_IDLE = "assets/images/enemy/white/idle.png";
+static const char* WHITE_TEXTURE_WALK = "assets/images/enemy/white/walk.png";
+static const char* WHITE_TEXTURE_SHURIKEN = "assets/images/enemy/white/shuriken.png";
+static const char* WHITE_TEXTURE_SWORD_PRE = "assets/images/enemy/white/sword_pre.png";
+static const char* WHITE_TEXTURE_SWORD = "assets/images/enemy/white/sword.png";
+static const char* WHITE_TEXTURE_SWORD_AFTER = "assets/images/enemy/white/sword_after.png";
 
 float WhiteEnemyEntity::GetDirSign() const
 {
 	return m_dir ? 1.0f : -1.0f;
+}
+
+bool WhiteEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playerHp) const
+{
+	playerHp = nullptr;
+
+	if (m_scene == nullptr)
+	{
+		return false;
+	}
+
+	for (Actor* actor : m_scene->GetActors())
+	{
+		if (actor == nullptr || actor->GetType() != ActorType::Player || actor->IsDead())
+		{
+			continue;
+		}
+
+		TransformComponent* transform = actor->GetComponent<TransformComponent>();
+		if (transform == nullptr)
+		{
+			return false;
+		}
+
+		playerPos = transform->GetPosition();
+		playerHp = actor->GetComponent<HPComponent>();
+		return true;
+	}
+
+	return false;
+}
+
+void WhiteEnemyEntity::PlayMotion(
+	const std::string& motionName,
+	const std::string& texturePath,
+	int frameCount,
+	float frameSpeed,
+	bool loop
+)
+{
+	if (m_currentTexturePath == texturePath)
+	{
+		return;
+	}
+
+	if (m_sprite == nullptr || m_anim == nullptr || frameCount <= 0)
+	{
+		return;
+	}
+
+	if (!m_sprite->LoadTextureDiv(texturePath, frameCount, 1))
+	{
+		return;
+	}
+
+	AnimationClip clip;
+	for (int i = 0; i < frameCount; i++)
+	{
+		clip.frames.push_back(i);
+	}
+	clip.speed = frameSpeed;
+	clip.loop = loop;
+
+	m_anim->AddClip(motionName, clip);
+	m_anim->Play(motionName, true);
+	m_currentTexturePath = texturePath;
 }
 
 // 手裏剣攻撃開始呼び出し関数
@@ -64,6 +147,7 @@ void WhiteEnemyEntity::StartShurikenAttack()
 
 	//アニメーションリセット 必要
 	//m_anim->SetAnimation(1);こんな感じ
+	PlayMotion("shuriken", WHITE_TEXTURE_SHURIKEN, 3, 0.08f, false);
 
 	m_attackOnce = false;
 	m_actionLock = true;
@@ -81,6 +165,7 @@ void WhiteEnemyEntity::StartSwordAttack()
 
 	//アニメーションリセット　必要
 	//m_anim->SetAnimation(1);こんな感じ
+	PlayMotion("sword_pre", WHITE_TEXTURE_SWORD_PRE, 3, 0.12f, false);
 
 	m_attackOnce = false;
 	m_actionLock = true;
@@ -88,9 +173,15 @@ void WhiteEnemyEntity::StartSwordAttack()
 
 void WhiteEnemyEntity::Update(float deltaTime)
 {
-	// TODO: プレイヤー座標取得に置き換える
-	// Vector2d playerPos = player->GetTransform()->GetPosition();
-	Vector2d playerPos = Vector2d(0.0f, 0.0f);
+	Vector2d playerPos = Vector2d::Zero();
+	HPComponent* playerHp = nullptr;
+
+	if (!TryGetPlayerInfo(playerPos, playerHp))
+	{
+		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+		EnemyEntity::Update(deltaTime);
+		return;
+	}
 
 	Vector2d myPos = m_transform->GetPosition();
 
@@ -145,6 +236,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		}
 		else
 		{
+			PlayMotion("idle", WHITE_TEXTURE_IDLE, 4, 0.16f, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			//continue;
@@ -230,12 +322,14 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		switch (m_whiteState)
 		{
 		case 0:
+			PlayMotion("idle", WHITE_TEXTURE_IDLE, 4, 0.16f, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			m_actionLock = false;
 			break;
 
 		case 1:
 			// 接近しながら手裏剣クールタイム待ち
+			PlayMotion("walk", WHITE_TEXTURE_WALK, 4, 0.12f, true);
 			m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
 
 			if (distance < WHITE_STOP_SHURIKEN_RANGE || distance > WHITE_SHURIKEN_RANGE)
@@ -255,6 +349,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		case 2:
 			// 後退しながら手裏剣クールタイム待ち
+			PlayMotion("walk", WHITE_TEXTURE_WALK, 4, 0.12f, true);
 			m_velocity->SetVelocity(Vector2d(-WHITE_BACK_SPEED * dir, 0.0f));
 
 			if (distance >= WHITE_BACK_RANGE || distance < WHITE_NEAR_SWORD_RANGE)
@@ -274,6 +369,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		case 3:
 			// ちょうどいい距離なので停止して手裏剣
+			PlayMotion("idle", WHITE_TEXTURE_IDLE, 4, 0.16f, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (distance < WHITE_BACK_RANGE || distance >= WHITE_SHURIKEN_RANGE)
@@ -293,6 +389,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		case 4:
 			// 剣
+			PlayMotion("idle", WHITE_TEXTURE_IDLE, 4, 0.16f, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (m_cooldownTimer <= 0.0f)
@@ -307,6 +404,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		case 5:
 			// 遠距離なので接近
+			PlayMotion("walk", WHITE_TEXTURE_WALK, 4, 0.12f, true);
 			m_velocity->SetVelocity(Vector2d(WHITE_FAR_APPROACH_SPEED * dir, 0.0f));
 
 			if (distance < WHITE_SHURIKEN_RANGE)
@@ -362,6 +460,27 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			m_attackType = 2;
 		}*/
 
+		if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
+		{
+			float dir = GetDirSign();
+			Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 16.0f);
+			Vector2d bulletVel(WHITE_BULLET_SPEED * dir, 0.0f);
+
+			m_scene->SpawnActor(
+				new EnemyBullet(
+					m_scene,
+					bulletPos,
+					bulletVel,
+					WHITE_BULLET_DELETE_RANGE,
+					"assets/images/enemy/bullet/shuriken.png",
+					WHITE_SHURIKEN_DAMAGE
+				)
+			);
+
+			m_attackOnce = true;
+			m_attackActive = true;
+		}
+
 		// 手裏剣攻撃終了
 		// 0.7秒後に攻撃、攻撃不可時間0.1秒へ移行
 
@@ -391,11 +510,13 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		if (attackTime < ATTACK_START)
 		{
+			PlayMotion("sword_pre", WHITE_TEXTURE_SWORD_PRE, 3, 0.12f, false);
 			m_attackActive = false;
 			m_attackType = 2;
 		}
 		else if (attackTime < ATTACK_END)
 		{
+			PlayMotion("sword", WHITE_TEXTURE_SWORD, 3, 0.08f, false);
 			m_attackActive = true;
 			m_attackType = 2;
 
@@ -434,7 +555,11 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 					if (dy < heightRange)
 					{
-						/*p->hp*/  //-= WHITE_SWORD_DAMAGE;
+						if (playerHp != nullptr)
+						{
+							playerHp->Damage(WHITE_SWORD_DAMAGE);
+							playerHp->SetInvincible(0.3f);
+						}
 					}
 				}
 
@@ -443,6 +568,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		}
 		else if (attackTime < END_TIME)
 		{
+			PlayMotion("sword_after", WHITE_TEXTURE_SWORD_AFTER, 3, 0.12f, false);
 			m_attackType = 2;
 			m_attackActive = false;
 		}
@@ -485,5 +611,5 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 std::string WhiteEnemyEntity::GetTexturePath() const
 {
-	return "assets/images/enemy/whiteEnemy.png";
+	return WHITE_TEXTURE_IDLE;
 }
