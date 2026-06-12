@@ -37,22 +37,22 @@ bool WhiteEnemyEntity::Init()
 	return true;
 }
 
-//陟厄ｽｼ邵ｺ・ｮ霑･・ｶ隲ｷ遏ｩ繝ｻ驕假ｽｻ
+//
 static const float WHITE_TILE_SIZE = 104.0f;
 static const float WHITE_ENEMY_HALF_WIDTH = 48.0f;
 static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
 static const float WHITE_SWORD_GAP_RANGE = WHITE_TILE_SIZE * 0.7f;
-static const float WHITE_FIND_RANGE = 800.0f;//驍擾ｽ｢隰ｨ・ｵ陷ｿ・ｯ髢ｭ・ｽ驕ｽ繝ｻ蟲・
-static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;//陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ竊馴§・ｻ郢ｧ迢暦ｽｯ繝ｻ蟲・
-static const float WHITE_BACK_RANGE = 450.0f;//陟慕｢・ﾂ邵ｺ・ｫ驕假ｽｻ郢ｧ迢暦ｽｯ繝ｻ蟲・
-static const float WHITE_STOP_SHURIKEN_RANGE = 612.0f;//陋帶㊧・ｭ・｢邵ｺ蜉ｱ窶ｻ隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ竊馴§・ｻ郢ｧ迢暦ｽｯ繝ｻ蟲・
-static const float WHITE_SHURIKEN_RANGE = 650.0f;//隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ・定ｿ｢蜷ｶ竕ｧ驕ｽ繝ｻ蟲・
-static const float WHITE_BULLET_DELETE_RANGE = 1500.0f;//陟托ｽｾ郢ｧ蜻茨ｽｶ蛹ｻ笘・恪譎槫ｱｬ
+static const float WHITE_FIND_RANGE = 800.0f;//
+static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;//
+static const float WHITE_BACK_RANGE = 450.0f;//
+static const float WHITE_STOP_SHURIKEN_RANGE = 612.0f;//
+static const float WHITE_SHURIKEN_RANGE = 650.0f;//
+static const float WHITE_BULLET_DELETE_RANGE = 1500.0f;//
 
-static const float WHITE_APPROACH_SPEED = 120.0f;//隰暦ｽ･髴鷹ｷｹﾂ貅ｷ・ｺ・ｦ
-static const float WHITE_BACK_SPEED = 180.0f;//陟慕｢・ﾂ鬨ｾ貅ｷ・ｺ・ｦ
-static const float WHITE_FAR_APPROACH_SPEED = 250.0f;//鬩包｣ｰ髴肴辨螻ｬ邵ｺ荵晢ｽ臥ｸｺ・ｮ隰暦ｽ･髴鷹ｷｹﾂ貅ｷ・ｺ・ｦ
-static const float WHITE_BULLET_SPEED = 250.0f;//陟托ｽｾ鬨ｾ繝ｻ
+static const float WHITE_APPROACH_SPEED = 120.0f;//
+static const float WHITE_BACK_SPEED = 180.0f;//
+static const float WHITE_FAR_APPROACH_SPEED = 250.0f;//
+static const float WHITE_BULLET_SPEED = 250.0f;//
 
 static const float WHITE_SAME_FLOOR_Y_RANGE = WHITE_TILE_SIZE * 0.5f;
 static const float WHITE_STUCK_MOVE_EPS = 1.0f;
@@ -60,14 +60,14 @@ static const float WHITE_STUCK_IDLE_TIME = 0.25f;
 
 static const float WHITE_ACTION_TIME_SCALE = 1.5f;
 
-static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;//隰・事・｣荳樊ｮｴ邵ｺ・ｮ隰ｾ・ｻ隰ｦ繝ｻ・ｸ讎雁ｺ・ｭ弱ｋ菫｣
-static const float WHITE_SWORD_COOLDOWN = 0.25f * WHITE_ACTION_TIME_SCALE;//陷托ｽ｣邵ｺ・ｮ隰ｾ・ｻ隰ｦ繝ｻ・ｸ讎雁ｺ・ｭ弱ｋ菫｣
-static const float WHITE_RECHECK_TIME = 0.2f * WHITE_ACTION_TIME_SCALE;//髯ｦ謔溯劒郢ｧ雋槭・陋ｻ・､陞ｳ螢ｹ笘・ｹｧ荵昶穐邵ｺ・ｧ邵ｺ・ｮ隴弱ｋ菫｣
+static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;//
+static const float WHITE_SWORD_COOLDOWN = 0.25f * WHITE_ACTION_TIME_SCALE;//
+static const float WHITE_RECHECK_TIME = 0.2f * WHITE_ACTION_TIME_SCALE;//
 
-static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE;//陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ繝ｻ隶難ｽｪ驕ｽ繝ｻ蟲・
-static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;//陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ繝ｻ驍ｵ・ｦ驕ｽ繝ｻ蟲・
-static const int WHITE_SWORD_DAMAGE = 10;//陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ繝ｻ郢敖郢晢ｽ｡郢晢ｽｼ郢ｧ・ｸ
-static const int WHITE_SHURIKEN_DAMAGE = 5;//隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ繝ｻ郢敖郢晢ｽ｡郢晢ｽｼ郢ｧ・ｸ
+static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE;//
+static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;//
+static const int WHITE_SWORD_DAMAGE = 10;//
+static const int WHITE_SHURIKEN_DAMAGE = 5;//
 
 static const float WHITE_SHURIKEN_SHOT_TIME = 16.0f / 24.0f; // shuriken shot time
 static const float WHITE_SHURIKEN_END_TIME = 24.0f / 24.0f;  // shuriken end time
@@ -259,7 +259,7 @@ void WhiteEnemyEntity::PlaySheetMotion(
 	m_currentMotionName = motionName;
 }
 
-// 隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ蟷戊沂蜿･莉也ｸｺ・ｳ陷・ｽｺ邵ｺ驤ｴ譛ｪ隰ｨ・ｰ
+//
 void WhiteEnemyEntity::StartShurikenAttack()
 {
 	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
@@ -269,14 +269,14 @@ void WhiteEnemyEntity::StartShurikenAttack()
 
 	m_attackActive = false;
 
-	//郢ｧ・｢郢昜ｹ斟鍋ｹ晢ｽｼ郢ｧ・ｷ郢晢ｽｧ郢晢ｽｳ郢晢ｽｪ郢ｧ・ｻ郢昴・繝ｨ 陟｢繝ｻ・ｦ繝ｻ	//m_anim->SetAnimation(1);邵ｺ阮呻ｽ鍋ｸｺ・ｪ隲｢貅伉ｧ
+	//	//m_anim->SetAnimation(1);
 	PlaySheetMotion("shuriken", WHITE_SHURIKEN_FRAMES, WHITE_SHURIKEN_DURATIONS, false);
 
 	m_attackOnce = false;
 	m_actionLock = true;
 }
 
-// 陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ蟷戊沂蜿･莉也ｸｺ・ｳ陷・ｽｺ邵ｺ驤ｴ譛ｪ隰ｨ・ｰ
+// 
 void WhiteEnemyEntity::StartSwordAttack()
 {
 	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
@@ -286,7 +286,7 @@ void WhiteEnemyEntity::StartSwordAttack()
 
 	m_attackActive = false;
 
-	//郢ｧ・｢郢昜ｹ斟鍋ｹ晢ｽｼ郢ｧ・ｷ郢晢ｽｧ郢晢ｽｳ郢晢ｽｪ郢ｧ・ｻ郢昴・繝ｨ邵ｲﾂ陟｢繝ｻ・ｦ繝ｻ	//m_anim->SetAnimation(1);邵ｺ阮呻ｽ鍋ｸｺ・ｪ隲｢貅伉ｧ
+	//	//m_anim->SetAnimation(1);
 	m_currentMotionName = "";
 	PlaySheetMotion("sword", WHITE_SWORD_FRAMES, WHITE_SWORD_DURATIONS, false);
 
@@ -318,7 +318,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		m_sprite->SetFlipH(m_attackType == 0 ? distanceX >= 0.0f : m_dir);
 	}
 
-	// 陟托ｽｾ邵ｺ蠕後・郢晢ｽｬ郢ｧ・､郢晢ｽ､郢晢ｽｼ邵ｺ荵晢ｽ蛾ｫｮ・｢郢ｧ蠕娯・邵ｺ蠑ｱ笳・ｹｧ閾･笏瑚怏・ｹ陋ｹ繝ｻ
+	// 
 	/*for (int j = 0; j < 3; j++)
 	{
 		int bulletIndex = j;
@@ -376,21 +376,21 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 	/*----------------
 
-			霑･・ｶ隲ｷ蛟ｶ・ｸﾂ髫包ｽｧ
+			
 			||whiteState||
-			0 陟輔・・ｩ繝ｻ
-			1 隰暦ｽ･髴醍ｬｬ辟秘勳荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ
-			2 陟慕｢・ﾂ隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ
-			3 陋帶㊧・ｭ・｢邵ｺ蜉ｱ窶ｻ隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ
-			4 陋帶㊧・ｭ・｢邵ｺ蜉ｱ窶ｻ陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ
-			5 隰暦ｽ･髴代・
-			6 雎・ｽｻ nashi
+			0 
+			1 
+			2 
+			3 
+			4 
+			5 
+			6  nashi
 
-			隰ｾ・ｻ隰ｦ繝ｻ・ｸﾂ髫包ｽｧ
+			
 			||attackType||
-			0 驕假ｽｻ陷阪・
-			1 隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ
-			2 陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ
+			0 
+			1 
+			2 
 
    ---------------*/
 
@@ -419,17 +419,17 @@ void WhiteEnemyEntity::Update(float deltaTime)
 					m_whiteState = 2;
 				}
 			}
-			//邵ｺ・｡郢ｧ繝ｻ竕ｧ邵ｺ・ｩ邵ｺ繝ｻ・槭・螢ｼ笳剰ｱ・ｽ｢邵ｺ蜉ｱ窶ｻ隰・事・｣荳樊ｮｴ
+			//
 			else if (distance < WHITE_STOP_SHURIKEN_RANGE)
 			{
 				m_whiteState = 3;
 			}
-			// 鬩包｣ｰ邵ｺ繝ｻ・ｼ螢ｽ逎・恆莉｣・邵ｺ・ｪ邵ｺ蠕鯉ｽ芽ｬ・事・｣荳樊ｮｴ陟輔・笆
+			// 
 			else if (distance < WHITE_SHURIKEN_RANGE)
 			{
 				m_whiteState = 1;
 			}
-			// 鬩包｣ｰ邵ｺ蜷ｶ邃・ｹｧ蜈ｷ・ｼ螢ｽ逎・恆莉｣繝ｻ邵ｺ・ｿ
+			// 
 			else
 			{
 				m_whiteState = 5;
@@ -462,7 +462,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 1:
-			// 隰暦ｽ･髴台ｻ｣・邵ｺ・ｪ邵ｺ蠕鯉ｽ芽ｬ・事・｣荳樊ｮｴ郢ｧ・ｯ郢晢ｽｼ郢晢ｽｫ郢ｧ・ｿ郢ｧ・､郢晢｣ｰ陟輔・笆
+			// 
 			PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
 			PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
 			m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
@@ -511,7 +511,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 3:
-			// 邵ｺ・｡郢ｧ繝ｻ竕ｧ邵ｺ・ｩ邵ｺ繝ｻ・樣恪譎槫ｱｬ邵ｺ・ｪ邵ｺ・ｮ邵ｺ・ｧ陋帶㊧・ｭ・｢邵ｺ蜉ｱ窶ｻ隰・事・｣荳樊ｮｴ
+			// 
 			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -538,7 +538,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			// 陷托ｽ｣
+			// 
 			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -569,8 +569,8 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 6:
-			//郢ｧ繝ｻ・臥ｹｧ蠕湖皮ｹ晢ｽｼ郢ｧ・ｷ郢晢ｽｧ郢晢ｽｳ邵ｺ・ｮ邵ｺ繧・・郢晏干ﾎ樒ｹｧ・､郢晢ｽ､郢晢ｽｼ邵ｺ讙主愛鬮ｱ・｢陞滓じ竊馴勗蠕娯夢邵ｺ貅假ｽ芽輔・・ｩ貅倪・
-			//闕ｳﾂ隴鯉ｽｦ邵ｺ・ｯ雎・ｽｻ邵ｺ・ｫ邵ｺ・ｾ邵ｺ繝ｻ
+			//
+			//
 
 			SetState(Actor::State::Dead);
 			break;
@@ -585,7 +585,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		m_attackType = 1;
 
-		// 0.7驕倩ｲ橸ｽｾ蠕娯・隰・事・｣荳樊ｮｴ騾具ｽｺ陝・・
+		// 0.7
 
 		/*if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
 		{
@@ -631,13 +631,13 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			m_attackActive = true;
 		}
 
-		// 隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ・ｵ繧・ｽｺ繝ｻ		// 0.7驕倩ｲ橸ｽｾ蠕娯・隰ｾ・ｻ隰ｦ繝ｻﾂ竏ｵ蛻､隰ｦ繝ｻ・ｸ讎雁ｺ・ｭ弱ｋ菫｣0.1驕伜・竏磯§・ｻ髯ｦ繝ｻ
+		// 		// 0.7
 
 		if (attackTime >= WHITE_SHURIKEN_END_TIME)
 		{
 			m_attackType = 0;
 
-			// 隰・事・｣荳樊ｮｴ邵ｺ・ｮ隰ｾ・ｻ隰ｦ繝ｻ・ｸ讎雁ｺ・ｭ弱ｋ菫｣
+			// 
 			m_cooldownTimer = WHITE_SHURIKEN_COOLDOWN;
 
 			m_actionTimer = 0.0f;
@@ -716,12 +716,12 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		}
 	}
 
-	// 隰ｨ・ｵ隴幢ｽｬ闖ｴ阮吶・隶難ｽｪ驕假ｽｻ陷阪・
-	//邵ｺ阮呻ｼ・I邵ｺ・ｧ闖ｫ・ｮ雎・ｽ｣邵ｺ蜉ｱ笳・ｸｺ荵晢ｽ芽ｫ､・ｪ邵ｺ蜉ｱ・・
+	// 
+	//
 
-	// 隰ｨ・ｵ隴幢ｽｬ闖ｴ阮吶・驍ｵ・ｦ驕假ｽｻ陷阪・
+	// 
 
-	// 陟托ｽｾ邵ｺ・ｮ驕假ｽｻ陷阪・
+	// 
 	/*for (int j = 0; j < 3; j++)
 	{
 		int bulletIndex = i * 3 + j;
