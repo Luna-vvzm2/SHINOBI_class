@@ -315,5 +315,8 @@
     <Image Include="assets\images\blocks\ground.png">
       <Filter>リソース ファイル</Filter>
     </Image>
+    <Image Include="assets\images\entities\players\musashi_sheet.PNG">
+      <Filter>リソース ファイル</Filter>
+    </Image>
   </ItemGroup>
 </Project>

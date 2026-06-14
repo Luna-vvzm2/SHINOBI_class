@@ -29,6 +29,7 @@ public:
 
     ActorType GetType() const override { return ActorType::Player; }
     CollisionComponent* GetCollision() const { return m_collision; }
+    CollisionComponent* GetAttackCol() const { return m_attackCol; }
 
     bool OnGround() const { return m_isGround; }
     void SetCanMove(bool canMove) { m_canMove = canMove; }
@@ -45,6 +46,8 @@ public:
         STRONG_ATTACK,
         
     };
+
+    Vector2d GetDrawOffset() const { return m_drawOffset; }
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -61,6 +64,7 @@ private:
 
     bool m_attack;
     AttackType m_attackType;
+    CollisionComponent* m_attackCol;
 
     int m_weakAttackIdx;
     int m_strongAttackIdx;
@@ -74,6 +78,8 @@ private:
     bool m_squat;         // ‚µ‚á‚ª‚Ý
     bool m_canStand;      // ‚µ‚á‚ª‚Ý‰Â”Û
     bool m_canCharge;
+
+    Vector2d m_drawOffset;
 
     std::string GetTexturePath() const override;
 

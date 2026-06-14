@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include "TransformComponent.h"
 #include "CollisionComponent.h"
+#include "PlayerEntity.h"
 
 std::unordered_map<std::string, int>
 SpriteComponent::s_textureCache;
@@ -92,8 +93,13 @@ void SpriteComponent::Draw() {
     // š Transform ‚Ì scale ‚ð‚»‚Ì‚Ü‚ÜŽg‚¤
     Vector2d scale = transform->GetScale();
 
+    if (auto player = dynamic_cast<PlayerEntity*>(m_owner))
+    {
+        pos.y += player->GetDrawOffset().y;
+    }
+
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, 0.0f, m_handle,
+        pos, scale.x, scale.y, transform->GetAngle(), m_handle,
         true, Vector2d((float)texW, (float)texH) * 0.5f, 255, false, false
     );
 }
