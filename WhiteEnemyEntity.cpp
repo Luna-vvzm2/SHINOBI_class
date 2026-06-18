@@ -37,13 +37,13 @@ bool WhiteEnemyEntity::Init()
 	return true;
 }
 
-//陟厄ｽｼ邵ｺ・ｮ霑･・ｶ隲ｷ遏ｩ繝ｻ驕假ｽｻ
+
 static const float WHITE_TILE_SIZE = 104.0f;
 static const float WHITE_ENEMY_HALF_WIDTH = 48.0f;
 static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
 static const float WHITE_SWORD_GAP_RANGE = WHITE_TILE_SIZE * 0.7f;
-static const float WHITE_FIND_RANGE = 800.0f;//驍擾ｽ｢隰ｨ・ｵ陷ｿ・ｯ髢ｭ・ｽ驕ｽ繝ｻ蟲・
-static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;//陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ竊馴§・ｻ郢ｧ迢暦ｽｯ繝ｻ蟲・
+static const float WHITE_FIND_RANGE = 800.0f;
+static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;
 static const float WHITE_BACK_RANGE = 450.0f;//陟慕｢・ﾂ邵ｺ・ｫ驕假ｽｻ郢ｧ迢暦ｽｯ繝ｻ蟲・
 static const float WHITE_STOP_SHURIKEN_RANGE = 612.0f;//陋帶㊧・ｭ・｢邵ｺ蜉ｱ窶ｻ隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ竊馴§・ｻ郢ｧ迢暦ｽｯ繝ｻ蟲・
 static const float WHITE_SHURIKEN_RANGE = 650.0f;//隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ・定ｿ｢蜷ｶ竕ｧ驕ｽ繝ｻ蟲・
@@ -259,7 +259,7 @@ void WhiteEnemyEntity::PlaySheetMotion(
 	m_currentMotionName = motionName;
 }
 
-// 隰・事・｣荳樊ｮｴ隰ｾ・ｻ隰ｦ繝ｻ蟷戊沂蜿･莉也ｸｺ・ｳ陷・ｽｺ邵ｺ驤ｴ譛ｪ隰ｨ・ｰ
+
 void WhiteEnemyEntity::StartShurikenAttack()
 {
 	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
@@ -269,14 +269,13 @@ void WhiteEnemyEntity::StartShurikenAttack()
 
 	m_attackActive = false;
 
-	//郢ｧ・｢郢昜ｹ斟鍋ｹ晢ｽｼ郢ｧ・ｷ郢晢ｽｧ郢晢ｽｳ郢晢ｽｪ郢ｧ・ｻ郢昴・繝ｨ 陟｢繝ｻ・ｦ繝ｻ	//m_anim->SetAnimation(1);邵ｺ阮呻ｽ鍋ｸｺ・ｪ隲｢貅伉ｧ
 	PlaySheetMotion("shuriken", WHITE_SHURIKEN_FRAMES, WHITE_SHURIKEN_DURATIONS, false);
 
 	m_attackOnce = false;
 	m_actionLock = true;
 }
 
-// 陷托ｽ｣隰ｾ・ｻ隰ｦ繝ｻ蟷戊沂蜿･莉也ｸｺ・ｳ陷・ｽｺ邵ｺ驤ｴ譛ｪ隰ｨ・ｰ
+
 void WhiteEnemyEntity::StartSwordAttack()
 {
 	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
@@ -286,7 +285,6 @@ void WhiteEnemyEntity::StartSwordAttack()
 
 	m_attackActive = false;
 
-	//郢ｧ・｢郢昜ｹ斟鍋ｹ晢ｽｼ郢ｧ・ｷ郢晢ｽｧ郢晢ｽｳ郢晢ｽｪ郢ｧ・ｻ郢昴・繝ｨ邵ｲﾂ陟｢繝ｻ・ｦ繝ｻ	//m_anim->SetAnimation(1);邵ｺ阮呻ｽ鍋ｸｺ・ｪ隲｢貅伉ｧ
 	m_currentMotionName = "";
 	PlaySheetMotion("sword", WHITE_SWORD_FRAMES, WHITE_SWORD_DURATIONS, false);
 
@@ -318,29 +316,6 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		m_sprite->SetFlipH(m_attackType == 0 ? distanceX >= 0.0f : m_dir);
 	}
 
-	// 陟托ｽｾ邵ｺ蠕後・郢晢ｽｬ郢ｧ・､郢晢ｽ､郢晢ｽｼ邵ｺ荵晢ｽ蛾ｫｮ・｢郢ｧ蠕娯・邵ｺ蠑ｱ笳・ｹｧ閾･笏瑚怏・ｹ陋ｹ繝ｻ
-	/*for (int j = 0; j < 3; j++)
-	{
-		int bulletIndex = j;
-
-		if (m_bulletActive[bulletIndex] == true)
-		{
-			float bulletDistance = p->x - white->bulletX[bulletIndex];
-
-			if (bulletDistance < 0.0f)
-			{
-				bulletDistance *= -1.0f;
-			}
-
-			if (bulletDistance > WHITE_BULLET_DELETE_RANGE)
-			{
-				white->bulletActive[bulletIndex] = false;
-				white->bulletX[bulletIndex] = 0.0f;
-				white->bulletY[bulletIndex] = 0.0f;
-				white->bulletMuki[bulletIndex] = 0;
-			}
-		}
-	}*/
 
 	if (distance < 0.0f)
 	{
@@ -419,12 +394,12 @@ void WhiteEnemyEntity::Update(float deltaTime)
 					m_whiteState = 2;
 				}
 			}
-			//邵ｺ・｡郢ｧ繝ｻ竕ｧ邵ｺ・ｩ邵ｺ繝ｻ・槭・螢ｼ笳剰ｱ・ｽ｢邵ｺ蜉ｱ窶ｻ隰・事・｣荳樊ｮｴ
+
 			else if (distance < WHITE_STOP_SHURIKEN_RANGE)
 			{
 				m_whiteState = 3;
 			}
-			// 鬩包｣ｰ邵ｺ繝ｻ・ｼ螢ｽ逎・恆莉｣・邵ｺ・ｪ邵ｺ蠕鯉ｽ芽ｬ・事・｣荳樊ｮｴ陟輔・笆
+
 			else if (distance < WHITE_SHURIKEN_RANGE)
 			{
 				m_whiteState = 1;
