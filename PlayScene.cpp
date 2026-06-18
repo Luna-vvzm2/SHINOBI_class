@@ -186,7 +186,8 @@ void PlayScene::Update(float deltaTime) {
 void PlayScene::Draw() {
 	Renderer* renderer = m_game->GetRenderer();
 
-
+	// âºîwåi
+	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
 	// --- ÉAÉNÉ^Å[ï`âÊ ---
 	drawActors(m_backactors);

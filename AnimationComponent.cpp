@@ -43,6 +43,14 @@ void AnimationComponent::Play(const std::string& name, bool reset)
         m_sprite->SetFrame(m_currentClip->frames[0]);
 }
 
+bool AnimationComponent::IsFinished() const {
+    if (!m_currentClip) return true;
+
+    if (m_currentClip->loop) return false;
+
+    return m_frameIndex >= m_currentClip->frames.size() - 1;
+}
+
 // --------------------
 // 更新（フレーム切替）
 // --------------------

@@ -14,14 +14,64 @@ public:
 
     enum class ActionState {
         IDLE,
+
+        RUN_START,
         RUN,
+        STOP_SHORT,
+        STOP_LONG,
+
+        CHANGE_DIR,
+        CHANGE_DIR_RUN,
+
+        SQUAT_START,
         SQUAT,
+        SQUAT_IDLE,
+        SQUAT_WALK,
+
+        JUMP_START,
         JUMP,
+        JUMP_SECOND,
         FALL,
+        JUMP_LANDING,
+
         ATTACK,
+        WEAK_ATTACK1,
+        WEAK_ATTACK2,
+        WEAK_ATTACK3,
+        ATTACK_END,
+        WEAK_ATTACK4,
+
+        WEAK_AIR_ATTACK1,
+        WEAK_AIR_ATTACK2,
+        WEAK_AIR_ATTACK3,
+        HAYABUSA,
+        HAYABUSA_HIT,
+        HAYABUSA_GROUND,
+
+        STRONG_ATTACK1,
+        STRONG_ATTACK2,
+
         SQUAT_ATTACK,
-        HIT,
-        DODGE,
+        WALL_ATTACK,
+
+        KUNAI,
+        KUNAI_AIR,
+        KUNAI_SQUAT,
+
+        HIT_GROUND,
+        HIT_AIR,
+        HIT_TRAP,
+
+        ROLL,
+        HIEN,
+        SENTEN,
+        ROLL_LANDING,
+
+        WALL_HOLD,
+        WALL_JUMP,
+        WALL_CLIMB,
+        WALL_CLIMB_UP,
+
         CHASE,
         DEAD,
     };

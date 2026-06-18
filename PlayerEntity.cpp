@@ -103,8 +103,14 @@ bool PlayerEntity::Init() {
     changeDirRun.loop = false;
     m_anim->AddClip("changeDirRun", changeDirRun);
 
+    AnimationClip squatStart;
+    squatStart.frames = { 27 };
+    squatStart.speed = 0.1f;
+    squatStart.loop = false;
+    m_anim->AddClip("squatStart", squatStart);
+
     AnimationClip squat;
-    squat.frames = { 27, 28, 28, 28, 29 };
+    squat.frames = { 28, 28, 28, 29 };
     squat.speed = 0.1f;
     squat.loop = false;
     m_anim->AddClip("squat", squat);
@@ -414,6 +420,14 @@ void PlayerEntity::UpdateJump(float deltaTime) {
     Vector2d vel = m_velocity->Get();
 
     if (input.IsTrigger(Action::JUMP)) {
+        if (m_squat) {
+            if (m_canStand)
+            {
+                ExitSquat();
+                m_drawOffset = Vector2d(0.0f, 10.0f);
+            }
+        }
+
         if (m_jumpCount == 0) {
             vel.y = -700.0f;
 
@@ -505,6 +519,7 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
+    m_squat = true;
 }
 
 void PlayerEntity::ExitSquat()
@@ -518,6 +533,7 @@ void PlayerEntity::ExitSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(85, 192);
+    m_squat = false;
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
@@ -550,7 +566,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
 
 void PlayerEntity::UpdateState() {
     if (m_hp->GetHP() <= 0) {
-        m_state = ActionState::DEAD;
+        ChangeState(ActionState::DEAD);
         return;
     }
 
@@ -558,13 +574,15 @@ void PlayerEntity::UpdateState() {
 
     if (m_attack) {
         if (input.IsDown(Action::DOWN)) {
-            m_state = ActionState::SQUAT_ATTACK;
-            m_anim->Play("squatAttack");
+            ChangeState(ActionState::SQUAT_ATTACK);
             m_collision->SetRect(90, 95);
+            return;
         }
+        // —vC³
         m_state = ActionState::ATTACK;
-        m_anim->Play("attack");
+        m_anim->Play("weakAttack1");
         return;
+        //
     }
 
     Vector2d vel = m_velocity->Get();
@@ -572,19 +590,30 @@ void PlayerEntity::UpdateState() {
     if (!m_isGround) {
         if (vel.y < 0) {
             if (m_jumpCount == 1) {
-                m_state = ActionState::JUMP;
-                m_anim->Play("jump");
+                ChangeState(ActionState::JUMP_START);
             }
             else if (m_jumpCount == 2) {
-                m_state = ActionState::JUMP;
-                m_anim->Play("jumpSecond");
+                ChangeState(ActionState::JUMP_SECOND);
             }
         }
         else {
-            m_state = ActionState::FALL;
-            m_anim->Play("fall");
+            if (m_squat) {
+                if (m_canStand)
+                {
+                    ExitSquat();
+                    m_drawOffset = Vector2d(0.0f, 10.0f);
+                }
+            }
+            ChangeState(ActionState::FALL);
         }
+        return;
+    }
 
+    if (m_state == ActionState::SQUAT_START) {
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::SQUAT);
+        }
         return;
     }
 
@@ -594,45 +623,275 @@ void PlayerEntity::UpdateState() {
         if (!m_squat)
         {
             EnterSquat();
-            m_squat = true;
+            ChangeState(ActionState::SQUAT_START);
+            return;
         }
-        m_state = ActionState::SQUAT;
-        if (vel.x == 0) {
-            m_anim->Play("squat");
+
+        // ‚µ‚á‚ª‚Ý‚È‚ª‚çˆÚ“®
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
+        {
+            ChangeState(ActionState::SQUAT_WALK);
+            return;
         }
-        else {
-            m_anim->Play("squatWalk");
+
+        if (m_squat) {
+            ChangeState(ActionState::SQUAT);
         }
         return;
     }
+    
 
-    if (m_squat)
-    {
+    if (m_squat) {
         if (m_canStand)
         {
             ExitSquat();
-            m_squat = false;
             m_drawOffset = Vector2d(0.0f, 10.0f);
         }
         else {
-            if (vel.x == 0) {
-                m_anim->Play("squat");
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
+            {
+                ChangeState(ActionState::SQUAT_WALK);
+                return;
             }
-            else {
-                m_anim->Play("squatWalk");
-            }
+
+            ChangeState(ActionState::SQUAT);
             return;
         }
     }
+    
+    if (m_state == ActionState::RUN_START)
+    {
+        if (!(input.IsDown(Action::LEFT) || input.IsDown(Action::RIGHT)))
+        {
+            ChangeState(ActionState::STOP_SHORT);
+            return;
+        }
 
-    if (vel.x != 0) {
-        m_state = ActionState::RUN;
-        m_anim->Play("run");
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::RUN);
+        }
         return;
     }
 
-    m_state = ActionState::IDLE;
-    m_anim->Play("idle");
+    if (m_state == ActionState::RUN)
+    {
+        // ˆÚ“®ƒL[—£‚µ‚½
+        if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
+        {
+            ChangeState(ActionState::STOP_LONG);
+            return;
+        }
+        return;
+    }
+
+    if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
+    {
+        ChangeState(ActionState::RUN_START);
+        return;
+    }
+
+    if ((m_state == ActionState::STOP_SHORT) || (m_state == ActionState::STOP_LONG))
+    {
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::IDLE);
+        }
+        return;
+    }
+
+    ChangeState(ActionState::IDLE);
+}
+
+void PlayerEntity::ChangeState(ActionState newState)
+{
+    if (m_state == newState)
+        return;
+
+    m_state = newState;
+
+    switch (m_state)
+    {
+    case ActionState::IDLE:
+        m_anim->Play("idle");
+        break;
+
+    case ActionState::RUN:
+        m_anim->Play("run");
+        break;
+
+    case ActionState::RUN_START:
+        m_anim->Play("runStart");
+        break;
+
+    case ActionState::STOP_SHORT:
+        m_anim->Play("stopShort");
+        break;
+
+    case ActionState::STOP_LONG:
+        m_anim->Play("stopLong");
+        break;
+
+    case ActionState::CHANGE_DIR:
+        m_anim->Play("changeDir");
+        break;
+
+    case ActionState::CHANGE_DIR_RUN:
+        m_anim->Play("changeDirRun");
+        break;
+    
+    case ActionState::SQUAT_START:
+        m_anim->Play("squatStart");
+        break;
+
+    case ActionState::SQUAT:
+        m_anim->Play("squat");
+        break;
+
+    case ActionState::SQUAT_IDLE:
+        m_anim->Play("squatIdle");
+        break;
+
+    case ActionState::SQUAT_WALK:
+        m_anim->Play("squatWalk");
+        break;
+
+    case ActionState::SQUAT_ATTACK:
+        m_anim->Play("squatAttack");
+        break;
+
+    case ActionState::JUMP_START:
+        m_anim->Play("jumpStart");
+        break;
+
+    case ActionState::JUMP:
+        m_anim->Play("jump");
+        break;
+
+    case ActionState::JUMP_SECOND:
+        m_anim->Play("jumpSecond");
+        break;
+
+    case ActionState::FALL:
+        m_anim->Play("fall");
+        break;
+
+    case ActionState::JUMP_LANDING:
+        m_anim->Play("jumpLanding");
+        break;
+
+    case ActionState::ROLL:
+        m_anim->Play("roll");
+        break;
+
+    case ActionState::HIEN:
+        m_anim->Play("Hien");
+        break;
+
+    case ActionState::SENTEN:
+        m_anim->Play("Senten");
+        break;
+
+    case ActionState::ROLL_LANDING:
+        m_anim->Play("rollLanding");
+        break;
+
+    case ActionState::WALL_HOLD:
+        m_anim->Play("wallHold");
+        break;
+
+    case ActionState::WALL_JUMP:
+        m_anim->Play("wallJump");
+        break;
+
+    case ActionState::WALL_CLIMB:
+        m_anim->Play("wallClimb");
+        break;
+
+    case ActionState::WALL_CLIMB_UP:
+        m_anim->Play("wallClimbUp");
+        break;
+
+    case ActionState::WEAK_ATTACK1:
+        m_anim->Play("weak_attack1");
+        break;
+
+    case ActionState::WEAK_ATTACK2:
+        m_anim->Play("weak_attack2");
+        break;
+
+    case ActionState::WEAK_ATTACK3:
+        m_anim->Play("weak_attack3");
+        break;
+
+    case ActionState::ATTACK_END:
+        m_anim->Play("attackEnd");
+        break;
+
+    case ActionState::WEAK_ATTACK4:
+        m_anim->Play("weak_attack4");
+        break;
+
+    case ActionState::WEAK_AIR_ATTACK1:
+        m_anim->Play("weakAirAttack1");
+        break;
+
+    case ActionState::WEAK_AIR_ATTACK2:
+        m_anim->Play("weakAirAttack2");
+        break;
+
+    case ActionState::WEAK_AIR_ATTACK3:
+        m_anim->Play("weakAirAttack3");
+        break;
+
+    case ActionState::STRONG_ATTACK1:
+        m_anim->Play("strongAttack1");
+        break;
+
+    case ActionState::STRONG_ATTACK2:
+        m_anim->Play("strongAttack2");
+        break;
+
+    case ActionState::HAYABUSA:
+        m_anim->Play("Hayabusa");
+        break;
+
+    case ActionState::HAYABUSA_HIT:
+        m_anim->Play("HayabusaHit");
+        break;
+
+    case ActionState::HAYABUSA_GROUND:
+        m_anim->Play("HayabusaGround");
+        break;
+
+    case ActionState::KUNAI:
+        m_anim->Play("Kunai");
+        break;
+
+    case ActionState::KUNAI_AIR:
+        m_anim->Play("KunaiAir");
+        break;
+
+    case ActionState::KUNAI_SQUAT:
+        m_anim->Play("KunaiSquat");
+        break;
+
+    case ActionState::HIT_TRAP:
+        m_anim->Play("hitTrap");
+        break;
+
+    case ActionState::HIT_GROUND:
+        m_anim->Play("hitGround");
+        break;
+
+    case ActionState::HIT_AIR:
+        m_anim->Play("hitAir");
+        break;
+
+    case ActionState::DEAD:
+        m_anim->Play("dead");
+        break;
+    }
 }
 
 void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
@@ -641,13 +900,22 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     m_hp->Damage(damage);
     
     m_velocity->Set(knockback);
-
-    m_state = ActionState::HIT;
+    if (OnGround()) {
+        m_state = ActionState::HIT_GROUND;
+    }
+    else {
+        m_state = ActionState::HIT_AIR;
+    }
+    
 
     m_invincibleTime = 2.0f;
 }
 
+void PlayerEntity::HitTrap() {
+    m_hp->Damage(10);
 
+    m_state = ActionState::HIT_TRAP;
+}
 
 std::string PlayerEntity::GetTexturePath() const {
     return "";

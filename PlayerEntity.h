@@ -25,6 +25,7 @@ public:
     void UpdateGravity(float deltaTime);
     void UpdateAttack(float deltaTime);
     void UpdateState();
+    void ChangeState(ActionState newState);
 
 
     ActorType GetType() const override { return ActorType::Player; }
@@ -37,6 +38,8 @@ public:
     HPComponent* GetHP() const { return m_hp; }
 
     void TakeDamage(int damage, const Vector2d& knockback);
+    void HitTrap();
+
     void CheckCanStand();
     void EnterSquat();
     void ExitSquat();
