@@ -105,7 +105,7 @@ void SpriteComponent::Draw() {
     }
 
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, 0.0f, m_handle,
+        pos, scale.x, scale.y, m_rotation, m_handle,
         true, Vector2d(static_cast<float>(texW), static_cast<float>(texH)) * 0.5f, 255, m_flipH, false
     );
 }

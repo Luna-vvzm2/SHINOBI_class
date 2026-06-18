@@ -65,11 +65,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // === Y譁ｹ蜷醍ｧｻ蜍 ===
+    // === Y隴・ｽｹ陷ｷ驢搾ｽｧ・ｻ陷・ ===
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === Y譁ｹ蜷題｡晉ｪ∝�逅 ===
+    // === Y隴・ｽｹ陷ｷ鬘鯉ｽ｡譎会ｽｪ竏晢ｿｽ騾・ ===
     for (auto actor : m_scene->GetActors()) {
 
         Vector2d actorPos;
@@ -105,11 +105,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapY > 0 && overlapX > 0) {
             if (overlapY < overlapX) {
-                if (diffY > 0) { // 荳九°繧牙ｽ薙◆縺｣縺
+                if (diffY > 0) {
                     playerPos.y = actorPos.y + aHalfH + halfH;
                     vel.y = 0;
                 }
-                else { // 上に乗った
+                else { 
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 
@@ -120,12 +120,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         }
     }
 
-    // === X譁ｹ蜷醍ｧｻ蜍 ===
+    // === X隴・ｽｹ陷ｷ驢搾ｽｧ・ｻ陷・ ===
     pos = m_transform->GetPosition();
     pos.x += vel.x * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === X譁ｹ蜷題｡晉ｪ∝�逅 ===
+    // === X隴・ｽｹ陷ｷ鬘鯉ｽ｡譎会ｽｪ竏晢ｿｽ騾・ ===
     for (auto actor : m_scene->GetActors()) {
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
@@ -153,12 +153,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         float overlapY = (halfH + aHalfH) - std::abs(diffY);
 
         if (overlapX > 0 && overlapY > 0) {
-            // === X方向補正 ===
+            // === X譁ｹ蜷題｣懈ｭ｣ ===
             if (overlapX < overlapY) {
-                if (diffX > 0) { // ブロック右側（左に押し戻す）
+                if (diffX > 0) { // 繝悶Ο繝・け蜿ｳ蛛ｴ・亥ｷｦ縺ｫ謚ｼ縺玲綾縺呻ｼ・
                     playerPos.x = actorPos.x + aHalfW + halfW;
                 }
-                else { // 左側（右に押し戻す）
+                else { // 蟾ｦ蛛ｴ・亥承縺ｫ謚ｼ縺玲綾縺呻ｼ・
                     playerPos.x = actorPos.x - aHalfW - halfW;
                 }
             }

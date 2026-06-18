@@ -1,6 +1,8 @@
 #pragma once
 #include "EnemyEntity.h"
 
+class PlayerEntity;
+
 class ArmorEnemyEntity : public EnemyEntity
 {
 public:
@@ -15,7 +17,7 @@ public:
 	bool IsGuardBroken() const { return m_guard <= 0; }
 
 private:
-	bool TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playerHp) const;
+	bool TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player) const;
 	void UpdateGuardRecover(float deltaTime);
 	void PlayMotion(
 		const std::string& motionName,
