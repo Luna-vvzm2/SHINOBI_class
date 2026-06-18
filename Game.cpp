@@ -3,6 +3,7 @@
 #include <iomanip>
 #include "TitleScene.h"
 #include "PlayScene.h"
+#include "StoryScene.h"
 #include "SpriteComponent.h"
 
 Game::Game()
@@ -31,15 +32,15 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 	SetBackgroundColor(0, 0, 0);
 	SetWaitVSyncFlag(FALSE);
 
-	// ウィンドウタイトル設定
+	// ウィンドウタイトルを設定
 	SetWindowTextA(m_window, title.c_str());
-	//	DirectInput系コントローラなどXInput系を使う設定
+	//	DirectInputではなくXInputの設定
 	SetUseXInputFlag(TRUE);
 	//	初期化
-	//	DxLib初期化
+	//	DxLibを初期化
 	if (DxLib_Init() != 0) {
-		std::cerr << "DxLib初期化失敗\n";
-		MessageBoxA(m_window, "DxLib初期化失敗", "エラー", MB_OK);
+		std::cerr << "DxLib初期化に失敗\n";
+		MessageBoxA(m_window, "DxLib初期化に失敗", "エラー", MB_OK);
 		return false;
 	}
 
@@ -47,8 +48,8 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 	//	Renderer初期化
 	m_renderer = std::make_unique<Renderer>(m_window, width, height);
 	if (!m_renderer) {
-		std::cerr << "Renderer初期化失敗\n";
-		MessageBoxA(m_window, "Renderer初期化失敗", "エラー", MB_OK);
+		std::cerr << "Renderer初期化に失敗\n";
+		MessageBoxA(m_window, "Renderer初期化に失敗", "エラー", MB_OK);
 		return false;
 	}
 
@@ -64,14 +65,14 @@ bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, c
 
 	m_scene = std::make_unique<TitleScene>(this);
 	if (!m_scene->Init()) {
-		std::cerr << "TitleScene 初期化失敗" << std::endl;
+		std::cerr << "TitleScene 初期化に失敗" << std::endl;
 		return false;
 	}
 
 	QueryPerformanceFrequency(&m_freq);
 	QueryPerformanceCounter(&m_prevTime);
 
-	std::cout << "アプリ初期化成功\n";
+	std::cout << "アプリケーション開始\n";
 	return true;
 }
 
@@ -92,7 +93,7 @@ bool Game::Run() {
 }
 
 void Game::Update(float deltaTime) {
-	// ★修正：一画的な一律キー遷移を削除し、シーン独自のメニュー入力を活かせるようにしました
+	// メイン：全て自分で管理している、シーンと効果音の判別をしているようにしましょう
 	// シーン更新
 	if (m_scene) { m_scene->Update(deltaTime); }
 }
@@ -104,7 +105,7 @@ void Game::Draw() {
 #ifdef _DEBUG
 	Vector2d ls = m_input.GetPad().GetStickL();
 	Vector2d rs = m_input.GetPad().GetStickR();
-	// FPS描画
+	// FPS表示
 	std::vector<NumberInfo> GameInfo = {
 		{ m_fps, 2 },
 		{ ls.x, 1 },
@@ -142,7 +143,7 @@ void Game::Draw() {
 }
 
 void Game::ChangeScene(Scene::Type type) {
-	m_scene.reset(); // 現在のシーンを安全に破棄
+	m_scene.reset(); // 現在のシーンを完全に削除
 
 	if (type == Scene::Type::Title) {
 		m_scene = std::make_unique<TitleScene>(this);
@@ -150,9 +151,12 @@ void Game::ChangeScene(Scene::Type type) {
 	else if (type == Scene::Type::Play) {
 		m_scene = std::make_unique<PlayScene>(this);
 	}
+	else if (type == Scene::Type::Story) {
+		m_scene = std::make_unique<StoryScene>(this);
+	}
 
 	if (m_scene) {
-		m_scene->Init(); // 新しいシーンの初期化を実行
+		m_scene->Init(); // 新規シーンの初期化処理を実行
 	}
 }
 

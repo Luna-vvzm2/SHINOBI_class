@@ -8,12 +8,13 @@
 #include <stdlib.h> // EXIT用
 
 TitleScene::TitleScene(Game* game)
-	: Scene(game),
+	: Scene(game), //コロン以降は全て初期化リストと言われ、初期化される。
 	titlePos(0.0f, 0.0f),
-	m_subState(SubState::Title), // 最初はタイトル画面
+	m_subState(SubState::Opening), // ← 変更: 最初はオープニング画面
 	titleSelect(0),
 	settingSelect(0),
 	extraSelect(0),
+	imgOpeningBg(-1), // ← 追加
 	imgTitleBg(-1),
 	imgSettingBg(-1),
 	imgSoundBg(-1),
@@ -30,6 +31,7 @@ TitleScene::TitleScene(Game* game)
 }
 
 TitleScene::~TitleScene() {
+	if (imgOpeningBg != -1)     DeleteGraph(imgOpeningBg); // ← 追加
 	if (imgTitleBg != -1)       DeleteGraph(imgTitleBg);
 	if (imgSettingBg != -1)     DeleteGraph(imgSettingBg);
 	if (imgSoundBg != -1)       DeleteGraph(imgSoundBg);
@@ -44,6 +46,8 @@ bool TitleScene::Init() {
 	TitleUI* title = new TitleUI(this);
 	AddUIActor(title);
 
+	// ※画像ファイル名は実際のパスに合わせてください
+	if (imgOpeningBg == -1)  imgOpeningBg = LoadGraph("kari/opening.png"); // ← 追加
 	if (imgTitleBg == -1)    imgTitleBg = LoadGraph("kari/basho.png");
 	if (imgSettingBg == -1)  imgSettingBg = LoadGraph("kari/haikei1.png");
 	if (imgSoundBg == -1)    imgSoundBg = LoadGraph("kari/haikei2.png");
@@ -80,6 +84,13 @@ void TitleScene::Update(float deltaTime) {
 	int setY = 300;
 
 	switch (m_subState) {
+	case SubState::Opening: // ← 追加
+		// Enterキーか左クリックが押されたらタイトル画面（メニュー）へ遷移
+		if (triggerEnter || triggerLeftClick) {
+			m_subState = SubState::Title;
+		}
+		break;
+
 	case SubState::Title:
 		for (int i = 0; i < 5; i++) {
 			int y = titleY + i * 50;
@@ -93,11 +104,13 @@ void TitleScene::Update(float deltaTime) {
 
 		if (triggerEnter || triggerLeftClick) {
 			if (titleSelect == 0) {
-				// ★新しく Game クラスに追加したシーン切り替え関数を呼び出す
+				// コンティニュー Game クラスに追加済みシーン切り替え関数を呼び出す
 				m_game->ChangeScene(Scene::Type::Play);
 			}
 			else if (titleSelect == 1) {
-				// New Game
+				// New Game → StorySceneに遷移
+				std::cout << "New Game selected!" << std::endl;
+				m_game->ChangeScene(Scene::Type::Story);
 			}
 			else if (titleSelect == 2) {
 				m_subState = SubState::Settings;
@@ -179,6 +192,22 @@ void TitleScene::Draw() {
 	int setY = 300;
 
 	switch (m_subState) {
+	case SubState::Opening: // ← 追加
+		// オープニング背景の描画
+		if (imgOpeningBg != -1) {
+			DrawExtendGraph(0, 0, 1280, 720, imgOpeningBg, TRUE);
+		}
+		else {
+			DrawBox(0, 0, 1280, 720, GetColor(0, 0, 0), TRUE);
+		}
+
+		// Title側にあったPress Startの描画をこちらに移動
+		{
+			const std::string& debugFont = m_game->GatDebugFont();
+			renderer->DrawTextC(Vector2d(m_game->GetWidth() / 2.0f, m_game->GetHeight() * 0.8f), "Press [ENTER] or (B) to Start", Color(192, 192, 192), debugFont, 24, false);
+		}
+		break;
+
 	case SubState::Title:
 		if (imgTitleBg != -1) {
 			DrawExtendGraph(0, 0, 1280, 720, imgTitleBg, TRUE);
@@ -201,11 +230,7 @@ void TitleScene::Draw() {
 		SetFontSize(16);
 
 		drawActors(m_UIactors);
-
-		{
-			const std::string& debugFont = m_game->GatDebugFont();
-			renderer->DrawTextC(Vector2d(m_game->GetWidth() / 2.0f, m_game->GetHeight() * 0.8f), "Press [ENTER] or (B) to Start", Color(192, 192, 192), debugFont, 24, false);
-		}
+		// (ここに元々あった Press Enter の描画処理を削除)
 		break;
 
 	case SubState::Settings:
@@ -242,7 +267,7 @@ void TitleScene::Draw() {
 			DrawBox(0, 0, 1280, 720, GetColor(0, 0, 0), TRUE);
 		}
 		SetFontSize(48);
-		DrawString(100, 80, "設定 ＞ サウンド", GetColor(50, 150, 255));
+		DrawString(100, 80, "設定 ～ サウンド", GetColor(50, 150, 255));
 		DrawBox(100, 140, 1180, 142, GetColor(50, 100, 200), TRUE);
 
 		SetFontSize(28);
@@ -261,7 +286,7 @@ void TitleScene::Draw() {
 			DrawBox(0, 0, 1280, 720, GetColor(0, 0, 0), TRUE);
 		}
 		SetFontSize(48);
-		DrawString(100, 80, "設定 ＞ グラフィック", GetColor(50, 255, 150));
+		DrawString(100, 80, "設定 ～ グラフィック", GetColor(50, 255, 150));
 		DrawBox(100, 140, 1180, 142, GetColor(50, 200, 100), TRUE);
 
 		SetFontSize(28);
@@ -280,11 +305,11 @@ void TitleScene::Draw() {
 			DrawBox(0, 0, 1280, 720, GetColor(0, 0, 0), TRUE);
 		}
 		SetFontSize(48);
-		DrawString(100, 80, "設定 ＞ 言語選択", GetColor(255, 50, 255));
+		DrawString(100, 80, "設定 ～ 言語選択", GetColor(255, 50, 255));
 		DrawBox(100, 140, 1180, 142, GetColor(200, 50, 200), TRUE);
 
 		SetFontSize(28);
-		DrawString(200, 300, "・日本語 (Japanese)  ＜選択中＞", GetColor(255, 255, 255));
+		DrawString(200, 300, "・日本語 (Japanese)  ◎選択中◎", GetColor(255, 255, 255));
 		DrawString(200, 380, "・英語   (English)", GetColor(150, 150, 150));
 
 		SetFontSize(16);
@@ -299,7 +324,7 @@ void TitleScene::Draw() {
 
 		if (extraSelect == 0) {
 			SetFontSize(40);
-			DrawString(500, 350, "権利表記", GetColor(255, 50, 50));
+			DrawString(500, 350, "スタッフロール", GetColor(255, 50, 50));
 		}
 
 		SetFontSize(16);
@@ -309,14 +334,14 @@ void TitleScene::Draw() {
 	case SubState::ExtraCredit:
 		DrawBox(0, 0, 1280, 720, GetColor(0, 0, 0), TRUE);
 		SetFontSize(48);
-		DrawString(100, 80, "エクストラ ＞ 権利表記", GetColor(255, 255, 50));
+		DrawString(100, 80, "エクストラ ～ スタッフロール", GetColor(255, 255, 50));
 		DrawBox(100, 140, 1180, 142, GetColor(200, 200, 50), TRUE);
 
 		SetFontSize(24);
 		DrawString(200, 260, "【プログラム / グラフィック】", GetColor(180, 180, 180));
-		DrawString(200, 300, "　あなた (You)", GetColor(255, 255, 255));
+		DrawString(200, 300, " なかつるあつし ", GetColor(255, 255, 255));
 		DrawString(200, 380, "【使用ライブラリ】", GetColor(180, 180, 180));
-		DrawString(200, 420, "　DXライブラリ (Copyright (C) 2001-2026 Takumi Yamada)", GetColor(255, 255, 255));
+		DrawString(200, 420, " DX ライブラリ (Copyright (C) 2001-2026 Takumi Yamada)", GetColor(255, 255, 255));
 
 		SetFontSize(16);
 		DrawString(1100, 680, "[Esc] 戻る", GetColor(200, 200, 200));

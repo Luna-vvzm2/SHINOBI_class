@@ -9,6 +9,7 @@ class TitleScene : public Scene
 public:
 	// タイトルシーン内部の画面状態（サブ状態）を定義
 	enum class SubState {
+		Opening, // ← 追加: オープニング画面（PRESS START等）
 		Title,
 		Settings,
 		SettingsSound,
@@ -16,6 +17,7 @@ public:
 		SettingsLanguage,
 		Extra,
 		ExtraCredit
+
 	};
 
 	//	コンストラクタ
@@ -39,6 +41,7 @@ private:
 	int extraSelect;
 
 	// 設定・エキストラ関係の背景画像ハンドル
+	int imgOpeningBg; // ← 追加: オープニング用背景
 	int imgTitleBg;
 	int imgSettingBg;
 	int imgSoundBg;
