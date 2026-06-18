@@ -79,6 +79,7 @@ private:
 	void UpdateSkillMenu(float deltaTime);
 	int GetSkillMaxX(int y);
 	void ClampSkillCursor();
+	SkillData* GetSelectedSkill();
 
 	int m_skillCursorX = 0;
 	int m_skillCursorY = 0;

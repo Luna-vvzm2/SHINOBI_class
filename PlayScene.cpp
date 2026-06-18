@@ -21,6 +21,38 @@
 
 #include <algorithm>
 
+PlayScene::SkillData* PlayScene::GetSelectedSkill()
+{
+	switch (m_skillCursorY)
+	{
+	case 0:
+		return &m_ninjutsu[m_skillCursorX];
+
+
+	case 1:
+		return &m_ninpou[m_skillCursorX];
+
+
+	case 2:
+		return &m_ningi[m_skillCursorX];
+
+
+	case 3:
+	{
+		int index = m_skillCursorX;
+		return &m_combat[index];
+	}
+
+	case 4:
+	{
+		int index = 9 + m_skillCursorX;
+		return &m_combat[index];
+	}
+	}
+
+	return nullptr;
+}
+
 void PlayScene::ClampSkillCursor()
 {
 	// 全体範囲
@@ -366,17 +398,26 @@ void PlayScene::DrawSkillMenu()
 		TRUE
 	);
 
-	int index =
-		m_skillCursorY * 4 +
-		m_skillCursorX;
+	SkillData* skill = GetSelectedSkill();
 
-	DrawString(
-		950,
-		430,
-		"テスト用文章",
-		GetColor(255, 255, 255)
-	);
 
+	if (skill)
+	{
+		DrawString(
+			975,
+			430,
+			skill->name.c_str(),
+			GetColor(255, 255, 255)
+		);
+
+
+		DrawString(
+			975,
+			600,
+			skill->description.c_str(),
+			GetColor(255, 255, 255)
+		);
+	}
 }
 
 
