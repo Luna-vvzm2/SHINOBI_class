@@ -18,7 +18,7 @@ public:
 
 	void InitConsole();
 
-	bool tick(float& deltaTime, int targetFPS = 60, float maxDeltaTime = 0.1f);
+	//bool tick(float& deltaTime, int targetFPS = 60, float maxDeltaTime = 0.1f);
 
 	bool IsRunning() const { return m_running; }
 	int GetWidth() const { return m_winWidth; }
@@ -57,6 +57,6 @@ private:
 	float m_fps = 0.0f;
 	LARGE_INTEGER m_prevTime;
 	LARGE_INTEGER m_freq;
-
+	float m_accumulator;
 
 };

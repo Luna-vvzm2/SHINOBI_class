@@ -37,12 +37,12 @@ void TitleUI::Draw() {
 	int w, h;
 	GetGraphSize(m_title->GetHandle(), &w, &h);
 
-	int ScaleX = 2.0f;
+	int ScaleX = 2;
 	int ScaleY = ScaleX;
 
 	// スクリーン座標描画（カメラ影響なし）
 	m_scene->GetGame()->GetRenderer()->DrawSpriteEx(
-		pos, ScaleX, ScaleY, 0.0f, m_title->GetHandle(),
+		pos, (float)ScaleX, (float)ScaleY, 0.0f, m_title->GetHandle(),
 		true, Vector2d(0, 0), 255, false, false, false
 	);
 }

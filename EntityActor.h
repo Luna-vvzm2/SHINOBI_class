@@ -19,6 +19,7 @@ public:
         JUMP,
         FALL,
         ATTACK,
+        SQUAT_ATTACK,
         HIT,
         DODGE,
         CHASE,
@@ -40,7 +41,6 @@ public:
     Vector2d GetSize() const;
 
     CollisionComponent* GetCollision() const { return m_collision; }
-
 
 protected:
 
