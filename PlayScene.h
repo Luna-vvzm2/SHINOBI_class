@@ -50,5 +50,41 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
+	enum class MenuState
+	{
+		None,
+		Skill,
+		Equipment,
+		Item
+	};
 
+	MenuState m_menuState = MenuState::None;
+
+	// スキルデータ
+	struct SkillData
+	{
+		std::string name;
+		std::string description;
+	};
+
+
+	std::vector<SkillData> m_ninjutsu;
+	std::vector<SkillData> m_ninpou;
+	std::vector<SkillData> m_ningi;
+	std::vector<SkillData> m_combat;
+
+
+	// スキルメニュー
+	void DrawSkillMenu();
+	void UpdateSkillMenu(float deltaTime);
+	int GetSkillMaxX(int y);
+	void ClampSkillCursor();
+
+	int m_skillCursorX = 0;
+	int m_skillCursorY = 0;
+
+	float m_cursorRepeatTimer = 0.0f;
+
+	const float m_cursorRepeatDelay = 0.3f; // 最初の待ち時間
+	const float m_cursorRepeatInterval = 0.08f; // 連続移動間隔
 };

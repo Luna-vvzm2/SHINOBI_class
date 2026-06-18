@@ -16,6 +16,7 @@ void Input::Init() {
     m_actionKeyMap[static_cast<size_t>(Action::JUMP)] = { Key::SPACE };
     m_actionKeyMap[static_cast<size_t>(Action::ESCAPE)] = { Key::ESCAPE };
     m_actionKeyMap[static_cast<size_t>(Action::ENTER)] = { Key::ENTER };
+    m_actionKeyMap[static_cast<size_t>(Action::MENU)] = { Key::M };
 
     // ジョイパッドも同様に
     m_actionPadMap[static_cast<size_t>(Action::UP)] = { Joypad::UP };
@@ -96,7 +97,7 @@ int Input::GetPressFrame(Action action) const {
 
     // パッド側チェック（最大値をとる）
     for (auto btn : m_actionPadMap[idx]) {
-        if (m_key.GetPressFrame(btn) > frame) {
+        if (m_pad.GetPressFrame(btn) > frame) {
             frame = m_pad.GetPressFrame(btn);
         }
     }

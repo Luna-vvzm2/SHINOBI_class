@@ -15,6 +15,7 @@ enum class Action {
     ESCAPE,
     JUMP,
     ENTER,
+    MENU,
     ACTION_COUNT
 };
 

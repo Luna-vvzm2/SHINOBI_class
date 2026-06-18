@@ -17,6 +17,7 @@ public:
 		ESCAPE,
 		SPACE,
 		ENTER,
+		M,
 		KEY_COUNT
 	};
 

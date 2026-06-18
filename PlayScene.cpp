@@ -21,6 +21,365 @@
 
 #include <algorithm>
 
+void PlayScene::ClampSkillCursor()
+{
+	// ‘S‘Ì”ÍˆÍ
+	if (m_skillCursorY < 0)
+		m_skillCursorY = 0;
+
+	if (m_skillCursorY > 4)
+		m_skillCursorY = 4;
+
+
+	int max = 0;
+
+
+	switch (m_skillCursorY)
+	{
+	case 0:
+		// ”Ep
+		max = 4;
+		break;
+
+
+	case 1:
+		// ”E–@
+		max = 8;
+		break;
+
+
+	case 2:
+		// ”E‹Z
+		max = 7;
+		break;
+
+
+	case 3:
+		// í“¬‹Z 1’i–Ú
+		max = 9;
+		break;
+
+
+	case 4:
+		// í“¬‹Z 2’i–Ú
+		max = 8;
+		break;
+	}
+
+
+
+	if (m_skillCursorX < 0)
+		m_skillCursorX = 0;
+
+
+	if (m_skillCursorX >= max)
+		m_skillCursorX = max - 1;
+}
+
+int PlayScene::GetSkillMaxX(int y)
+{
+	switch (y)
+	{
+	case 0:
+		return 4; // ”Ep
+
+	case 1:
+		return 8; // ”E–@
+
+	case 2:
+		return 7; // ”E‹Z
+
+	case 3:
+		return 9; // í“¬‹Zã’i
+
+	case 4:
+		return 8; // í“¬‹Z‰º’i
+	}
+
+	return 0;
+}
+
+void PlayScene::UpdateSkillMenu(float deltaTime)
+{
+	const Input& input = m_game->GetInput();
+
+
+	bool move = false;
+
+
+	// ‰Ÿ‚µ‚½uŠÔ
+	if (input.IsTrigger(Action::RIGHT))
+	{
+		m_skillCursorX++;
+		move = true;
+	}
+
+	if (input.IsTrigger(Action::LEFT))
+	{
+		m_skillCursorX--;
+		move = true;
+	}
+
+	if (input.IsTrigger(Action::DOWN))
+	{
+		m_skillCursorY++;
+		move = true;
+	}
+
+	if (input.IsTrigger(Action::UP))
+	{
+		m_skillCursorY--;
+		move = true;
+	}
+
+
+
+	// ’·‰Ÿ‚µ’†
+	if (input.IsDown(Action::RIGHT) ||
+		input.IsDown(Action::LEFT) ||
+		input.IsDown(Action::DOWN) ||
+		input.IsDown(Action::UP))
+	{
+
+		m_cursorRepeatTimer += deltaTime;
+
+
+		if (m_cursorRepeatTimer >= m_cursorRepeatDelay)
+		{
+			if (m_cursorRepeatTimer >= m_cursorRepeatDelay + m_cursorRepeatInterval)
+			{
+				m_cursorRepeatTimer -= m_cursorRepeatInterval;
+
+
+				if (input.IsDown(Action::RIGHT))
+					m_skillCursorX++;
+
+				if (input.IsDown(Action::LEFT))
+					m_skillCursorX--;
+
+				if (input.IsDown(Action::DOWN))
+					m_skillCursorY++;
+
+				if (input.IsDown(Action::UP))
+					m_skillCursorY--;
+			}
+		}
+	}
+	else
+	{
+		// —£‚µ‚½‚çƒŠƒZƒbƒg
+		m_cursorRepeatTimer = 0.0f;
+	}
+
+
+	ClampSkillCursor();
+}
+
+void PlayScene::DrawSkillMenu()
+{
+	// ”wŒi
+	DrawBox(
+		0,
+		0,
+		m_game->GetWidth(),
+		m_game->GetHeight(),
+		GetColor(20, 20, 20),
+		TRUE
+	);
+
+	const int startX = 50;
+	const int size = 60;
+	const int gap = 15;
+
+
+	// ƒ^ƒCƒgƒ‹
+	DrawString(
+		800,
+		50,
+		"ƒXƒLƒ‹",
+		GetColor(255, 255, 255)
+	);
+
+
+	// ƒJƒeƒSƒŠ–¼
+	DrawString(
+		startX,
+		120,
+		"”Ep",
+		GetColor(255, 255, 255)
+	);
+
+
+	// ”Ep 4ŒÂ
+	for (int i = 0; i < 4; i++)
+	{
+		int x = startX + i * (size + gap);
+		int y = 160;
+
+		DrawBox(
+			x,
+			y,
+			x + size,
+			y + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+
+
+
+	// ”E–@ 8ŒÂ
+	DrawString(
+		startX,
+		250,
+		"”E–@",
+		GetColor(255, 255, 255)
+	);
+
+
+	for (int i = 0; i < 8; i++)
+	{
+		int x = startX + i * (size + gap);
+		int y = 290;
+
+
+		DrawBox(
+			x,
+			y,
+			x + size,
+			y + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+
+
+
+	// ”E‹Z 7ŒÂ
+	DrawString(
+		startX,
+		380,
+		"”E‹Z",
+		GetColor(255, 255, 255)
+	);
+
+
+	for (int i = 0; i < 7; i++)
+	{
+		int x = startX + i * (size + gap);
+		int y = 420;
+
+
+		DrawBox(
+			x,
+			y,
+			x + size,
+			y + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+
+
+
+	// í“¬‹Z 17ŒÂ
+	DrawString(
+		startX,
+		510,
+		"í“¬‹Z",
+		GetColor(255, 255, 255)
+	);
+
+
+	for (int i = 0; i < 17; i++)
+	{
+		int x =
+			startX + (i % 9) * (size + gap);
+
+		int y =
+			550 + (i / 9) * (size + gap);
+
+
+		DrawBox(
+			x,
+			y,
+			x + size,
+			y + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+
+	// ƒJ[ƒ\ƒ‹•`‰æ
+
+	int cursorX =
+		startX + m_skillCursorX * (size + gap);
+
+	int cursorY = 0;
+
+
+	switch (m_skillCursorY)
+	{
+	case 0:
+		cursorY = 160;
+		break;
+
+	case 1:
+		cursorY = 290;
+		break;
+
+	case 2:
+		cursorY = 420;
+		break;
+
+	case 3:
+		cursorY = 550;
+		break;
+
+	case 4:
+		cursorY = 550 + (size + gap);
+		break;
+	}
+
+
+	DrawBox(
+		cursorX - 5,
+		cursorY - 5,
+		cursorX + size + 5,
+		cursorY + size + 5,
+		GetColor(255, 0, 0),
+		FALSE
+	);
+
+	const int demoX = 800;
+	const int demoY = 150;
+	const int demoW = 400;
+	const int demoH = 250;
+
+
+	DrawBox(
+		demoX,
+		demoY,
+		demoX + demoW,
+		demoY + demoH,
+		GetColor(80, 80, 80),
+		TRUE
+	);
+
+	int index =
+		m_skillCursorY * 4 +
+		m_skillCursorX;
+
+	DrawString(
+		950,
+		430,
+		"ƒeƒXƒg—p•¶Í",
+		GetColor(255, 255, 255)
+	);
+
+}
+
+
 PlayScene::PlayScene(Game* game)
 	: Scene(game),
 	m_player(nullptr),
@@ -28,7 +387,9 @@ PlayScene::PlayScene(Game* game)
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
 	m_stageIndex(0),
 	m_comboCount(0),
-	m_currentStage(1)
+	m_currentStage(1),
+	m_skillCursorX(0),
+	m_skillCursorY(0)
 {
 
 }
@@ -37,6 +398,65 @@ bool PlayScene::Init() {
 	m_isRunning = true;
 	m_type = Type::Play;
 	m_stageIndex = 0;
+
+	//ƒXƒLƒ‹ƒf[ƒ^
+	m_ninjutsu =
+	{
+		{"”Ep1", "test"},
+		{"”Ep2", "test"},
+		{"”Ep3", "test"},
+		{"”Ep4", "test"}
+	};
+
+
+	m_ninpou =
+	{
+		{"”E–@1", "test"},
+		{"”E–@2", "test"},
+		{"”E–@3", "test"},
+		{"”E–@4", "test"},
+		{"”E–@5", "test"},
+		{"”E–@6", "test"},
+		{"”E–@7", "test"},
+		{"”E–@8", "test"}
+	};
+
+
+	m_ningi =
+	{
+		{"”E‹Z1", "test"},
+		{"”E‹Z2", "test"},
+		{"”E‹Z3", "test"},
+		{"”E‹Z4", "test"},
+		{"”E‹Z5", "test"},
+		{"”E‹Z6", "test"},
+		{"”E‹Z7", "test"}
+	};
+
+
+	m_combat =
+	{
+		{"í“¬‹Z1", "test"},
+		{"í“¬‹Z2", "test"},
+		{"í“¬‹Z3", "test"},
+		{"í“¬‹Z4", "test"},
+		{"í“¬‹Z5", "test"},
+		{"í“¬‹Z6", "test"},
+		{"í“¬‹Z7", "test"},
+		{"í“¬‹Z8", "test"},
+		{"í“¬‹Z9", "test"},
+
+		{"í“¬‹Z10", "test"},
+		{"í“¬‹Z11", "test"},
+		{"í“¬‹Z12", "test"},
+		{"í“¬‹Z13", "test"},
+		{"í“¬‹Z14", "test"},
+		{"í“¬‹Z15", "test"},
+		{"í“¬‹Z16", "test"},
+		{"í“¬‹Z17", "test"}
+	};
+
+
 	
 	// CSV ‚©‚çƒ}ƒbƒv“Ç‚İ‚İ
 	if (!m_mapData.LoadStage("assets/maps/stage1")) {
@@ -154,10 +574,44 @@ bool PlayScene::Init() {
 }
 
 void PlayScene::Update(float deltaTime) {
+
+	const Input& input = m_game->GetInput();
+
+	if (input.IsTrigger(Action::MENU))
+	{
+		if (m_menuState == MenuState::None)
+		{
+			m_menuState = MenuState::Skill;
+		}
+		else
+		{
+			m_menuState = MenuState::None;
+		}
+	}
+
+	if (m_menuState == MenuState::Skill)
+	{
+		UpdateSkillMenu(deltaTime);
+		return;
+	}
+
+
+	if (m_menuState != MenuState::None)
+	{
+		return;
+	}
+
+
+	if (m_menuState == MenuState::Equipment)
+	{
+		return;
+	}
+
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
 	RemoveDeadActors(); 
+
 	if (m_player) {
 		Vector2d playerPos = m_player->GetComponent<TransformComponent>()->GetPosition();
 
@@ -192,6 +646,24 @@ void PlayScene::Draw() {
 	drawActors(m_backactors);
 	drawActors(m_actors);
 	drawActors(m_UIactors);
+
+	if (m_menuState == MenuState::Skill)
+	{
+		DrawSkillMenu();
+	}
+
+
+	if (m_menuState == MenuState::Equipment)
+	{
+		//DrawEquipmentMenu();
+	}
+
+
+	if (m_menuState == MenuState::Item)
+	{
+		//DrawItemMenu();
+	}
+
 
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_comboCount, 0 }
@@ -228,3 +700,5 @@ void PlayScene::AddCombo() {
 	m_comboCount++;
 	std::cout << "Combo: " << m_comboCount << std::endl;
 }
+
+
