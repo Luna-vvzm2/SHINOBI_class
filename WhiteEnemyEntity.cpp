@@ -1013,7 +1013,7 @@ std::string WhiteEnemyEntity::GetTexturePath() const
 
 
 
-// DEBUG DAMAGE TEST START
+/* DEBUG DAMAGE TEST START
 static const int WHITE_DEBUG_DAMAGE = 10;
 static const Vector2d WHITE_DEBUG_KNOCKBACK = Vector2d(260.0f, -320.0f);
 
@@ -1029,4 +1029,4 @@ void WhiteEnemyEntity::UpdateDebugDamageInput()
 
 	wasDebugDamageKeyDown = isDebugDamageKeyDown;
 }
-// DEBUG DAMAGE TEST END
+// DEBUG DAMAGE TEST END*/
