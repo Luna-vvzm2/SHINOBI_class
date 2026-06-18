@@ -21,7 +21,8 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
 
     , m_dir(true)
     , m_jumpSpeed(0.0f)
-    , m_moveSpeed(280.0f)
+    , m_moveSpeed(290.0f)
+    , m_dashSpeed(350.0f)
     , m_jumpCount(0)
     , m_jumpTime(0.0f)
     , m_maxJumpTime(1.5f)
@@ -41,7 +42,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_canStand(true)
     , m_canCharge(true)
 
-    , m_drawOffset(Vector2d(0.0f, 10.0f))
+    , m_drawOffset(Vector2d(0.0f, 0.0f))
 {
 }
 
@@ -381,12 +382,24 @@ void PlayerEntity::UpdateMove(float deltaTime) {
     Vector2d move(0.0f, 0.0f);
     if (m_canMove) {
         if (input.IsDown(Action::DOWN)) {
-            if (input.IsDown(Action::LEFT))  move.x -= 0.5f;
-            if (input.IsDown(Action::RIGHT)) move.x += 0.5f;
+            if (input.IsDown(Action::LEFT)) {
+                move.x -= 0.5f;
+                m_dir = false;
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                move.x += 0.5f;
+                m_dir = true;
+            }
         }
         else {
-            if (input.IsDown(Action::LEFT))  move.x -= 1.0f;
-            if (input.IsDown(Action::RIGHT)) move.x += 1.0f;
+            if (input.IsDown(Action::LEFT)) {
+                move.x -= 1.0f;
+                m_dir = false;
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                move.x += 1.0f;
+                m_dir = true;
+            }
         }
     }
     move.normalize();
@@ -408,6 +421,12 @@ void PlayerEntity::UpdateMove(float deltaTime) {
     }
     
     m_velocity->Set(vel);
+
+    Vector2d scale = m_transform->GetScale();
+
+    scale.x = m_dir ? 1.0f : -1.0f;
+
+    m_transform->SetScale(scale);
 }
 
 void PlayerEntity::UpdateJump(float deltaTime) {
@@ -424,7 +443,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
             if (m_canStand)
             {
                 ExitSquat();
-                m_drawOffset = Vector2d(0.0f, 10.0f);
+                m_drawOffset = Vector2d(0.0f, 0.0f);
             }
         }
 
@@ -519,6 +538,7 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
+    m_drawOffset = Vector2d(0.0f, -48.0f);   // è„Ç…48px
     m_squat = true;
 }
 
@@ -533,6 +553,7 @@ void PlayerEntity::ExitSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(85, 192);
+    m_drawOffset = Vector2d(0.0f, 0.0f);
     m_squat = false;
 }
 
@@ -601,7 +622,6 @@ void PlayerEntity::UpdateState() {
                 if (m_canStand)
                 {
                     ExitSquat();
-                    m_drawOffset = Vector2d(0.0f, 10.0f);
                 }
             }
             ChangeState(ActionState::FALL);
@@ -618,7 +638,6 @@ void PlayerEntity::UpdateState() {
     }
 
     if (input.IsDown(Action::DOWN)) {
-        m_drawOffset = Vector2d(0.0f, -40.0f);   // è„Ç…40px
 
         if (!m_squat)
         {
@@ -645,7 +664,6 @@ void PlayerEntity::UpdateState() {
         if (m_canStand)
         {
             ExitSquat();
-            m_drawOffset = Vector2d(0.0f, 10.0f);
         }
         else {
             if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))

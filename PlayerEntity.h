@@ -60,6 +60,7 @@ private:
     bool m_dir;
     float m_jumpSpeed;    // ジャンプ速度
     float m_moveSpeed;    // 移動速度
+    float m_dashSpeed;
     // EntityActor.bool m_isGround;          // 接地フラグ
     int m_jumpCount;
     float m_jumpTime;
