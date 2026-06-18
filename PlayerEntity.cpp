@@ -1,4 +1,5 @@
 #include "PlayerEntity.h"
+#include "EnemyEntity.h"
 #include "HitEffect.h"
 #include "BlockActor.h"
 #include "TransformComponent.h"
@@ -11,6 +12,20 @@
 #include "Input.h"
 #include "Game.h"
 #include "PlayScene.h"
+
+//                       offset, width, height, damage
+AttackHitbox weak1{ Vector2d(0,0), 450, 200, 10 };
+AttackHitbox weak2{ Vector2d(0,0), 450, 200, 10 };
+AttackHitbox weak3{ Vector2d(0,0), 450, 200, 10 };
+AttackHitbox weak4{ Vector2d(0,0), 450, 200, 10 };
+AttackHitbox strong1{ Vector2d(0,0), 500, 300, 30 };
+AttackHitbox strong2{ Vector2d(0,0), 500, 300, 30 };
+AttackHitbox airWeak1;
+AttackHitbox airWeak2;
+AttackHitbox airWeak3;
+AttackHitbox Hayabusa;
+AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10 };
+AttackHitbox Kunai;
 
 
 PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
@@ -272,6 +287,12 @@ bool PlayerEntity::Init() {
     strongAttack1.loop = false;
     m_anim->AddClip("strongAttack1", strongAttack1);
 
+    AnimationClip strongAttackEnd;
+    strongAttackEnd.frames = { 157 };
+    strongAttackEnd.speed = 0.2f;
+    strongAttackEnd.loop = false;
+    m_anim->AddClip("strongAttackEnd", strongAttackEnd);
+
     AnimationClip strongAttack2;
     strongAttack2.frames = { 158, 158, 159, 160, 160, 161, 162, 163, 163, 164, 164, 165, 165, 166, 166, 167, 168, 168, 168, 168 };
     strongAttack2.speed = 0.1f;
@@ -433,6 +454,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
     if (!m_canStand) {
         return;
     }
+    if (!m_canMove) return;
 
     const Input& input = m_scene->GetGame()->GetInput();
 
@@ -529,6 +551,7 @@ void PlayerEntity::CheckCanStand()
 
 void PlayerEntity::EnterSquat()
 {
+    if (!m_canMove) return;
     float oldHeight = m_collision->GetHeight();
     float newHeight = 95.0f;
 
@@ -562,15 +585,67 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
 
     if (input.IsTrigger(Action::WEAK_ATTACK)) {
         m_attack = true;
-        m_attackType = AttackType::WEAK_ATTACK;
-        m_attackTimer = 0.2f;
-        m_weakAttackIdx++;
+        m_canMove = false;
+        if (m_squat) {
+            m_attackType = AttackType::SQUAT_ATTACK;
+            m_attackTimer = 0.4f;
+            CheckAttackHit(squatAttack);
+        }
+        else {
+            m_attackType = AttackType::WEAK_ATTACK;
+            switch (m_weakAttackIdx) {
+            case 0:
+                m_attackTimer = 0.8f;
+                CheckAttackHit(weak1);
+                break;
+            case 1:
+                m_attackTimer = 0.7f;
+                CheckAttackHit(weak2);
+                break;
+            case 2:
+                m_attackTimer = 1.2f;
+                CheckAttackHit(weak3);
+                break;
+            case 3:
+                m_attackTimer = 1.3f;
+                CheckAttackHit(weak4);
+                break;
+            }
+            m_weakAttackIdx++;
+
+            Vector2d vel = m_velocity->Get();
+            vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+
+            m_velocity->Set(vel);
+        }
     }
 
+
     if (input.IsTrigger(Action::STRONG_ATTACK)) {
+        if (m_squat) {
+            if (!m_canStand) {
+                return;
+            }
+            else {
+                ExitSquat();
+            }
+        }
+        if (m_squat && !m_canStand) return;
         m_attack = true;
+        m_canMove = false;
         m_attackType = AttackType::STRONG_ATTACK;
-        m_attackTimer = 0.3f;
+
+        switch (m_strongAttackIdx) {
+        case 0:
+            m_attackTimer = 0.9f;
+            CheckAttackHit(strong1);
+            break;
+        case 1:
+            m_attackTimer = 1.0f;
+            CheckAttackHit(strong2);
+            break;
+        }
+
         m_strongAttackIdx++;
     }
 
@@ -578,11 +653,57 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
         m_attackTimer -= deltaTime;
         if (m_attackTimer <= 0) {
             m_attack = false;
+            m_canMove = true;
             m_weakAttackIdx = 0;
             m_strongAttackIdx = 0;
         }
     }
 
+}
+
+void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
+{
+    Vector2d attackPos = m_transform->GetPosition();
+
+    if (m_dir)
+    {
+        attackPos += hitbox.offset;
+    }
+    else
+    {
+        attackPos += Vector2d(-hitbox.offset.x, hitbox.offset.y);
+    }
+
+    for (Actor* actor : m_scene->GetActors())
+    {
+        if (actor->GetType() != ActorType::Enemy)
+        {
+            continue;
+        }
+
+        EnemyEntity* enemy =
+            static_cast<EnemyEntity*>(actor);
+
+        CollisionComponent* col =
+            enemy->GetCollision();
+
+        if (!col)
+        {
+            continue;
+        }
+
+        float diffX = attackPos.x - enemy->GetPos().x;
+        float diffY = attackPos.y - enemy->GetPos().y;
+
+        float overlapX = (hitbox.width * 0.5f + col->GetWidth() * 0.5f) - std::abs(diffX);
+        float overlapY = (hitbox.height * 0.5f + col->GetHeight() * 0.5f) - std::abs(diffY);
+
+        if (overlapX > 0 && overlapY > 0)
+        {
+            enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f }
+            );
+        }
+    }
 }
 
 void PlayerEntity::UpdateState() {
@@ -594,16 +715,62 @@ void PlayerEntity::UpdateState() {
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (m_attack) {
-        if (input.IsDown(Action::DOWN)) {
+        if (m_state == ActionState::SQUAT_ATTACK) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::SQUAT);
+            }
+        }
+
+        if (m_squat) {
             ChangeState(ActionState::SQUAT_ATTACK);
-            m_collision->SetRect(90, 95);
             return;
         }
-        // —vC³
-        m_state = ActionState::ATTACK;
-        m_anim->Play("weakAttack1");
+
+        if (input.IsTrigger(Action::WEAK_ATTACK)) {
+            switch (m_weakAttackIdx) {
+            case 1:
+                ChangeState(ActionState::WEAK_ATTACK1);
+                break;
+            case 2:
+                ChangeState(ActionState::WEAK_ATTACK2);
+                break;
+            case 3:
+                ChangeState(ActionState::WEAK_ATTACK3);
+                break;
+            case 4:
+                ChangeState(ActionState::WEAK_ATTACK4);
+                break;
+            }
+        }
+
+        if ((m_state == ActionState::WEAK_ATTACK1) || (m_state == ActionState::WEAK_ATTACK2) || (m_state == ActionState::WEAK_ATTACK3)) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::ATTACK_END);
+            }
+            return;
+        }
+
+        if (input.IsTrigger(Action::STRONG_ATTACK)) {
+            switch (m_strongAttackIdx) {
+            case 1:
+                ChangeState(ActionState::STRONG_ATTACK1);
+                break;
+            case 2:
+                ChangeState(ActionState::STRONG_ATTACK2);
+                break;
+            }
+        }
+
+        if (m_state == ActionState::STRONG_ATTACK1) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::STRONG_ATTACK_END);
+            }
+        }
+
         return;
-        //
     }
 
     Vector2d vel = m_velocity->Get();
@@ -831,15 +998,15 @@ void PlayerEntity::ChangeState(ActionState newState)
         break;
 
     case ActionState::WEAK_ATTACK1:
-        m_anim->Play("weak_attack1");
+        m_anim->Play("weakAttack1");
         break;
 
     case ActionState::WEAK_ATTACK2:
-        m_anim->Play("weak_attack2");
+        m_anim->Play("weakAttack2");
         break;
 
     case ActionState::WEAK_ATTACK3:
-        m_anim->Play("weak_attack3");
+        m_anim->Play("weakAttack3");
         break;
 
     case ActionState::ATTACK_END:
@@ -847,7 +1014,7 @@ void PlayerEntity::ChangeState(ActionState newState)
         break;
 
     case ActionState::WEAK_ATTACK4:
-        m_anim->Play("weak_attack4");
+        m_anim->Play("weakAttack4");
         break;
 
     case ActionState::WEAK_AIR_ATTACK1:

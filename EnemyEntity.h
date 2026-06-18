@@ -34,6 +34,7 @@ public:
     HPComponent* GetHP() const { return m_hp; }
     virtual int GetMaxHP() const { return 100;  }
 
+    void TakeDamage(int damage, const Vector2d& knockback);
 protected:
     HPComponent* m_hp;
     GravityComponent* m_gravity;

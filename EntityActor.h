@@ -49,6 +49,7 @@ public:
         HAYABUSA_GROUND,
 
         STRONG_ATTACK1,
+        STRONG_ATTACK_END,
         STRONG_ATTACK2,
 
         SQUAT_ATTACK,
@@ -58,6 +59,7 @@ public:
         KUNAI_AIR,
         KUNAI_SQUAT,
 
+        HIT,
         HIT_GROUND,
         HIT_AIR,
         HIT_TRAP,

@@ -71,7 +71,7 @@ void AnimationComponent::Update(float deltaTime)
             if (m_currentClip->loop)
                 m_frameIndex = 0;
             else
-                m_frameIndex = last; // ループなしは最後のフレーム
+                m_frameIndex = (float)last; // ループなしは最後のフレーム
         }
 
         m_sprite->SetFrame(frames[m_frameIndex]);

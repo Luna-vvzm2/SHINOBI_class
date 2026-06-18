@@ -2,6 +2,14 @@
 #include "EntityActor.h"
 #include "Vector2d.h"
 
+struct AttackHitbox
+{
+    Vector2d offset;
+    float width = 0;
+    float height = 0;
+    int damage = 0;
+};
+
 class TransformComponent;
 class VelocityComponent;
 class GravityComponent;
@@ -36,7 +44,9 @@ public:
     void SetCanMove(bool canMove) { m_canMove = canMove; }
 
     HPComponent* GetHP() const { return m_hp; }
+    bool GetDir() const { return m_dir; }
 
+    void CheckAttackHit(const AttackHitbox& hitbox);
     void TakeDamage(int damage, const Vector2d& knockback);
     void HitTrap();
 
@@ -47,7 +57,7 @@ public:
     enum class AttackType {
         WEAK_ATTACK,
         STRONG_ATTACK,
-        
+        SQUAT_ATTACK,
     };
 
     Vector2d GetDrawOffset() const { return m_drawOffset; }
@@ -88,3 +98,6 @@ private:
     std::string GetTexturePath() const override;
 
 };
+
+
+
