@@ -4,6 +4,7 @@
 #include "PlayerEntity.h"
 
 #include "HPComponent.h"
+#include <DxLib.h>
 
 #include <cmath>
 
@@ -60,17 +61,32 @@ void SekienkiBossEntity::StartJumpAttack()
 
 void SekienkiBossEntity::PhaseChange()
 {
-    float hpRate = (float)m_hp->GetHP() / GetMaxHP();
+    float hpRate =
+        (float)m_hp->GetHP() / GetMaxHP();
 
-    if (m_phase < 2 && hpRate <= 0.5f)
+    if (m_phase < 2 &&hpRate <= 0.5f)
     {
         m_phase = 2;
+
         m_attackStep = 12;
+
+        m_attackTimer = 2.0f;
+
+        SetVel({ 0.0f,0.0f });
+
+        m_hp->SetInvincible(999.0f);
     }
-    else if (m_phase < 1 && hpRate <= 0.7f)
+    else if (m_phase < 1 &&hpRate <= 0.7f)
     {
         m_phase = 1;
+
         m_attackStep = 11;
+
+        m_attackTimer = 2.0f;
+
+        SetVel({ 0.0f,0.0f });
+
+        m_hp->SetInvincible(999.0f);
     }
 }
 
@@ -78,6 +94,13 @@ void SekienkiBossEntity::PhaseChange()
 
 void SekienkiBossEntity::UpdateAI(float deltaTime)
 {
+    PhaseChange();
+    if (m_attackStep == 11 ||m_attackStep == 12)
+    {
+        return;
+    }
+
+
     auto* player =
         static_cast<PlayScene*>(GetScene())->GetPlayer();
 
@@ -106,9 +129,6 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
     // 行動選択
     //---------------------------------
 
-    if (m_attackStep != 0)
-        return;
-
     int r = rand() % 100;
 
     float hp70 = GetMaxHP() * 0.7f;
@@ -128,7 +148,8 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
         }
         else if (r < 90)
         {
-            m_attackStep = 3;
+            m_secondJump = false;
+            StartJumpAttack();
             return;
         }
     }
@@ -140,7 +161,8 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
     {
         if (r < 40)
         {
-            m_attackStep = 3;
+            m_secondJump = false;
+            StartJumpAttack();
             return;
         }
     }
@@ -214,17 +236,36 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
 
     if (m_jumpAttackCooldown <= 0.0f)
     {
+        float hp70 = GetMaxHP() * 0.7f;
+        float hp50 = GetMaxHP() * 0.5f;
+
+        if (m_hp->GetHP() > hp70)
+            return;
+
         if (rand() % 100 < 40)
         {
             m_secondJump = false;
             StartJumpAttack();
-            return;;
+            return;
         }
     }
 }
 
 void SekienkiBossEntity::UpdateAttack(float deltaTime)
 {
+    //---------------------------------
+    // デバッグ用(attackStep確認)
+    //---------------------------------
+    
+    static int prevStep = -1;
+
+    if (prevStep != m_attackStep)
+    {
+        printf("[Step Change] %d -> %d\n", prevStep, m_attackStep);
+        prevStep = m_attackStep;
+    }
+ 
+
     //---------------------------------
     // タイマー
     //---------------------------------
@@ -247,6 +288,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
                 m_bulletVel.x * deltaTime;
         }
     }
+    
 
     //---------------------------------
     // 火炎攻撃終了
@@ -415,7 +457,6 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     if (m_attackStep == 8 &&
         m_rollDistanceLeft > 0.0f)
     {
-        printf("STEP8 START\n");
         float moveStep =
             fabsf(GetVel().x) * deltaTime;
 
@@ -442,7 +483,6 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
         if (m_attackTimer <= 0.0f)
         {
-            printf("STEP9 START\n");
             m_bulletActive = true;
 
             m_bulletPos =
@@ -451,8 +491,26 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
                 GetPos().y - 120.0f
             };
 
-            m_attackStep = 10;
+            auto* player =
+                static_cast<PlayScene*>(GetScene())->GetPlayer();
+
+            if (player)
+            {
+                float dir =
+                    player->GetPos().x > GetPos().x
+                    ? 1.0f
+                    : -1.0f;
+
+                m_bulletVel =
+                {
+                    dir * 300.0f,
+                    0.0f
+                };
+            }
+
             m_tornadoDistanceLeft = 600.0f;
+
+            m_attackStep = 10;
         }
     }
 
@@ -481,35 +539,33 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     //---------------------------------
     // 形態移行管理
     //---------------------------------
-    switch (m_attackStep)
+
+    if (m_attackStep == 11)
     {
-    case 11:
-        // Phase1移行演出
-        SetVel({ 0.0f, 0.0f });
-        if (!m_hp->IsInvincible())
-            m_hp->SetInvincible(999.0f);
-        m_attackTimer = 2.0f;
-        break;
-
-    case 12:
-        // Phase2移行演出
-        SetVel({ 0.0f, 0.0f });
-        if (!m_hp->IsInvincible())
-            m_hp->SetInvincible(999.0f);
-        m_attackTimer = 2.5f;
-        break;
-    }
-
-    if (m_attackStep == 11 || m_attackStep == 12)
-    {
-        m_attackTimer -= deltaTime;
-
         if (m_attackTimer <= 0.0f)
         {
             m_hp->SetInvincible(0.0f);
-            m_attackStep = 0; 
+
+            m_attackStep = 0;
+
+            m_attackTimer = 1.0f;
         }
-        return; 
+
+        return;
+    }
+
+    if (m_attackStep == 12)
+    {
+        if (m_attackTimer <= 0.0f)
+        {
+            m_hp->SetInvincible(0.0f);
+
+            m_attackStep = 0;
+
+            m_attackTimer = 1.0f;
+        }
+
+        return;
     }
 
 }
