@@ -34,6 +34,8 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_gravity(nullptr)
     , m_anim(nullptr)
 
+    , m_combo(0)
+
     , m_dir(true)
     , m_jumpSpeed(0.0f)
     , m_moveSpeed(290.0f)
@@ -47,7 +49,6 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_HayabusaHit(false)
     , m_attackType()
     , m_attackCol(nullptr)
-    , m_airHitCount(0)
     , m_weakAttackIdx(0)
     , m_strongAttackIdx(0)
     , m_airAttackIdx(0)
@@ -501,7 +502,6 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     
     if (m_isGround) {
         m_jumpCount = 0;
-        m_airHitCount = 0;
         if (!m_squat)
         {
             m_collision->SetRect(85, 192);
@@ -698,7 +698,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 CheckAttackHit(Hayabusa);
                 if (m_hit) {
                     m_HayabusaHit = true;
-                    vel.x = m_dir ? -600 : 600;
+                    vel.x = m_dir ? -600.0f : 600.0f;
                     vel.y = -600.0f;
                 }
                 else {
@@ -759,6 +759,8 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
         {
             enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
             m_hit = true;
+            m_combo++;
+            printf("combo: %d\n", m_combo);
         }
     }
 }
@@ -871,7 +873,7 @@ void PlayerEntity::UpdateState() {
             {
                 ChangeState(ActionState::FALL);
                 m_attackTimer = 0;
-                m_attackType == AttackType::WEAK_ATTACK;
+                m_attackType = AttackType::WEAK_ATTACK;
             }
             return;
         }
@@ -1236,6 +1238,8 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     
 
     m_invincibleTime = 2.0f;
+    m_combo = 0;
+    printf("combo: %d\n", m_combo);
 }
 
 void PlayerEntity::HitTrap() {

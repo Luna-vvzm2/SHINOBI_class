@@ -69,6 +69,8 @@ private:
     //SpriteComponent* m_sprite;
     AnimationComponent* m_anim;
 
+    int m_combo;
+
     bool m_dir;
     float m_jumpSpeed;    // ジャンプ速度
     float m_moveSpeed;    // 移動速度
@@ -83,7 +85,6 @@ private:
     bool m_HayabusaHit;
     AttackType m_attackType;
     CollisionComponent* m_attackCol;
-    int m_airHitCount;
 
     int m_weakAttackIdx;
     int m_strongAttackIdx;
