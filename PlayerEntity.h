@@ -58,6 +58,8 @@ public:
         WEAK_ATTACK,
         STRONG_ATTACK,
         SQUAT_ATTACK,
+        AIR_ATTACK,
+        HAYABUSA,
     };
 
     Vector2d GetDrawOffset() const { return m_drawOffset; }
@@ -77,11 +79,15 @@ private:
     float m_maxJumpTime;
 
     bool m_attack;
+    bool m_hit;
+    bool m_HayabusaHit;
     AttackType m_attackType;
     CollisionComponent* m_attackCol;
+    int m_airHitCount;
 
     int m_weakAttackIdx;
     int m_strongAttackIdx;
+    int m_airAttackIdx;
 
     float m_attackTimer;
 

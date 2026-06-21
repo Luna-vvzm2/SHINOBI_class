@@ -14,16 +14,16 @@
 #include "PlayScene.h"
 
 //                       offset, width, height, damage
-AttackHitbox weak1{ Vector2d(0,0), 450, 200, 10 };
-AttackHitbox weak2{ Vector2d(0,0), 450, 200, 10 };
-AttackHitbox weak3{ Vector2d(0,0), 450, 200, 10 };
-AttackHitbox weak4{ Vector2d(0,0), 450, 200, 10 };
-AttackHitbox strong1{ Vector2d(0,0), 500, 300, 30 };
-AttackHitbox strong2{ Vector2d(0,0), 500, 300, 30 };
-AttackHitbox airWeak1;
-AttackHitbox airWeak2;
-AttackHitbox airWeak3;
-AttackHitbox Hayabusa;
+AttackHitbox weak1{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox weak2{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox weak3{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox weak4{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox strong1{ Vector2d(100,-50), 400, 300, 30 };
+AttackHitbox strong2{ Vector2d(100,-50), 400, 300, 30 };
+AttackHitbox airWeak1{ Vector2d(100,50), 300, 200, 10 };
+AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 10 };
+AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 10 };
+AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 30 };
 AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10 };
 AttackHitbox Kunai;
 
@@ -43,10 +43,14 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_maxJumpTime(1.5f)
 
     , m_attack(false)
+    , m_hit(false)
+    , m_HayabusaHit(false)
     , m_attackType()
     , m_attackCol(nullptr)
+    , m_airHitCount(0)
     , m_weakAttackIdx(0)
     , m_strongAttackIdx(0)
+    , m_airAttackIdx(0)
     , m_attackTimer(0.0f)
 
     , m_hitTimer(0.0f)
@@ -67,7 +71,7 @@ bool PlayerEntity::Init() {
 
     m_hp = AddComponent<HPComponent>(100);
     m_transform->SetScale({ 1.0f, 1.0f });
-    m_gravity = AddComponent<GravityComponent>(3200.0f);
+    m_gravity = AddComponent<GravityComponent>(2800.0f);
     m_attackCol = AddComponent<CollisionComponent>();
 
     //m_sprite = AddComponent<SpriteComponent>();
@@ -78,7 +82,7 @@ bool PlayerEntity::Init() {
     m_anim->SetSprite(m_sprite);
 
     AnimationClip idle;
-    idle.frames = { 0, 1, 2, 3, 4, 5, };
+    idle.frames = { 0, 1, 2, 3, 4, 5 };
     idle.speed = 0.3f;
     idle.loop = true;
     m_anim->AddClip("idle", idle);
@@ -267,19 +271,19 @@ bool PlayerEntity::Init() {
     weakAirAttack1.frames = { 133, 134, 135, 135 };
     weakAirAttack1.speed = 0.1f;
     weakAirAttack1.loop = false;
-    m_anim->AddClip("weakAirAttack", weakAirAttack1);
+    m_anim->AddClip("weakAirAttack1", weakAirAttack1);
 
     AnimationClip weakAirAttack2;
     weakAirAttack2.frames = { 136, 137, 137, 137, 138 };
     weakAirAttack2.speed = 0.1f;
     weakAirAttack2.loop = false;
-    m_anim->AddClip("weakAirAttack", weakAirAttack2);
+    m_anim->AddClip("weakAirAttack2", weakAirAttack2);
 
     AnimationClip weakAirAttack3;
     weakAirAttack3.frames = { 139, 139, 140, 141, 141, 142, 143, 143, 143, 143, 143, 143, 143, 143, 143, 143, 143, 143, 144, 144, 144, 145, 145, 146, 146, 146 };
     weakAirAttack3.speed = 0.1f;
     weakAirAttack3.loop = false;
-    m_anim->AddClip("weakAirAttack", weakAirAttack3);
+    m_anim->AddClip("weakAirAttack3", weakAirAttack3);
 
     AnimationClip strongAttack1;
     strongAttack1.frames = { 147, 148, 149, 149, 150, 150, 151, 152, 152, 153, 153, 154, 155, 155, 156, 157, 157 };
@@ -306,10 +310,10 @@ bool PlayerEntity::Init() {
     m_anim->AddClip("Hayabusa", Hayabusa);
 
     AnimationClip HayabusaHit;
-    HayabusaHit.frames = { 171, 171, 171, 171, 171, 171, 171, 171, 171, 172, 172, 173, 173, 174, 174, 175 };
+    HayabusaHit.frames = { 171, 171, 171, 172, 172, 173, 173, 174, 174, 175 };
     HayabusaHit.speed = 0.1f;
     HayabusaHit.loop = false;
-    m_anim->AddClip("HitHayabusa", HayabusaHit);
+    m_anim->AddClip("HayabusaHit", HayabusaHit);
 
     AnimationClip HayabusaGround;
     HayabusaGround.frames = { 176 };
@@ -470,7 +474,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
         }
 
         if (m_jumpCount == 0) {
-            vel.y = -700.0f;
+            vel.y = -600.0f;
 
             m_isGround = false;
             m_jumpCount++;
@@ -479,13 +483,13 @@ void PlayerEntity::UpdateJump(float deltaTime) {
             m_collision->SetRect(85, 150);
         }
         else if (m_jumpCount == 1) {
-            vel.y = -700.0f;
+            vel.y = -800.0f;
             m_jumpCount++;
         }
     }
 
     if (input.IsDown(Action::JUMP) && m_jumpCount == 1 && m_jumpTime < m_maxJumpTime) {
-        vel.y += -1300.0f * deltaTime;
+        vel.y += -1500.0f * deltaTime;
         m_jumpTime += deltaTime;
     }
 
@@ -497,6 +501,7 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     
     if (m_isGround) {
         m_jumpCount = 0;
+        m_airHitCount = 0;
         if (!m_squat)
         {
             m_collision->SetRect(85, 192);
@@ -581,6 +586,8 @@ void PlayerEntity::ExitSquat()
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
+    m_hit = false;
+
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (input.IsTrigger(Action::WEAK_ATTACK)) {
@@ -590,6 +597,26 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             m_attackType = AttackType::SQUAT_ATTACK;
             m_attackTimer = 0.4f;
             CheckAttackHit(squatAttack);
+        }
+        else if (!m_isGround) {
+            m_attackType = AttackType::AIR_ATTACK;
+            switch (m_airAttackIdx) {
+            case 0:
+                m_attackTimer = 0.2f;
+                CheckAttackHit(airWeak1);
+                if (m_hit) m_airAttackIdx++;
+                break;
+            case 1:
+                m_attackTimer = 0.3f;
+                CheckAttackHit(airWeak2);
+                if (m_hit) m_airAttackIdx++;
+                break;
+            case 2:
+                m_attackTimer = 1.3f;
+                CheckAttackHit(airWeak3);
+                if (m_hit) m_airAttackIdx++;
+                break;
+            }
         }
         else {
             m_attackType = AttackType::WEAK_ATTACK;
@@ -631,31 +658,63 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             }
         }
         if (m_squat && !m_canStand) return;
+
         m_attack = true;
         m_canMove = false;
-        m_attackType = AttackType::STRONG_ATTACK;
-
-        switch (m_strongAttackIdx) {
-        case 0:
+        if (!m_isGround) {
+            m_HayabusaHit = false;
+            m_attackType = AttackType::HAYABUSA;
             m_attackTimer = 0.9f;
-            CheckAttackHit(strong1);
-            break;
-        case 1:
-            m_attackTimer = 1.0f;
-            CheckAttackHit(strong2);
-            break;
         }
+        else {
+            m_attackType = AttackType::STRONG_ATTACK;
 
-        m_strongAttackIdx++;
+            switch (m_strongAttackIdx) {
+            case 0:
+                m_attackTimer = 0.9f;
+                CheckAttackHit(strong1);
+                break;
+            case 1:
+                m_attackTimer = 1.0f;
+                CheckAttackHit(strong2);
+                break;
+            }
+
+            m_strongAttackIdx++;
+
+            Vector2d vel = m_velocity->Get();
+            vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+
+            m_velocity->Set(vel);
+        }
     }
 
     if (m_attack) {
         m_attackTimer -= deltaTime;
+
+        if (m_attackType == AttackType::HAYABUSA) {
+            Vector2d vel = m_velocity->Get();
+            if (!m_HayabusaHit) {
+                CheckAttackHit(Hayabusa);
+                if (m_hit) {
+                    m_HayabusaHit = true;
+                    vel.x = m_dir ? -600 : 600;
+                    vel.y = -600.0f;
+                }
+                else {
+                    vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+                }
+            }
+            m_velocity->Set(vel);
+        }
+
         if (m_attackTimer <= 0) {
             m_attack = false;
             m_canMove = true;
+            m_HayabusaHit = false;
             m_weakAttackIdx = 0;
             m_strongAttackIdx = 0;
+            m_airAttackIdx = 0;
         }
     }
 
@@ -681,11 +740,9 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
             continue;
         }
 
-        EnemyEntity* enemy =
-            static_cast<EnemyEntity*>(actor);
+        EnemyEntity* enemy = static_cast<EnemyEntity*>(actor);
 
-        CollisionComponent* col =
-            enemy->GetCollision();
+        CollisionComponent* col = enemy->GetCollision();
 
         if (!col)
         {
@@ -700,8 +757,8 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
 
         if (overlapX > 0 && overlapY > 0)
         {
-            enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f }
-            );
+            enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
+            m_hit = true;
         }
     }
 }
@@ -727,7 +784,27 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
+        
+
         if (input.IsTrigger(Action::WEAK_ATTACK)) {
+            if (!m_isGround) {
+                switch (m_airAttackIdx) {
+                case 0:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK1);
+                    break;
+                case 1:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK1);
+                    break;
+                case 2:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK2);
+                    break;
+                case 3:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK3);
+                    break;
+                }
+                return;
+            }
+
             switch (m_weakAttackIdx) {
             case 1:
                 ChangeState(ActionState::WEAK_ATTACK1);
@@ -753,6 +830,11 @@ void PlayerEntity::UpdateState() {
         }
 
         if (input.IsTrigger(Action::STRONG_ATTACK)) {
+            if (!m_isGround) {
+                ChangeState(ActionState::HAYABUSA);
+                return;
+            }
+
             switch (m_strongAttackIdx) {
             case 1:
                 ChangeState(ActionState::STRONG_ATTACK1);
@@ -768,23 +850,72 @@ void PlayerEntity::UpdateState() {
             {
                 ChangeState(ActionState::STRONG_ATTACK_END);
             }
+            return;
         }
 
+        if (m_state == ActionState::HAYABUSA) {
+            if (m_HayabusaHit) {
+                ChangeState(ActionState::HAYABUSA_HIT);
+                return;
+            }
+            if (m_isGround) {
+                ChangeState(ActionState::HAYABUSA_GROUND);
+                m_attackTimer = 0;
+                return;
+            }
+            
+        }
+
+        if (m_state == ActionState::HAYABUSA_HIT) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::FALL);
+                m_attackTimer = 0;
+                m_attackType == AttackType::WEAK_ATTACK;
+            }
+            return;
+        }
+
+        
+        return;
+    }
+
+    if (m_state == ActionState::HAYABUSA_GROUND) {
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::JUMP_LANDING);
+        }
         return;
     }
 
     Vector2d vel = m_velocity->Get();
 
     if (!m_isGround) {
-        if (vel.y < 0) {
+        if (input.IsTrigger(Action::JUMP)) {
             if (m_jumpCount == 1) {
                 ChangeState(ActionState::JUMP_START);
+                return;
             }
             else if (m_jumpCount == 2) {
                 ChangeState(ActionState::JUMP_SECOND);
+                return;
             }
         }
         else {
+            if (m_state == ActionState::JUMP_START) {
+                if (m_anim->IsFinished()) {
+                    ChangeState(ActionState::JUMP);
+                    return;
+                }
+            }
+
+            if (m_state == ActionState::JUMP) {
+                if (m_anim->IsFinished()) {
+                    ChangeState(ActionState::FALL);
+                    return;
+                }
+            }
+
             if (m_squat) {
                 if (m_canStand)
                 {
@@ -794,6 +925,17 @@ void PlayerEntity::UpdateState() {
             ChangeState(ActionState::FALL);
         }
         return;
+    }
+
+    if (m_state == ActionState::JUMP || m_state == ActionState::FALL) {
+        ChangeState(ActionState::JUMP_LANDING);
+        return;
+    }
+
+    if (m_state == ActionState::JUMP_LANDING) {
+        if (!(m_anim->IsFinished())) {
+            return;
+        }
     }
 
     if (m_state == ActionState::SQUAT_START) {

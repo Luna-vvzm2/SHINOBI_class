@@ -194,6 +194,20 @@ void PlayScene::Draw() {
 	drawActors(m_actors);
 	drawActors(m_UIactors);
 
+	// UŒ‚”ÍˆÍ•`‰æ --------------------------
+	Vector2d Pos = m_player->GetPos();
+	AttackHitbox Weak1{ Vector2d(50,100), 100, 100, 30 };
+	if (m_player->GetDir()) {
+		Pos.x += Weak1.offset.x;
+		Pos.y += Weak1.offset.y;
+	} 
+	else{
+		Pos.x -= Weak1.offset.x;
+		Pos.y += Weak1.offset.y;
+	}
+	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);
+	//------------------------------------------
+
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_comboCount, 0 }
 	};
