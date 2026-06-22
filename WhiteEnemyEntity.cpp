@@ -23,6 +23,7 @@ WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
 	, m_wallStopTimer(0.0f)
 	, m_lastMoveStartPos(pos)
 {
+
 }
 
 bool WhiteEnemyEntity::Init()

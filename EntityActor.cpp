@@ -65,13 +65,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // 
+    // === Y方向移動 ===
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // 
+    // === Y方向衝突処理 ===
     for (auto actor : m_scene->GetActors()) {
-
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
         BlockActor* block = nullptr;
@@ -81,11 +80,6 @@ void EntityActor::MoveAndCollide(float deltaTime) {
             block = static_cast<BlockActor*>(actor);
             actorCol = block->GetCollision();
             actorPos = block->GetPos();
-            if (std::abs(actorPos.x - pos.x) > 500)
-                continue;
-
-            if (std::abs(actorPos.y - pos.y) > 300)
-                continue;
             break;
         default:
             continue;
@@ -110,6 +104,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
                     vel.y = 0;
                 }
                 else { // 上に乗った
+                    
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 
@@ -154,16 +149,17 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapX > 0 && overlapY > 0) {
             // === X方向補正 ===
-            if (overlapX < overlapY) {
-                if (diffX > 0) { // ブロック右側（左に押し戻す）
-                    playerPos.x = actorPos.x + aHalfW + halfW;
-                }
-                else { // 左側（右に押し戻す）
-                    playerPos.x = actorPos.x - aHalfW - halfW;
-                }
+            if (diffX > 0) { // ブロック右側（左に押し戻す）
+                playerPos.x = actorPos.x + aHalfW + halfW;
             }
+            else { // 左側（右に押し戻す）
+                playerPos.x = actorPos.x - aHalfW - halfW;
+            }
+
+            vel.x = 0;
+            m_transform->SetPosition(playerPos);
         }
+
     }
     m_velocity->Set(vel);
 }
-
