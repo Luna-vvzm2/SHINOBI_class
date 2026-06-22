@@ -24,3 +24,4 @@ void BossEntity::Update(float deltaTime)
     UpdateAI(deltaTime);
     UpdateAttack(deltaTime);
 }
+
