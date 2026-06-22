@@ -108,6 +108,91 @@ void PlayScene::ClampSkillCursor()
 		m_skillCursorX = max - 1;
 }
 
+void PlayScene::DrawSkillRow(
+	const std::vector<SkillData>& skills,
+	int startX,
+	int startY
+)
+{
+	const int size = 60;
+	const int gap = 15;
+
+	for (int i = 0; i < skills.size(); i++)
+	{
+		int x =
+			startX + i * (size + gap);
+
+		DrawSkillSlot(
+			x,
+			startY,
+			skills[i]
+		);
+	}
+}
+
+void PlayScene::DrawSkillGrid(
+	const std::vector<SkillData>& skills,
+	int startX,
+	int startY,
+	int columns
+)
+{
+	const int size = 60;
+	const int gap = 15;
+
+	for (int i = 0; i < skills.size(); i++)
+	{
+		int x =
+			startX + (i % columns) * (size + gap);
+
+		int y =
+			startY + (i / columns) * (size + gap);
+
+		DrawSkillSlot(
+			x,
+			y,
+			skills[i]
+		);
+	}
+}
+
+void PlayScene::DrawSkillSlot(
+	int x,
+	int y,
+	const SkillData& skill
+) const
+{
+	const int size = 60;
+
+	int handle =
+		skill.unlocked ?
+		skill.iconHandle :
+		m_lockedSkillIcon;
+
+	if (handle >= 0)
+	{
+		DrawExtendGraph(
+			x,
+			y,
+			x + size,
+			y + size,
+			handle,
+			TRUE
+		);
+	}
+	else
+	{
+		DrawBox(
+			x,
+			y,
+			x + size,
+			y + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+}
+
 int PlayScene::GetSkillMaxX(int y)
 {
 	switch (y)
@@ -243,20 +328,11 @@ void PlayScene::DrawSkillMenu()
 
 
 	// îEèp 4å¬
-	for (int i = 0; i < 4; i++)
-	{
-		int x = startX + i * (size + gap);
-		int y = 160;
-
-		DrawBox(
-			x,
-			y,
-			x + size,
-			y + size,
-			GetColor(255, 255, 255),
-			FALSE
-		);
-	}
+	DrawSkillRow(
+		m_ninjutsu,
+		startX,
+		160
+	);
 
 
 
@@ -269,22 +345,11 @@ void PlayScene::DrawSkillMenu()
 	);
 
 
-	for (int i = 0; i < 8; i++)
-	{
-		int x = startX + i * (size + gap);
-		int y = 290;
-
-
-		DrawBox(
-			x,
-			y,
-			x + size,
-			y + size,
-			GetColor(255, 255, 255),
-			FALSE
-		);
-	}
-
+	DrawSkillRow(
+		m_ninpou,
+		startX,
+		290
+	);
 
 
 	// îEãZ 7å¬
@@ -296,22 +361,11 @@ void PlayScene::DrawSkillMenu()
 	);
 
 
-	for (int i = 0; i < 7; i++)
-	{
-		int x = startX + i * (size + gap);
-		int y = 420;
-
-
-		DrawBox(
-			x,
-			y,
-			x + size,
-			y + size,
-			GetColor(255, 255, 255),
-			FALSE
-		);
-	}
-
+	DrawSkillRow(
+		m_ningi,
+		startX,
+		420
+	);
 
 
 	// êÌì¨ãZ 17å¬
@@ -323,24 +377,12 @@ void PlayScene::DrawSkillMenu()
 	);
 
 
-	for (int i = 0; i < 17; i++)
-	{
-		int x =
-			startX + (i % 9) * (size + gap);
-
-		int y =
-			550 + (i / 9) * (size + gap);
-
-
-		DrawBox(
-			x,
-			y,
-			x + size,
-			y + size,
-			GetColor(255, 255, 255),
-			FALSE
-		);
-	}
+	DrawSkillGrid(
+		m_combat,
+		startX,
+		550,
+		9
+	);
 
 	// ÉJÅ[É\Éãï`âÊ
 
@@ -421,6 +463,8 @@ void PlayScene::DrawSkillMenu()
 }
 
 
+
+
 PlayScene::PlayScene(Game* game)
 	: Scene(game),
 	m_player(nullptr),
@@ -439,11 +483,12 @@ bool PlayScene::Init() {
 	m_isRunning = true;
 	m_type = Type::Play;
 	m_stageIndex = 0;
+	//m_lockedSkillIcon = LoadGraph("assets/images/skills/locked.png");
 
 	//ÉXÉLÉãÉfÅ[É^
 	m_ninjutsu =
 	{
-		{"îEèp1", "test"},
+		{"îEèp1", "ãZê‡ñæópÅióvèCê≥Åj", /*LoadGraph("assets/images/skills/fireball.png")*/ -1,true},
 		{"îEèp2", "test"},
 		{"îEèp3", "test"},
 		{"îEèp4", "test"}

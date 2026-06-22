@@ -60,13 +60,19 @@ private:
 
 	MenuState m_menuState = MenuState::None;
 
+
 	// スキルデータ
 	struct SkillData
 	{
 		std::string name;
 		std::string description;
+
+		int iconHandle = -1; 
+
+		bool unlocked = true;
 	};
 
+	int m_lockedSkillIcon = -1;
 
 	std::vector<SkillData> m_ninjutsu;
 	std::vector<SkillData> m_ninpou;
@@ -80,6 +86,25 @@ private:
 	int GetSkillMaxX(int y);
 	void ClampSkillCursor();
 	SkillData* GetSelectedSkill();
+
+	void DrawSkillRow(
+		const std::vector<SkillData>& skills,
+		int startX,
+		int startY
+	);
+
+	void DrawSkillSlot(
+		int x,
+		int y,
+		const SkillData& skill
+	) const;
+
+	void DrawSkillGrid(
+		const std::vector<SkillData>& skills,
+		int startX,
+		int startY,
+		int columns
+	);
 
 	int m_skillCursorX = 0;
 	int m_skillCursorY = 0;
