@@ -3,6 +3,7 @@
 #include "Vector2d.h"
 #include "Camera.h"
 #include "MapData.h"
+#include "ShurikenUI.h"
 
 
 class PlayerEntity;
@@ -50,5 +51,5 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
-
+	ShurikenUI* m_shurikenUI = nullptr;
 };

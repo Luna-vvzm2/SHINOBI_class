@@ -33,6 +33,11 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
 
+    // ---- è— Œ•ŠÖ˜A ----
+    int GetShurikenCount() const { return m_shurikenCount; }
+    void UseShuriken() { if (m_shurikenCount > 0) m_shurikenCount--; }
+    void AddShuriken(int amount) { m_shurikenCount += amount; }
+
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -58,6 +63,9 @@ private:
     bool m_canMove;       // ˆÚ“®‰Â”Û
     bool m_canCharge;
     ActionState m_state;
+
+    // ---- è— Œ•Š” ----
+    int m_shurikenCount = 5;   // ‰ŠúŠ”
 
     std::string GetTexturePath() const override;
 

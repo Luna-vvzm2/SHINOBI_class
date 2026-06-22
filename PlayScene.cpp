@@ -15,6 +15,7 @@
 #include "HitEffect.h"
 #include "GroundBlock.h"
 #include "HPBarUI.h"
+#include "ShurikenUI.h"
 #include "BackGroundUI.h"
 
 #include "Camera.h"
@@ -138,9 +139,11 @@ bool PlayScene::Init() {
 	);
 	AddUIActor(hpBar);
 
+	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
+	AddUIActor(shuriken);
+
 	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
 	AddBackActor(back);
-
 
 	float halfTile = m_mapData.tileSize * 0.5f;
 	m_camera.SetTileHalfSize(Vector2d(halfTile, halfTile));
@@ -183,6 +186,10 @@ void PlayScene::Update(float deltaTime) {
 		float newZoom = currentZoom + (targetZoom - currentZoom) * std::min(zoomSpeed * deltaTime, 1.0f);
 		*/
 		m_camera.SetZoom(1.0f);
+	}
+	if (m_shurikenUI && m_player)
+	{
+		m_shurikenUI->SetCount(m_player->GetShurikenCount());
 	}
 }
 

@@ -1,6 +1,7 @@
 #include "HPComponent.h"
 #include "Actor.h"
 #include <algorithm>    // std::clamp
+#include <iostream>
 
 HPComponent::HPComponent(Actor* owner, int maxHP)
     : Component(owner)

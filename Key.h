@@ -14,6 +14,7 @@ public:
 		D,
 		I,
 		O,
+		P,
 		ESCAPE,
 		SPACE,
 		ENTER,
