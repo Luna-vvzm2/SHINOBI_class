@@ -159,7 +159,10 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GravityComponent.cpp" />
     <ClCompile Include="GroundBlock.cpp" />
-    <ClCompile Include="HitEffect.cpp" />
+    <ClCompile Include="HitEffect.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="HPBerUI.cpp" />
     <ClCompile Include="HPComponent.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -206,7 +209,10 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GravityComponent.h" />
     <ClInclude Include="GroundBlock.h" />
-    <ClInclude Include="HitEffect.h" />
+    <ClInclude Include="HitEffect.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="HPBarUI.h" />
     <ClInclude Include="HPComponent.h" />
     <ClInclude Include="Input.h" />

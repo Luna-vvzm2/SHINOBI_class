@@ -1,6 +1,7 @@
 #include "PlayerEntity.h"
 #include "EnemyEntity.h"
-#include "HitEffect.h"
+#include "EffectActor.h"
+#include "Scene.h"
 #include "BlockActor.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
@@ -589,6 +590,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
     m_hit = false;
 
     const Input& input = m_scene->GetGame()->GetInput();
+    Vector2d pPos = m_transform->GetPosition();
 
     if (input.IsTrigger(Action::WEAK_ATTACK)) {
         m_attack = true;
@@ -597,25 +599,43 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             m_attackType = AttackType::SQUAT_ATTACK;
             m_attackTimer = 0.4f;
             CheckAttackHit(squatAttack);
+            pPos.x += (m_dir ? 90.0f : -90.0f);
+            pPos.y -= 50.0f;
+            SpawnEffect(new EffectActor(m_scene, pPos, EffectType::SquatAttack, !m_dir));
         }
         else if (!m_isGround) {
             m_attackType = AttackType::AIR_ATTACK;
             switch (m_airAttackIdx) {
-            case 0:
+            case 0: {
                 m_attackTimer = 0.2f;
                 CheckAttackHit(airWeak1);
                 if (m_hit) m_airAttackIdx++;
+                auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack1, !m_dir);
+                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
+
+                SpawnEffect(effect);
                 break;
-            case 1:
+            }
+            case 1: {
                 m_attackTimer = 0.3f;
                 CheckAttackHit(airWeak2);
                 if (m_hit) m_airAttackIdx++;
+                auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack2, !m_dir);
+                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 0.0f });
+
+                SpawnEffect(effect);
                 break;
-            case 2:
+            }
+            case 2: {
                 m_attackTimer = 1.3f;
                 CheckAttackHit(airWeak3);
                 if (m_hit) m_airAttackIdx++;
+                auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack3, !m_dir);
+                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
+
+                SpawnEffect(effect);
                 break;
+            }
             }
         }
         else {
@@ -624,18 +644,29 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             case 0:
                 m_attackTimer = 0.8f;
                 CheckAttackHit(weak1);
+                pPos.x += (m_dir ? 100.0f : -100.0f);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack1, !m_dir ));
                 break;
             case 1:
                 m_attackTimer = 0.7f;
                 CheckAttackHit(weak2);
+                pPos.x += (m_dir ? 30.0f : -30.0f);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack2, !m_dir));
                 break;
             case 2:
                 m_attackTimer = 1.2f;
                 CheckAttackHit(weak3);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack3, !m_dir));
                 break;
             case 3:
                 m_attackTimer = 1.3f;
                 CheckAttackHit(weak4);
+                pPos.x += (m_dir ? 100.0f : -100.0f);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack4, !m_dir));
                 break;
             }
             m_weakAttackIdx++;
@@ -665,6 +696,10 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             m_HayabusaHit = false;
             m_attackType = AttackType::HAYABUSA;
             m_attackTimer = 0.9f;
+            auto effect = new EffectActor(m_scene, GetPos(), EffectType::Hayabusa, !m_dir);
+            effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 100.0f });
+
+            SpawnEffect(effect);
         }
         else {
             m_attackType = AttackType::STRONG_ATTACK;
@@ -673,10 +708,16 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             case 0:
                 m_attackTimer = 0.9f;
                 CheckAttackHit(strong1);
+                pPos.x += (m_dir ? 70.0f : -70.0f);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack1, !m_dir));
                 break;
             case 1:
                 m_attackTimer = 1.0f;
                 CheckAttackHit(strong2);
+                pPos.x += (m_dir ? 70.0f : -70.0f);
+                pPos.y -= 60.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack2, !m_dir));
                 break;
             }
 
@@ -760,7 +801,10 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
             enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
             m_hit = true;
             m_combo++;
-            printf("combo: %d\n", m_combo);
+
+            /*SpawnEffect(
+                new EffectActor( m_scene, enemy->GetPos(), EffectType::WeakAttack1, !m_dir )
+            );*/
         }
     }
 }
@@ -1239,7 +1283,6 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
 
     m_invincibleTime = 2.0f;
     m_combo = 0;
-    printf("combo: %d\n", m_combo);
 }
 
 void PlayerEntity::HitTrap() {

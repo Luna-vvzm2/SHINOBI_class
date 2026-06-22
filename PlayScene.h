@@ -26,7 +26,7 @@ public:
 	PlayerEntity* GetPlayer() const { return m_player; }
 
 	// Õ“ËƒCƒxƒ“ƒg‚ÉŒÄ‚Ô
-	void SpawnHitEffect(const Vector2d& pos);
+	//void SpawnHitEffect(const Vector2d& pos);
 
 	void AddCombo();
 

@@ -12,7 +12,8 @@
 #include "GunnerEnemyEntity.h"
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
-#include "HitEffect.h"
+#include "EffectActor.h"
+//#include "HitEffect.h"
 #include "GroundBlock.h"
 #include "HPBarUI.h"
 #include "BackGroundUI.h"
@@ -138,6 +139,7 @@ bool PlayScene::Init() {
 	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
 	AddBackActor(back);
 
+	EffectActor::LoadEffects();
 
 	float halfTile = m_mapData.tileSize * 0.5f;
 	m_camera.SetTileHalfSize(Vector2d(halfTile, halfTile));
@@ -232,12 +234,12 @@ void PlayScene::Draw() {
 #endif
 }
 
-void PlayScene::SpawnHitEffect(const Vector2d& pos) {
-	m_effect = new HitEffect(this, pos, {32, 32});
-	AddActor(m_effect);
-	std::cout << "Spawned HitEffect at: " << pos.x << ", " << pos.y << std::endl;
-	
-}
+//void PlayScene::SpawnHitEffect(const Vector2d& pos) {
+//	m_effect = new HitEffect(this, pos, {32, 32});
+//	AddActor(m_effect);
+//	std::cout << "Spawned HitEffect at: " << pos.x << ", " << pos.y << std::endl;
+//	
+//}
 
 void PlayScene::AddCombo() {
 	m_comboCount++;
