@@ -23,6 +23,7 @@ public:
     void UpdateGravity(float deltaTime);
     void UpdateAttack(float deltaTime);
     void UpdateState();
+    void UpdateDead(float deltaTime); // 死亡時の専用アップデート
 
 
     ActorType GetType() const override { return ActorType::Player; }
@@ -58,6 +59,8 @@ private:
     bool m_canMove;       // 移動可否
     bool m_canCharge;
     ActionState m_state;
+
+    bool m_isDeadTriggered = false; // 死亡時の初回処理用フラグ
 
     std::string GetTexturePath() const override;
 
