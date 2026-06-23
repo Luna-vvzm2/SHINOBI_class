@@ -13,6 +13,7 @@ void Input::Init() {
     m_actionKeyMap[static_cast<size_t>(Action::RIGHT)] = { Key::RIGHT, Key::D };
     m_actionKeyMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Key::I };
     m_actionKeyMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Key::O };
+    m_actionKeyMap[static_cast<size_t>(Action::KUNAI)] = { Key::P };
     m_actionKeyMap[static_cast<size_t>(Action::JUMP)] = { Key::SPACE };
     m_actionKeyMap[static_cast<size_t>(Action::ESCAPE)] = { Key::ESCAPE };
     m_actionKeyMap[static_cast<size_t>(Action::ENTER)] = { Key::ENTER };

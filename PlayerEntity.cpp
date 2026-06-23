@@ -3,6 +3,7 @@
 #include "EffectActor.h"
 #include "Scene.h"
 #include "BlockActor.h"
+#include "KunaiActor.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "GravityComponent.h"
@@ -36,6 +37,10 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_anim(nullptr)
 
     , m_combo(0)
+    , m_kunai(10)
+
+    , m_kunaiSpawnTimer(0.0f)
+    , m_kunaiPending(false)
 
     , m_dir(true)
     , m_jumpSpeed(0.0f)
@@ -586,11 +591,51 @@ void PlayerEntity::ExitSquat()
     m_squat = false;
 }
 
+void PlayerEntity::SpawnKunai()
+{
+    Vector2d pos = GetPos();
+
+    pos.x += m_dir ? 40.0f : -40.0f;
+    pos.y -= 10.0f;
+
+    auto kunai = new KunaiActor(m_scene, pos, m_dir);
+
+    SpawnEffect(kunai);
+}
+
 void PlayerEntity::UpdateAttack(float deltaTime) {
     m_hit = false;
 
     const Input& input = m_scene->GetGame()->GetInput();
     Vector2d pPos = m_transform->GetPosition();
+
+    if (input.IsTrigger(Action::KUNAI)) {
+        if (m_kunai > 0) {
+            m_attack = true;
+            m_canMove = false;
+            if (m_squat) {
+                m_attackType = AttackType::SQUAT_KUNAI;
+                m_attackTimer = 0.5f;
+                m_kunai--;
+                m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                m_kunaiPending = true;
+            }
+            else if (!m_isGround) {
+                m_attackType = AttackType::AIR_KUNAI;
+                m_attackTimer = 0.2f;
+                m_kunai--;
+                m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                m_kunaiPending = true;
+            }
+            else {
+                m_attackType = AttackType::KUNAI;
+                m_attackTimer = 0.3f;
+                m_kunai--;
+                m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                m_kunaiPending = true;
+            }
+        }
+    }
 
     if (input.IsTrigger(Action::WEAK_ATTACK)) {
         m_attack = true;
@@ -733,6 +778,16 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
     if (m_attack) {
         m_attackTimer -= deltaTime;
 
+        if (m_kunaiPending)
+        {
+            m_kunaiSpawnTimer -= deltaTime;
+            if (m_kunaiSpawnTimer <= 0.0f)
+            {
+                SpawnKunai();
+                m_kunaiPending = false;
+            }
+        }
+
         if (m_attackType == AttackType::HAYABUSA) {
             Vector2d vel = m_velocity->Get();
             if (!m_HayabusaHit) {
@@ -818,6 +873,21 @@ void PlayerEntity::UpdateState() {
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (m_attack) {
+        if (input.IsTrigger(Action::KUNAI)) {
+            switch (m_attackType) {
+            case AttackType::SQUAT_KUNAI:
+                ChangeState(ActionState::KUNAI_SQUAT);
+                break;
+            case AttackType::AIR_KUNAI:
+                ChangeState(ActionState::KUNAI_AIR);
+                break;
+            case AttackType::KUNAI:
+                ChangeState(ActionState::KUNAI);
+                break;
+            }
+            return;
+        }
+
         if (m_state == ActionState::SQUAT_ATTACK) {
             if (m_anim->IsFinished())
             {
@@ -825,7 +895,7 @@ void PlayerEntity::UpdateState() {
             }
         }
 
-        if (m_squat) {
+        if (m_squat && !(m_attackType == AttackType::SQUAT_KUNAI)) {
             ChangeState(ActionState::SQUAT_ATTACK);
             return;
         }

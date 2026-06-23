@@ -151,6 +151,7 @@
     <ClCompile Include="EnemyEntity.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="KunaiActor.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -201,6 +202,7 @@
     <ClInclude Include="EnemyEntity.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="KunaiActor.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

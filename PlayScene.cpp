@@ -73,6 +73,7 @@ bool PlayScene::Init() {
 			case 1:
 				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
 				break;
+
 			}
 		}
 	}
@@ -126,7 +127,7 @@ bool PlayScene::Init() {
 		}
 	}
 	
-	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64}));
+	m_player = new PlayerEntity(this, Vector2d({200, 10000}), Vector2d({192, 64}));
 	AddActor(m_player);
 	
 	// ---- HP UI çÏê¨ ----

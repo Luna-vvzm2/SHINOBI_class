@@ -54,11 +54,18 @@ public:
     void EnterSquat();
     void ExitSquat();
 
+    void SpawnKunai();
+
     enum class AttackType {
         WEAK_ATTACK,
         STRONG_ATTACK,
+        KUNAI,
         SQUAT_ATTACK,
+        SQUAT_KUNAI,
         AIR_ATTACK,
+        AIR_KUNAI,
+        WALL_ATTACK,
+        WALL_KUNAI,
         HAYABUSA,
     };
 
@@ -70,6 +77,10 @@ private:
     AnimationComponent* m_anim;
 
     int m_combo;
+    int m_kunai;
+
+    float m_kunaiSpawnTimer;
+    bool m_kunaiPending;
 
     bool m_dir;
     float m_jumpSpeed;    // ƒWƒƒƒ“ƒv‘¬“x
