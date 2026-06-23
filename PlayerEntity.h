@@ -26,7 +26,6 @@ public:
     void UpdateState();
     void UpdateDead(float deltaTime); // 死亡時の専用アップデート
 
-
     ActorType GetType() const override { return ActorType::Player; }
     CollisionComponent* GetCollision() const { return m_collision; }
 
@@ -35,10 +34,8 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
 
-    // ---- 手裏剣関連 ----
+    // ★追加: 手裏剣の数を返す関数
     int GetShurikenCount() const { return m_shurikenCount; }
-    void UseShuriken() { if (m_shurikenCount > 0) m_shurikenCount--; }
-    void AddShuriken(int amount) { m_shurikenCount += amount; }
 
     std::function<void(int newMoney, int oldMoney)> OnMoneyChanged; // コールバック
     int GetMoney() const { return m_money; }

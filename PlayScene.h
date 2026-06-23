@@ -56,6 +56,7 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
+
 	ShurikenUI* m_shurikenUI = nullptr;
 
 	MoneyUI* m_moneyUI = nullptr;
