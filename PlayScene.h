@@ -52,6 +52,7 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
+
 	ShurikenUI* m_shurikenUI = nullptr;
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;

@@ -32,6 +32,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_canMove(true)
     , m_canCharge(true)
     , m_state()
+    , m_shurikenCount(5) // ★追加: 初期の手裏剣の数を5に設定
 {
 }
 
@@ -137,23 +138,7 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     if (m_isGround) m_jumpCount = 0;
 }
 
-void PlayerEntity::UpdateAttack(float deltaTime)
-{
-    const Input& input = m_scene->GetGame()->GetInput();
-
-    // 手裏剣投げ（例：Zキー）
-    if (input.IsTrigger(Action::KUNAIATTACK))
-    {
-        if (m_shurikenCount > 0)
-        {
-            UseShuriken();   // ← 手裏剣を減らす
-
-            // TODO: 手裏剣の飛び道具を生成する処理を書く
-            // 例: m_scene->AddActor(new ShurikenProjectile(...));
-        }
-    }
-}
-
+void PlayerEntity::UpdateAttack(float deltaTime) {}
 
 void PlayerEntity::UpdateState() {
     if (m_hp->GetHP() <= 0) { m_state = ActionState::DEAD; return; }
@@ -185,8 +170,7 @@ void PlayerEntity::UpdateDead(float deltaTime) {
         AnimationClip dead;
         dead.frames = { 0, 1, 2, 3, 4, 5 };
         dead.speed = 0.12f;
-        // ★修正: ループさせず、1回再生したら最後のコマで止まるように変更
-        dead.loop = false;
+        dead.loop = false; // 1回再生したら最後のコマで止まる
         m_anim->AddClip("dead", dead);
         m_anim->Play("dead");
 
