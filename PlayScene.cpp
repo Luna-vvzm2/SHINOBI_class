@@ -19,6 +19,9 @@
 
 #include "Camera.h"
 
+//イベントのため変更
+#include "EventManager.h"
+
 #include <algorithm>
 
 PlayScene::PlayScene(Game* game)
@@ -28,7 +31,8 @@ PlayScene::PlayScene(Game* game)
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
 	m_stageIndex(0),
 	m_comboCount(0),
-	m_currentStage(1)
+	m_currentStage(1),
+	m_eventManager(std::make_unique<EventManager>(this)) //イベントのため変更
 {
 
 }
@@ -85,6 +89,7 @@ bool PlayScene::Init() {
 			int objID =
 				objLayer.tiles[y * stage.width + x];
 
+
 			Vector2d pos(x * tileSize, y * tileSize);
 
 			switch (objID)
@@ -120,6 +125,14 @@ bool PlayScene::Init() {
 			case 8:
 				AddActor(new SekienkiBossEntity(this,pos,Vector2d(192, 192)));
 				break;
+
+			//イベントのため追加
+			default:
+				if (objID >= 100)
+				{
+					AddActor(new EventTrigger(this, pos, Vector2d(tileSize, tileSize), objID, m_eventManager.get()));
+				}
+				break;
 			}
 			
 		}
@@ -150,10 +163,25 @@ bool PlayScene::Init() {
 	// Renderer に Camera をセット
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
+	/*
+	//イベントテスト(シーン開始時にテキストが描画,先頭の行がTitleからの遷移の際のENTER入力でスキップされています)
+	std::unique_ptr<TalkEvent> testTalk = std::make_unique<TalkEvent>(this, "assets/events/event_101.txt");
+	m_eventManager->Init(std::move(testTalk));
+	//テスト2:プレイヤーのすぐ近くにイベントを配置
+	AddActor(new EventTrigger(this, Vector2d(400, 800 + 560), Vector2d(104, 104), 101, m_eventManager.get()));
+	*/
+
 	return true;
 }
 
 void PlayScene::Update(float deltaTime) {
+	//イベントのため変更
+	if (m_eventManager->IsRunning())
+	{
+		m_eventManager->Update(deltaTime);
+		return;
+	}
+
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
@@ -181,6 +209,7 @@ void PlayScene::Update(float deltaTime) {
 		*/
 		m_camera.SetZoom(1.0f);
 	}
+
 }
 
 void PlayScene::Draw() {
@@ -192,6 +221,12 @@ void PlayScene::Draw() {
 	drawActors(m_backactors);
 	drawActors(m_actors);
 	drawActors(m_UIactors);
+
+	//イベントのために変更
+	if (m_eventManager->IsRunning())
+	{
+		m_eventManager->Draw();
+	}
 
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_comboCount, 0 }
