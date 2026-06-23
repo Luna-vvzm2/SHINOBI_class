@@ -71,7 +71,7 @@ void KunaiActor::Update(float deltaTime)
         {
             enemy->TakeDamage(
                 10,
-                { 0,0 }
+                { m_dir ? 300.0f : -300.0f, 0 }
             );
 
             SetState(State::Dead);
