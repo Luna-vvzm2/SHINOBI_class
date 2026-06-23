@@ -321,6 +321,17 @@ bool PlayScene::Init() {
 	);
 	AddUIActor(hpBar);
 
+	// プレイヤーの HP が減ったらコンボをリセットする
+	if (m_player && m_player->GetHP()) {
+		m_player->GetHP()->OnHPChanged = [this](int newHP, int oldHP) {
+			if (newHP < oldHP) {
+				m_comboCount = 0;
+				// 必要ならログやサウンドを追加
+				std::cout << "Combo reset due to player damage\n";
+			}
+			};
+	}
+
 	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
 	AddUIActor(shuriken);
 
@@ -345,32 +356,6 @@ void PlayScene::Update(float deltaTime) {
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
-	// --- DEBUG: スペースで敵に 2 ダメージ（デバッグ用・後で削除） ---
-	{
-		const Key& key = m_game->GetInput().GetKey();
-		if (key.IsTrigger(Key::SPACE)) {
-			// 全アクターを走査して敵にダメージ
-			for (Actor* actor : GetActors()) {
-				if (!actor) continue;
-				if (actor->GetType() != ActorType::Enemy) continue;
-
-				EnemyEntity* enemy = static_cast<EnemyEntity*>(actor);
-				if (enemy->IsDead()) continue;
-
-				HPComponent* hp = enemy->GetHP();
-				if (hp) {
-					hp->Damage(2);
-
-					// 敵用 HP バーがあるなら表示（ShowFor を使う実装向け）
-					auto it = m_enemyToHPBarMap.find(enemy);
-					if (it != m_enemyToHPBarMap.end() && it->second) {
-						it->second->ShowFor(2.0f); // 2 秒表示（任意で変更）
-					}
-				}
-			}
-		}
-	}
-	// --- /DEBUG ---
 
 	// カメラ設定など（既にある処理）
 	if (m_player) {
@@ -429,7 +414,7 @@ void PlayScene::Update(float deltaTime) {
 
 void PlayScene::Draw() {
 	Renderer* renderer = m_game->GetRenderer();
-
+	if (!renderer) return;
 
 
 	// --- アクター描画 ---
@@ -440,6 +425,14 @@ void PlayScene::Draw() {
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_comboCount, 0 }
 	};
+
+	// コンボ表示（m_comboCount が 1 以上なら表示）
+	if (m_comboCount > 0) {
+		const std::string& debugFont = m_game->GatDebugFont();
+		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
+		std::string comboText = std::to_string(m_comboCount) + " Combo";
+		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(255, 200, 32), debugFont, 32, false);
+	}
 
 	if (m_resultShown) {
 		const std::string& debugFont = m_game->GatDebugFont();
@@ -470,5 +463,6 @@ void PlayScene::SpawnHitEffect(const Vector2d& pos) {
 
 void PlayScene::AddCombo() {
 	m_comboCount++;
+	// タイマーは廃止するため不要
 	std::cout << "Combo: " << m_comboCount << std::endl;
 }

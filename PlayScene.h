@@ -48,7 +48,9 @@ private:
 	Camera m_camera;
 
 	int m_stageIndex;
-	int m_comboCount;
+	int m_comboCount = 0;
+	float m_comboTimer = 0.0f; // コンボ表示の残り時間（秒）
+	const float COMBO_DISPLAY_TIME = 2.0f; // コンボ表示時間（秒）
 	int m_currentStage;
 	bool m_resultShown = false;
 

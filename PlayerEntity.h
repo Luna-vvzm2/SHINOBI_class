@@ -65,6 +65,8 @@ private:
     bool m_canCharge;
     ActionState m_state;
 
+    bool m_isDeadTriggered = false; // €–S‚Ì‰‰ñˆ——pƒtƒ‰ƒO
+
     // ---- è— Œ•Š” ----
     int m_shurikenCount = 5;   // ‰ŠúŠ”
 
