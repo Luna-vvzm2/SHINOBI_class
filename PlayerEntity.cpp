@@ -137,7 +137,23 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     if (m_isGround) m_jumpCount = 0;
 }
 
-void PlayerEntity::UpdateAttack(float deltaTime) {}
+void PlayerEntity::UpdateAttack(float deltaTime)
+{
+    const Input& input = m_scene->GetGame()->GetInput();
+
+    // 手裏剣投げ（例：Zキー）
+    if (input.IsTrigger(Action::KUNAIATTACK))
+    {
+        if (m_shurikenCount > 0)
+        {
+            UseShuriken();   // ← 手裏剣を減らす
+
+            // TODO: 手裏剣の飛び道具を生成する処理を書く
+            // 例: m_scene->AddActor(new ShurikenProjectile(...));
+        }
+    }
+}
+
 
 void PlayerEntity::UpdateState() {
     if (m_hp->GetHP() <= 0) { m_state = ActionState::DEAD; return; }

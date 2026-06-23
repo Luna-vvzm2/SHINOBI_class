@@ -34,6 +34,11 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
 
+    // ---- 手裏剣関連 ----
+    int GetShurikenCount() const { return m_shurikenCount; }
+    void UseShuriken() { if (m_shurikenCount > 0) m_shurikenCount--; }
+    void AddShuriken(int amount) { m_shurikenCount += amount; }
+
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -60,7 +65,8 @@ private:
     bool m_canCharge;
     ActionState m_state;
 
-    bool m_isDeadTriggered = false; // 死亡時の初回処理用フラグ
+    // ---- 手裏剣所持数 ----
+    int m_shurikenCount = 5;   // 初期所持数
 
     std::string GetTexturePath() const override;
 

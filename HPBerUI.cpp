@@ -3,22 +3,21 @@
 #include "TransformComponent.h"
 #include "SpriteComponent.h"
 #include "Game.h"
+#include <iostream>
+
+static const std::string DEFAULT_BAR = "assets/images/uies/hpBar.png";
+static const std::string DEFAULT_FRAME = "assets/images/uies/hpBarFrame.png";
 
 HPBarUI::HPBarUI(Scene* scene, HPComponent* hpComp)
     : UIActor(scene)
     , m_hp(hpComp)
-    , m_maxWidth(1.0f)
-    , m_height(1.0f)
+    , m_maxWidth(180.0f)
+    , m_height(12.0f)
 {
     m_transform = AddComponent<TransformComponent>();
-    m_sprite = AddComponent<SpriteComponent>("assets/images/uies/hpBar.png");
     m_backBar = AddComponent<SpriteComponent>("assets/images/uies/hpBarFrame.png");
-    if (!m_sprite) {
-        std::cerr << "画像読み込み失敗\n";
-    }
-    else {
-        std::cout << "画像読み込み成功" << std::endl;
-    }
+    // m_sprite = AddComponent<SpriteComponent>("assets/images/uies/hpBar.png");
+
     SetName("HPBarUI");
 }
 
@@ -26,48 +25,75 @@ bool HPBarUI::Init()
 {
     if (!UIActor::Init()) return false;
 
-    m_transform->SetPosition({ 20, 20 });
+    // 左上に小さく配置
+    m_transform->SetPosition({ 0, -120 });
+
+    // バーの最大幅（画像に合わせて調整）
+    //m_maxWidth = 60.0f;   // ← 小さくする
 
     return true;
 }
+
 
 void HPBarUI::Update(float deltaTime)
 {
     UIActor::Update(deltaTime);
 
-    if (!m_hp) return;
-
-
+    if (m_hp)
+    {
+        // 【滑らかに減らす演出を入れる場合】
+        float targetRatio = (float)m_hp->GetHP() / m_hp->GetMaxHP();
+        m_displayRatio += (targetRatio - m_displayRatio) * 5.0f * deltaTime;
+        if (fabs(m_displayRatio - targetRatio) < 0.001f) m_displayRatio = targetRatio;
+    }
 }
 
 void HPBarUI::Draw() {
-    if (!m_sprite || !m_hp) return;
+    if (!m_backBar || !m_hp) return;
 
-    auto transform = GetComponent<TransformComponent>();
-    if (!transform) return;
+    Vector2d pos = m_transform->GetPosition();
+    float scale = 0.7f;
 
-    Vector2d pos = transform->GetPosition();
-
-    // HP割合で横幅を計算
-    float ratio = (float)m_hp->GetHP() / m_hp->GetMaxHP();
-    int w, h;
-    GetGraphSize(m_backBar->GetHandle(), &w, &h);
-
-    int ScaleX = 3;
-    int ScaleY = ScaleX;
-
-    // スクリーン座標描画（カメラ影響なし）
+    // --- フレーム描画 ---
     m_scene->GetGame()->GetRenderer()->DrawSpriteEx(
-        pos, ScaleX, ScaleY, 0.0f, m_backBar->GetHandle(),
-        true, Vector2d(0, 0), 255, false, false, false
+        pos,
+        scale, scale,
+        0.0f,
+        m_backBar->GetHandle(),
+        true,
+        Vector2d(0, 0),
+        255,
+        false, false, false
     );
 
-    ScaleX = static_cast<int>(ScaleX * 63 * ratio);
+    // --- HP割合の計算（★ここを m_displayRatio に変更） ---
+    // これにより、実際のHPが減ってもゲージの描画幅がスルスルと滑らかに縮みます
+    float barWidth = m_maxWidth * m_displayRatio;
 
-    m_scene->GetGame()->GetRenderer()->DrawSpriteEx(
-        { 110, 29 }, ScaleX, ScaleY, 0.0f, m_sprite->GetHandle(),
-        true, Vector2d(0, 0), 255, false, false, false
-    );
+    int skew = 14; // ★斜めの傾き具合（ドット数）。数値を大きくするともっと傾きます。
+
+    // 基本となる左上の開始位置
+    int baseLeft = static_cast<int>(pos.x + 130);
+    int baseTop = static_cast<int>(pos.y + 160);
+
+    // 4頂点の座標を計算（時計回りに指定します：左上 -> 右上 -> 右下 -> 左下）
+    int x1 = baseLeft;                 // 1. 左上 (右にずらす)
+    int y1 = baseTop;
+
+    int x2 = static_cast<int>(baseLeft + barWidth); // 2. 右上
+    int y2 = baseTop;
+
+    int x3 = static_cast<int>(baseLeft + barWidth - skew); // 3. 右下
+    int y3 = static_cast<int>(baseTop + m_height);
+
+    int x4 = baseLeft + skew;                        // 4. 左下 (ずらさない)
+    int y4 = y3;
+
+    // HPが0より大きいときだけ描画（幅が0のときの誤描画を防ぐ安全策）
+    if (barWidth > 0.0f) {
+        // DrawQuadrangle(左上X, 左上Y, 右上X, 右上Y, 右下X, 右下Y, 左下X, 左下Y, 色, 塗りつぶしフラグ)
+        DrawQuadrangle(x1, y1, x2, y2, x3, y3, x4, y4, GetColor(255, 0, 0), TRUE);
+    }
 }
 
 void HPBarUI::SetPosition(float x, float y)
@@ -80,6 +106,4 @@ void HPBarUI::SetBarSize(float w, float h)
 {
     m_maxWidth = w;
     m_height = h;
-    if (m_sprite)
-        m_sprite->SetSize(w, h);
 }

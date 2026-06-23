@@ -149,9 +149,11 @@
     <ClCompile Include="EffectActor.cpp" />
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyEntity.cpp" />
+    <ClCompile Include="EnemyHPBar.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
+    <ClCompile Include="ShurikenUI.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -196,9 +198,11 @@
     <ClInclude Include="EffectActor.h" />
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyEntity.h" />
+    <ClInclude Include="EnemyHPBar.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
+    <ClInclude Include="ShurikenUI.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
