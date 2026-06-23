@@ -152,6 +152,7 @@
     <ClCompile Include="EnemyHPBar.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="MoneyUI.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="ShurikenUI.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
@@ -201,6 +202,7 @@
     <ClInclude Include="EnemyHPBar.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="MoneyUI.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="ShurikenUI.h" />
     <ClInclude Include="WhiteEnemyEntity.h">

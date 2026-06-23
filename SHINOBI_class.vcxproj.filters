@@ -177,6 +177,9 @@
     <ClCompile Include="EnemyHPBar.cpp">
       <Filter>ソース ファイル\Actor\UI</Filter>
     </ClCompile>
+    <ClCompile Include="MoneyUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -312,6 +315,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="EnemyHPBar.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="MoneyUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

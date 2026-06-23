@@ -20,6 +20,7 @@
 #include "TransformComponent.h"
 #include "HPComponent.h"
 #include "Camera.h"
+#include "MoneyUI.h"
 #include "EnemyHPBar.h"
 
 #include <algorithm>
@@ -334,6 +335,24 @@ bool PlayScene::Init() {
 
 	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
 	AddUIActor(shuriken);
+
+	// プレイヤー所持金 UI（左上に表示）
+	m_moneyUI = new MoneyUI(this, m_player, "assets/images/uies/money.png");
+	m_moneyUI->SetPosition(20.0f, 110.0f);   // テキスト左上基準（スクリーン座標）
+	m_moneyUI->SetImageSize(40.0f, 40.0f);   // 画像を 40x40 px に
+	m_moneyUI->SetImageOffset(0.0f, 0.0f);   // 画像の相対オフセット（必要なら微調整）
+	m_moneyUI->SetTextOffset(46.0f);         // 画像右側に数字を表示する距離
+	m_moneyUI->SetAnchorTopRight(220.0f, 50.0f, -80.0f);// 右上に固定：右端から220px, 上から50px, 画像と数字の間隔を-60px にする
+	AddUIActor(m_moneyUI);
+
+	// プレイヤー金額変更時に MoneyUI を 3 秒表示（増えたときのみ）
+	if (m_player) {
+		m_player->OnMoneyChanged = [this](int newMoney, int oldMoney) {
+			if (newMoney > oldMoney && m_moneyUI) {
+				m_moneyUI->ShowFor(3.0f); // 3秒表示
+			}
+			};
+	}
 
 	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
 	AddBackActor(back);

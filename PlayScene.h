@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "MapData.h"
 #include "ShurikenUI.h"
+#include "MoneyUI.h"
 #include <unordered_map>
 
 class PlayerEntity;
@@ -11,6 +12,7 @@ class HitEffect;
 class EnemyEntity;
 class HPBarUI;
 class EnemyHPBar;
+class MoneyUI;
 
 class PlayScene : public Scene
 {
@@ -55,6 +57,8 @@ private:
 	bool m_resultShown = false;
 
 	ShurikenUI* m_shurikenUI = nullptr;
+
+	MoneyUI* m_moneyUI = nullptr;
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
 };

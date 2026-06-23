@@ -207,4 +207,20 @@ void PlayerEntity::UpdateDead(float deltaTime) {
     }
 }
 
+void PlayerEntity::SetMoney(int amount)
+{
+    int old = m_money;
+    m_money = (amount >= 0) ? amount : 0;
+    if (OnMoneyChanged) OnMoneyChanged(m_money, old);
+}
+
+void PlayerEntity::AddMoney(int delta)
+{
+    if (delta == 0) return;
+    int old = m_money;
+    m_money += delta;
+    if (m_money < 0) m_money = 0;
+    if (OnMoneyChanged) OnMoneyChanged(m_money, old);
+}
+
 std::string PlayerEntity::GetTexturePath() const { return ""; }

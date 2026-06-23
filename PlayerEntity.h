@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityActor.h"
 #include "Vector2d.h"
+#include <functional>
 
 class TransformComponent;
 class VelocityComponent;
@@ -39,6 +40,11 @@ public:
     void UseShuriken() { if (m_shurikenCount > 0) m_shurikenCount--; }
     void AddShuriken(int amount) { m_shurikenCount += amount; }
 
+    std::function<void(int newMoney, int oldMoney)> OnMoneyChanged; // コールバック
+    int GetMoney() const { return m_money; }
+    void SetMoney(int amount);
+    void AddMoney(int delta);
+    
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -69,6 +75,8 @@ private:
 
     // ---- 手裏剣所持数 ----
     int m_shurikenCount = 5;   // 初期所持数
+
+    int m_money = 0;
 
     std::string GetTexturePath() const override;
 
