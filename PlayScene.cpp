@@ -204,7 +204,7 @@ bool PlayScene::Init() {
 				{
 					ArmorEnemyEntity* enemy = new ArmorEnemyEntity(this, pos);
 					AddActor(enemy);
-					EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
+					EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_armor.png");
 					hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
 					hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
 					hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
@@ -313,7 +313,7 @@ bool PlayScene::Init() {
 	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64
 		}));
 	AddActor(m_player);
-	
+
 	// ---- HP UI 作成 ----
 	HPBarUI* hpBar = new HPBarUI(
 		this,
