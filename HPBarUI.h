@@ -31,6 +31,9 @@ private:
     float m_maxWidth;
     float m_height;
 
+    std::string m_barImagePath;
+    std::string m_frameImagePath;
+
     Vector2d m_barOffset = { 0, 0 }; // フレーム内のゲージ位置
 
     float m_displayRatio = 1.0f; // 画面表示用のHP割合（0.0 ～ 1.0）

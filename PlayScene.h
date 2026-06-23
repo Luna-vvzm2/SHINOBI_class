@@ -4,12 +4,13 @@
 #include "Camera.h"
 #include "MapData.h"
 #include "ShurikenUI.h"
-
+#include <unordered_map>
 
 class PlayerEntity;
 class HitEffect;
-
-
+class EnemyEntity;
+class HPBarUI;
+class EnemyHPBar;
 
 class PlayScene : public Scene
 {
@@ -52,4 +53,6 @@ private:
 	bool m_resultShown = false;
 
 	ShurikenUI* m_shurikenUI = nullptr;
+
+	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
 };

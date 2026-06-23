@@ -3,6 +3,10 @@
 #include "TransformComponent.h"
 #include "SpriteComponent.h"
 #include "Game.h"
+#include <iostream>
+
+static const std::string DEFAULT_BAR = "assets/images/uies/hpBar.png";
+static const std::string DEFAULT_FRAME = "assets/images/uies/hpBarFrame.png";
 
 HPBarUI::HPBarUI(Scene* scene, HPComponent* hpComp)
     : UIActor(scene)
