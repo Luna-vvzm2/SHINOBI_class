@@ -38,7 +38,7 @@ private:
 	void StartDeadHit();
 	void UpdateDamageMotion(float deltaTime);
 	void CancelAttackForDamage();
-	void UpdateDebugDamageInput();
+	
 
 	float GetDirSign() const;
 	void PrepareMoveTracking(float wantedMoveX);

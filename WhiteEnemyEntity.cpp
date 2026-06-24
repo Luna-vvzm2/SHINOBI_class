@@ -584,7 +584,7 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 
 void WhiteEnemyEntity::Update(float deltaTime)
 {
-	UpdateDebugDamageInput();
+	
 
 	if (m_damageState != WHITE_DAMAGE_NONE)
 	{
