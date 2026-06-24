@@ -6,6 +6,7 @@
 #include "HPComponent.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
+#include "PlayerEntity.h"
 #include "Vector2d.h"
 
 ArmorEnemyEntity::ArmorEnemyEntity(Scene* scene, const Vector2d& pos)
@@ -35,6 +36,8 @@ static const float ARMOR_MOVE_SPEED = 120.0f;          // move speed
 static const float ARMOR_COOLDOWN = 0.4f;              // attack cooldown
 static const float ARMOR_ATTACK_RANGE = 120.0f;        // attack x range
 static const float ARMOR_ATTACK_HEIGHT_RANGE = 90.0f;  // attack y range
+static const float ARMOR_ATTACK_KNOCKBACK_X = 300.0f;  // attack knockback x
+static const float ARMOR_ATTACK_KNOCKBACK_Y = -200.0f; // attack knockback y
 static const int ARMOR_ATTACK_DAMAGE = 10;             // attack damage
 static const float ARMOR_GUARD_RECOVER_TIME = 5.0f;    // guard recover seconds
 
@@ -54,9 +57,9 @@ float ArmorEnemyEntity::GetDirSign() const
 	return m_dir ? 1.0f : -1.0f;
 }
 
-bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playerHp) const
+bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player) const
 {
-	playerHp = nullptr;
+	player = nullptr;
 
 	if (m_scene == nullptr)
 	{
@@ -77,7 +80,7 @@ bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playe
 		}
 
 		playerPos = transform->GetPosition();
-		playerHp = actor->GetComponent<HPComponent>();
+		player = static_cast<PlayerEntity*>(actor);
 		return true;
 	}
 
@@ -162,9 +165,9 @@ void ArmorEnemyEntity::Update(float deltaTime)
 	UpdateGuardRecover(deltaTime);
 
 	Vector2d playerPos = Vector2d::Zero();
-	HPComponent* playerHp = nullptr;
+	PlayerEntity* player = nullptr;
 
-	if (!TryGetPlayerInfo(playerPos, playerHp))
+	if (!TryGetPlayerInfo(playerPos, player))
 	{
 		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 		EnemyEntity::Update(deltaTime);
@@ -343,10 +346,13 @@ void ArmorEnemyEntity::Update(float deltaTime)
 						dy *= -1.0f;
 					}
 
-					if (dy < ARMOR_ATTACK_HEIGHT_RANGE && playerHp != nullptr)
+					if (dy < ARMOR_ATTACK_HEIGHT_RANGE && player != nullptr)
 					{
-						playerHp->Damage(ARMOR_ATTACK_DAMAGE);
-						playerHp->SetInvincible(0.3f);
+						float knockbackX = playerPos.x < myPos.x ? -ARMOR_ATTACK_KNOCKBACK_X : ARMOR_ATTACK_KNOCKBACK_X;
+						player->TakeDamage(
+							ARMOR_ATTACK_DAMAGE,
+							Vector2d(knockbackX, ARMOR_ATTACK_KNOCKBACK_Y)
+						);
 					}
 				}
 

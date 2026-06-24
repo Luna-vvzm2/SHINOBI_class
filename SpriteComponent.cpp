@@ -33,7 +33,6 @@ SpriteComponent::SpriteComponent(Actor* actor, const std::string& texturePath)
     , m_texturePath(texturePath)
 {
 }
-
 // --------------------
 // デストラクタ
 // --------------------
@@ -139,7 +138,6 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
 
     // フレーム配列確保
     m_frames.resize(total);
-
     // 正しい幅・高さで分割読み込み
     int ret = LoadDivGraph(
         path.c_str(),
@@ -152,7 +150,7 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
     );
 
     if (ret == -1) {
-        std::cerr << "[ERROR] 分割画像読み込み失敗: " << path << std::endl;
+        std::cerr << "[ERROR] 分割画像読み込み失敗:  " << path << std::endl;
         return false;
     }
 
@@ -216,7 +214,7 @@ bool SpriteComponent::LoadTexture(const std::string& path) {
     else {
         m_handle = LoadGraph(path.c_str());
         if (m_handle == -1) {
-            std::cerr << "[ERROR] 画像読み込み失敗: " << path << std::endl;
+            std::cerr << "[ERROR] 画像読み込み失敗:  " << path << std::endl;
             m_width = 32;
             m_height = 32;
 
