@@ -36,7 +36,6 @@ public:
     virtual int GetMaxHP() const { return 100;  }
     virtual void TakeDamage(int damage, const Vector2d& knockback);
 
-    void TakeDamage(int damage, const Vector2d& knockback);
 protected:
     virtual void OnDamaged(int damage, const Vector2d& knockback) {}
     virtual void OnDeadFromDamage(int damage, const Vector2d& knockback);
