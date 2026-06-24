@@ -42,6 +42,7 @@ public:
 
     void SetFlipX(bool flip) { m_flipX = flip; }
     bool GetFlipX() const { return m_flipX; }
+
 private:
     int m_handle;
     float m_width;
