@@ -57,6 +57,7 @@ public:
     void SpawnKunai();
 
     enum class AttackType {
+        NONE,
         WEAK_ATTACK,
         STRONG_ATTACK,
         KUNAI,
@@ -102,6 +103,9 @@ private:
     int m_airAttackIdx;
 
     float m_attackTimer;
+
+    bool m_canAttack;
+    float m_attackLockTimer;
 
     float m_hitTimer;
     float m_invincibleTime;

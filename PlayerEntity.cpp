@@ -60,6 +60,9 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_airAttackIdx(0)
     , m_attackTimer(0.0f)
 
+    , m_canAttack(true)
+    , m_attackLockTimer(0.0f)
+
     , m_hitTimer(0.0f)
     , m_invincibleTime(0.0f)
 
@@ -608,170 +611,211 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
 
     const Input& input = m_scene->GetGame()->GetInput();
     Vector2d pPos = m_transform->GetPosition();
+    if (m_canAttack) {
+        m_attackType = AttackType::NONE;
+        if (input.IsTrigger(Action::KUNAI)) {
+            if (m_kunai > 0) {
+                m_attack = true;
+                m_canAttack = false;
+                m_canMove = false;
+                if (m_squat) {
+                    m_attackType = AttackType::SQUAT_KUNAI;
+                    m_attackTimer = 0.5f;
+                    m_attackLockTimer = 0.3f;
+                    m_kunai--;
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiPending = true;
+                    m_anim->Play("KunaiSquat", true);
+                }
+                else if (!m_isGround) {
+                    m_attackType = AttackType::AIR_KUNAI;
+                    m_attackTimer = 0.2f;
+                    m_attackLockTimer = 0.1f;
+                    m_kunai--;
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiPending = true;
+                    m_anim->Play("KunaiAir", true);
+                }
+                else {
+                    m_attackType = AttackType::KUNAI;
+                    m_attackTimer = 0.3f;
+                    m_attackLockTimer = 0.3f;
+                    m_kunai--;
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiPending = true;
+                    m_anim->Play("Kunai", true);
+                }
+            }
+        }
 
-    if (input.IsTrigger(Action::KUNAI)) {
-        if (m_kunai > 0) {
+        if (input.IsTrigger(Action::WEAK_ATTACK) && m_attackType == AttackType::NONE) {
             m_attack = true;
+            m_canAttack = false;
             m_canMove = false;
             if (m_squat) {
-                m_attackType = AttackType::SQUAT_KUNAI;
-                m_attackTimer = 0.5f;
-                m_kunai--;
-                m_kunaiSpawnTimer = 0.05f; // –ñ3f
-                m_kunaiPending = true;
+                m_attackType = AttackType::SQUAT_ATTACK;
+                m_attackTimer = 0.4f;
+                m_attackLockTimer = 0.2f;
+                CheckAttackHit(squatAttack);
+                pPos.x += (m_dir ? 90.0f : -90.0f);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::SquatAttack, !m_dir));
+                m_anim->Play("squatAttack", true);
             }
             else if (!m_isGround) {
-                m_attackType = AttackType::AIR_KUNAI;
-                m_attackTimer = 0.2f;
-                m_kunai--;
-                m_kunaiSpawnTimer = 0.05f; // –ñ3f
-                m_kunaiPending = true;
+                m_attackType = AttackType::AIR_ATTACK;
+                switch (m_airAttackIdx) {
+                case 0: {
+                    m_attackTimer = 0.2f;
+                    m_attackLockTimer = 0.1f;
+                    CheckAttackHit(airWeak1);
+                    if (m_hit) m_airAttackIdx++;
+                    auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack1, !m_dir);
+                    effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
+
+                    SpawnEffect(effect);
+                    m_anim->Play("weakAirAttack1", true);
+                    break;
+                }
+                case 1: {
+                    m_attackTimer = 0.3f;
+                    m_attackLockTimer = 0.2f;
+                    CheckAttackHit(airWeak2);
+                    if (m_hit) m_airAttackIdx++;
+                    auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack2, !m_dir);
+                    effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 0.0f });
+
+                    SpawnEffect(effect);
+                    m_anim->Play("weakAirAttack2", true);
+                    break;
+                }
+                case 2: {
+                    m_attackTimer = 1.3f;
+                    m_attackLockTimer = 1.3f;
+                    CheckAttackHit(airWeak3);
+                    if (m_hit) m_airAttackIdx++;
+                    auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack3, !m_dir);
+                    effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
+
+                    SpawnEffect(effect);
+                    m_anim->Play("weakAirAttack3", true);
+                    break;
+                }
+                }
             }
             else {
-                m_attackType = AttackType::KUNAI;
-                m_attackTimer = 0.3f;
-                m_kunai--;
-                m_kunaiSpawnTimer = 0.05f; // –ñ3f
-                m_kunaiPending = true;
+                m_attackType = AttackType::WEAK_ATTACK;
+                switch (m_weakAttackIdx) {
+                case 0:
+                    m_attackTimer = 0.8f;
+                    m_attackLockTimer = 0.13f;
+                    CheckAttackHit(weak1);
+                    pPos.x += (m_dir ? 100.0f : -100.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack1, !m_dir));
+                    m_anim->Play("weakAttack1", true);
+                    break;
+                case 1:
+                    m_attackTimer = 0.7f;
+                    m_attackLockTimer = 0.2f;
+                    CheckAttackHit(weak2);
+                    pPos.x += (m_dir ? 30.0f : -30.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack2, !m_dir));
+                    m_anim->Play("weakAttack2", true);
+                    break;
+                case 2:
+                    m_attackTimer = 1.2f;
+                    m_attackLockTimer = 0.25f;
+                    CheckAttackHit(weak3);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack3, !m_dir));
+                    m_anim->Play("weakAttack3", true);
+                    break;
+                case 3:
+                    m_attackTimer = 1.3f;
+                    m_attackLockTimer = 1.3f;
+                    CheckAttackHit(weak4);
+                    pPos.x += (m_dir ? 100.0f : -100.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack4, !m_dir));
+                    m_anim->Play("weakAttack4", true);
+                    break;
+                }
+                m_weakAttackIdx++;
+
+                Vector2d vel = m_velocity->Get();
+                vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+
+                m_velocity->Set(vel);
             }
         }
-    }
 
-    if (input.IsTrigger(Action::WEAK_ATTACK)) {
-        m_attack = true;
-        m_canMove = false;
-        if (m_squat) {
-            m_attackType = AttackType::SQUAT_ATTACK;
-            m_attackTimer = 0.4f;
-            CheckAttackHit(squatAttack);
-            pPos.x += (m_dir ? 90.0f : -90.0f);
-            pPos.y -= 50.0f;
-            SpawnEffect(new EffectActor(m_scene, pPos, EffectType::SquatAttack, !m_dir));
-        }
-        else if (!m_isGround) {
-            m_attackType = AttackType::AIR_ATTACK;
-            switch (m_airAttackIdx) {
-            case 0: {
-                m_attackTimer = 0.2f;
-                CheckAttackHit(airWeak1);
-                if (m_hit) m_airAttackIdx++;
-                auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack1, !m_dir);
-                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
 
-                SpawnEffect(effect);
-                break;
+        if (input.IsTrigger(Action::STRONG_ATTACK) && m_attackType == AttackType::NONE) {
+            if (m_squat) {
+                if (!m_canStand) {
+                    return;
+                }
+                else {
+                    ExitSquat();
+                }
             }
-            case 1: {
-                m_attackTimer = 0.3f;
-                CheckAttackHit(airWeak2);
-                if (m_hit) m_airAttackIdx++;
-                auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack2, !m_dir);
-                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 0.0f });
 
-                SpawnEffect(effect);
-                break;
-            }
-            case 2: {
-                m_attackTimer = 1.3f;
-                CheckAttackHit(airWeak3);
-                if (m_hit) m_airAttackIdx++;
-                auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack3, !m_dir);
-                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
-
-                SpawnEffect(effect);
-                break;
-            }
-            }
-        }
-        else {
-            m_attackType = AttackType::WEAK_ATTACK;
-            switch (m_weakAttackIdx) {
-            case 0:
-                m_attackTimer = 0.8f;
-                CheckAttackHit(weak1);
-                pPos.x += (m_dir ? 100.0f : -100.0f);
-                pPos.y -= 50.0f;
-                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack1, !m_dir ));
-                break;
-            case 1:
-                m_attackTimer = 0.7f;
-                CheckAttackHit(weak2);
-                pPos.x += (m_dir ? 30.0f : -30.0f);
-                pPos.y -= 50.0f;
-                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack2, !m_dir));
-                break;
-            case 2:
-                m_attackTimer = 1.2f;
-                CheckAttackHit(weak3);
-                pPos.y -= 50.0f;
-                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack3, !m_dir));
-                break;
-            case 3:
-                m_attackTimer = 1.3f;
-                CheckAttackHit(weak4);
-                pPos.x += (m_dir ? 100.0f : -100.0f);
-                pPos.y -= 50.0f;
-                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack4, !m_dir));
-                break;
-            }
-            m_weakAttackIdx++;
-
-            Vector2d vel = m_velocity->Get();
-            vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
-
-            m_velocity->Set(vel);
-        }
-    }
-
-
-    if (input.IsTrigger(Action::STRONG_ATTACK)) {
-        if (m_squat) {
-            if (!m_canStand) {
-                return;
-            }
-            else {
-                ExitSquat();
-            }
-        }
-        if (m_squat && !m_canStand) return;
-
-        m_attack = true;
-        m_canMove = false;
-        if (!m_isGround) {
-            m_HayabusaHit = false;
-            m_attackType = AttackType::HAYABUSA;
-            m_attackTimer = 0.9f;
-            auto effect = new EffectActor(m_scene, GetPos(), EffectType::Hayabusa, !m_dir);
-            effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 100.0f });
-
-            SpawnEffect(effect);
-        }
-        else {
-            m_attackType = AttackType::STRONG_ATTACK;
-
-            switch (m_strongAttackIdx) {
-            case 0:
+            m_attack = true;
+            m_canAttack = false;
+            m_canMove = false;
+            if (!m_isGround) {
+                m_HayabusaHit = false;
+                m_attackType = AttackType::HAYABUSA;
                 m_attackTimer = 0.9f;
-                CheckAttackHit(strong1);
-                pPos.x += (m_dir ? 70.0f : -70.0f);
-                pPos.y -= 50.0f;
-                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack1, !m_dir));
-                break;
-            case 1:
-                m_attackTimer = 1.0f;
-                CheckAttackHit(strong2);
-                pPos.x += (m_dir ? 70.0f : -70.0f);
-                pPos.y -= 60.0f;
-                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack2, !m_dir));
-                break;
+                m_attackLockTimer = 0.9f;
+                auto effect = new EffectActor(m_scene, GetPos(), EffectType::Hayabusa, !m_dir);
+                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 100.0f });
+
+                SpawnEffect(effect);
             }
+            else {
+                m_attackType = AttackType::STRONG_ATTACK;
 
-            m_strongAttackIdx++;
+                switch (m_strongAttackIdx) {
+                case 0:
+                    m_attackTimer = 0.9f;
+                    m_attackLockTimer = 0.4f;
+                    CheckAttackHit(strong1);
+                    pPos.x += (m_dir ? 70.0f : -70.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack1, !m_dir));
+                    m_anim->Play("strongAttack1", true);
+                    break;
+                case 1:
+                    m_attackTimer = 1.0f;
+                    m_attackLockTimer = 1.0f;
+                    CheckAttackHit(strong2);
+                    pPos.x += (m_dir ? 70.0f : -70.0f);
+                    pPos.y -= 60.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack2, !m_dir));
+                    m_anim->Play("strongAttack2", true);
+                    break;
+                }
 
-            Vector2d vel = m_velocity->Get();
-            vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+                m_strongAttackIdx++;
 
-            m_velocity->Set(vel);
+                Vector2d vel = m_velocity->Get();
+                vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+
+                m_velocity->Set(vel);
+            }
+        }
+    }
+
+    if (!m_canAttack)
+    {
+        m_attackLockTimer -= deltaTime;
+
+        if (m_attackLockTimer <= 0)
+        {
+            m_canAttack = true;
         }
     }
 
@@ -813,7 +857,14 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             m_airAttackIdx = 0;
         }
     }
-
+    printf(
+        "weak=%d strong=%d type=%d attack=%d canAttack=%d\n",
+        m_weakAttackIdx,
+        m_strongAttackIdx,
+        (int)m_attackType,
+        m_attack,
+        m_canAttack
+    );
 }
 
 void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)

@@ -129,7 +129,7 @@ bool EffectActor::LoadEffects()
 
     EffectData weak3;
     weak3.handles = attackHandles;
-    weak3.clip.frames = { -1, -1, -1, 5, 6, 7 };
+    weak3.clip.frames = { -1, -1, 5, 6, 7 };
     weak3.clip.speed = 0.1f;
     weak3.clip.loop = false;
     weak3.size = { 64,64 };
@@ -137,7 +137,7 @@ bool EffectActor::LoadEffects()
 
     EffectData weak4;
     weak4.handles = attackHandles;
-    weak4.clip.frames = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, 10 };
+    weak4.clip.frames = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, 10 };
     weak4.clip.speed = 0.1f;
     weak4.clip.loop = false;
     weak4.size = { 64,64 };
