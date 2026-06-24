@@ -43,6 +43,7 @@ public:
     // Camera Ý’è
     void SetCamera(const Camera* camera) { m_camera = camera; }
     float GetCameraZoom() const { return m_camera ? m_camera->GetZoom() : 1.0f; }
+    void DrawBackground(const Vector2d& pos, int handle, bool useCamera);
 
 private:
     Vector2d ApplyCamera(const Vector2d& pos, bool useCamera) const;

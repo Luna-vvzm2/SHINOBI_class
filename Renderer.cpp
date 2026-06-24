@@ -129,3 +129,19 @@ int Renderer::GetFontHandle(const std::string& fontName, int size) {
     else m_fontCache[key] = handle;
     return handle;
 }
+
+void Renderer::DrawBackground(
+    const Vector2d& pos,
+    int handle,
+    bool useCamera
+)
+{
+    Vector2d p = ApplyCamera(pos, useCamera);
+
+    DrawGraph(
+        (int)p.x,
+        (int)p.y,
+        handle,
+        TRUE
+    );
+}

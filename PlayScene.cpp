@@ -29,7 +29,9 @@ PlayScene::PlayScene(Game* game)
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
 	m_stageIndex(0),
 	m_comboCount(0),
-	m_currentStage(1)
+	m_currentStage(1),
+	m_bgHandle(0),
+	m_fgHandle(0)
 {
 
 }
@@ -137,7 +139,7 @@ bool PlayScene::Init() {
 	);
 	AddUIActor(hpBar);
 
-	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
+	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg1.png");
 	AddBackActor(back);
 
 	EffectActor::LoadEffects();
@@ -153,6 +155,8 @@ bool PlayScene::Init() {
 	// Renderer ‚É Camera ‚ðƒZƒbƒg
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
+	m_bgHandle = LoadGraph("assets/images/uies/bg1.png");
+	m_fgHandle = LoadGraph("assets/images/uies/fg1.png");
 	return true;
 }
 
@@ -188,17 +192,43 @@ void PlayScene::Update(float deltaTime) {
 
 void PlayScene::Draw() {
 	Renderer* renderer = m_game->GetRenderer();
+	Vector2d cam = m_camera.GetCenter();
 
 	// ‰¼”wŒi
 	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
+	// ”wŒi
+	renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), 9270), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+
+	
 	// --- ƒAƒNƒ^[•`‰æ ---
 	drawActors(m_backactors);
 	drawActors(m_actors);
 	drawActors(m_UIactors);
 
+	// ‘OŒi
+	renderer->DrawSpriteEx(Vector2d(-1290 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(1910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(3510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(5110 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(6710 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(8310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(9910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(11510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(13110 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(14710 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(16310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(17910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(19510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(21110 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(22710 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(24310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(25910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	renderer->DrawSpriteEx(Vector2d(27510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+
 	// UŒ‚”ÍˆÍ•`‰æ --------------------------
-	Vector2d Pos = m_player->GetPos();
+	/*Vector2d Pos = m_player->GetPos();
 	AttackHitbox Weak1{ Vector2d(50,100), 100, 100, 30 };
 	if (m_player->GetDir()) {
 		Pos.x += Weak1.offset.x;
@@ -208,7 +238,7 @@ void PlayScene::Draw() {
 		Pos.x -= Weak1.offset.x;
 		Pos.y += Weak1.offset.y;
 	}
-	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);
+	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);*/
 	//------------------------------------------
 
 	std::vector<NumberInfo> comboInfo = {

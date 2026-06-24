@@ -9,7 +9,6 @@ class PlayerEntity;
 class HitEffect;
 
 
-
 class PlayScene : public Scene
 {
 public:
@@ -37,6 +36,8 @@ public:
 	Camera& GetCamera() { return m_camera; }
 	const Camera& GetCamera() const { return m_camera; }
 
+	int m_bgHandle;
+	int m_fgHandle;
 private:
 
 	PlayerEntity* m_player;
@@ -49,6 +50,5 @@ private:
 	int m_comboCount;
 	int m_currentStage;
 	bool m_resultShown = false;
-
 
 };

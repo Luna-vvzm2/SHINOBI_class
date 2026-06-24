@@ -19,7 +19,7 @@ bool BackGroundUI::Init()
 {
 	if (!UIActor::Init()) return false;
 
-	m_transform->SetPosition({ -148, -32 });
+	m_transform->SetPosition({ 0, 5000 });
 
 	return true;
 }
