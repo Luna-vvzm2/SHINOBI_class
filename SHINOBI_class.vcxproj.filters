@@ -171,6 +171,9 @@
     <ClCompile Include="YoroiBossEntity.cpp">
       <Filter>ソース ファイル\Actor\Entity\EnemyEntity\BossEntity</Filter>
     </ClCompile>
+    <ClCompile Include="KunaiActor.cpp">
+      <Filter>ソース ファイル\Actor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -302,6 +305,9 @@
     <ClInclude Include="YoroiBossEntity.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="KunaiActor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\maps\stage1\map.csv">
@@ -313,6 +319,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\images\blocks\ground.png">
+      <Filter>リソース ファイル</Filter>
+    </Image>
+    <Image Include="assets\images\entities\players\musashi_sheet.PNG">
       <Filter>リソース ファイル</Filter>
     </Image>
   </ItemGroup>

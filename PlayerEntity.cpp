@@ -1,6 +1,9 @@
 #include "PlayerEntity.h"
-#include "HitEffect.h"
+#include "EnemyEntity.h"
+#include "EffectActor.h"
+#include "Scene.h"
 #include "BlockActor.h"
+#include "KunaiActor.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "GravityComponent.h"
@@ -12,6 +15,20 @@
 #include "Game.h"
 #include "PlayScene.h"
 
+//                       offset, width, height, damage
+AttackHitbox weak1{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox weak2{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox weak3{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox weak4{ Vector2d(100,0), 300, 200, 10 };
+AttackHitbox strong1{ Vector2d(100,-50), 400, 300, 30 };
+AttackHitbox strong2{ Vector2d(100,-50), 400, 300, 30 };
+AttackHitbox airWeak1{ Vector2d(100,50), 300, 200, 10 };
+AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 10 };
+AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 10 };
+AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 30 };
+AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10 };
+AttackHitbox Kunai;
+
 
 PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
     : EntityActor(scene, pos, size)
@@ -19,18 +36,32 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_gravity(nullptr)
     , m_anim(nullptr)
 
+    , m_combo(0)
+    , m_kunai(10)
+
+    , m_kunaiSpawnTimer(0.0f)
+    , m_kunaiPending(false)
+
     , m_dir(true)
     , m_jumpSpeed(0.0f)
-    , m_moveSpeed(280.0f)
+    , m_moveSpeed(290.0f)
+    , m_dashSpeed(350.0f)
     , m_jumpCount(0)
     , m_jumpTime(0.0f)
     , m_maxJumpTime(1.5f)
 
     , m_attack(false)
+    , m_hit(false)
+    , m_HayabusaHit(false)
     , m_attackType()
+    , m_attackCol(nullptr)
     , m_weakAttackIdx(0)
     , m_strongAttackIdx(0)
+    , m_airAttackIdx(0)
     , m_attackTimer(0.0f)
+
+    , m_canAttack(true)
+    , m_attackLockTimer(0.0f)
 
     , m_hitTimer(0.0f)
     , m_invincibleTime(0.0f)
@@ -39,6 +70,8 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_squat(false)
     , m_canStand(true)
     , m_canCharge(true)
+
+    , m_drawOffset(Vector2d(0.0f, 0.0f))
 {
 }
 
@@ -48,55 +81,297 @@ bool PlayerEntity::Init() {
 
     m_hp = AddComponent<HPComponent>(100);
     m_transform->SetScale({ 1.0f, 1.0f });
-    m_gravity = AddComponent<GravityComponent>(3200.0f);
+    m_gravity = AddComponent<GravityComponent>(2800.0f);
+    m_attackCol = AddComponent<CollisionComponent>();
 
     //m_sprite = AddComponent<SpriteComponent>();
-    m_sprite->LoadTextureDiv("assets/images/entities/players/musashiIdle.png", 6, 6);
+    m_sprite->LoadTextureDiv("assets/images/entities/players/musashi_sheet.png", 20, 12);
 
 
     m_anim = AddComponent<AnimationComponent>();
     m_anim->SetSprite(m_sprite);
 
     AnimationClip idle;
-    idle.frames = { 0,1,2,3,4,5 };
-    idle.speed = 0.2f;
+    idle.frames = { 0, 1, 2, 3, 4, 5 };
+    idle.speed = 0.3f;
     idle.loop = true;
     m_anim->AddClip("idle", idle);
 
+    AnimationClip runStart;
+    runStart.frames = { 6, 7 };
+    runStart.speed = 0.1f;
+    runStart.loop = false;
+    m_anim->AddClip("runStart", runStart);
 
     AnimationClip run;
-    run.frames = {6,7,8,9,10,11 };
+    run.frames = { 8, 9, 10, 11, 12, 13 };
     run.speed = 0.1f;
     run.loop = true;
     m_anim->AddClip("run", run);
 
+    AnimationClip stopShort;
+    stopShort.frames = { 14, 14, 17, 17, 18, 15 };
+    stopShort.speed = 0.1f;
+    stopShort.loop = false;
+    m_anim->AddClip("stopShort", stopShort);
+
+    AnimationClip stopLong;
+    stopLong.frames = { 16, 17, 17, 18, 15 };
+    stopLong.speed = 0.1f;
+    stopLong.loop = false;
+    m_anim->AddClip("stopLong", stopLong);
+
+    AnimationClip changeDir;
+    changeDir.frames = { 19, 20 };
+    changeDir.speed = 0.1f;
+    changeDir.loop = false;
+    m_anim->AddClip("changeDir", changeDir);
+
+    AnimationClip changeDirRun;
+    changeDirRun.frames = { 21, 22, 23, 24, 25, 26 };
+    changeDirRun.speed = 0.1f;
+    changeDirRun.loop = false;
+    m_anim->AddClip("changeDirRun", changeDirRun);
+
+    AnimationClip squatStart;
+    squatStart.frames = { 27 };
+    squatStart.speed = 0.1f;
+    squatStart.loop = false;
+    m_anim->AddClip("squatStart", squatStart);
 
     AnimationClip squat;
-    squat.frames = { 12,13,14,15 };
+    squat.frames = { 28, 28, 28, 29 };
     squat.speed = 0.1f;
     squat.loop = false;
     m_anim->AddClip("squat", squat);
 
+    AnimationClip squatIdle;
+    squatIdle.frames = { 29 };
+    squatIdle.speed = 0.1f;
+    squatIdle.loop = false;
+    m_anim->AddClip("squatIdle", squatIdle);
 
     AnimationClip squatWalk;
-    squatWalk.frames = { 18,19,20,21,22,23 };
+    squatWalk.frames = { 30, 30, 30, 31, 31, 32, 32, 32, 32, 32, 33, 33, 33,  34, 35, 35, 35 };
     squatWalk.speed = 0.1f;
     squatWalk.loop = true;
     m_anim->AddClip("squatWalk", squatWalk);
 
+    AnimationClip squatAttack;
+    squatAttack.frames = { 37, 38, 39, 40, 40, 40, 40, 41, 41, 42, 42 };
+    squatAttack.speed = 0.1f;
+    squatAttack.loop = false;
+    m_anim->AddClip("squatAttack", squatAttack);
+
+    AnimationClip jumpStart;
+    jumpStart.frames = { 43 };
+    jumpStart.speed = 0.1f;
+    jumpStart.loop = false;
+    m_anim->AddClip("jumpStart", jumpStart);
 
     AnimationClip jump;
-    jump.frames = { 24,25,26,27,28,29 };
+    jump.frames = { 44, 45, 46, 47, 48 };
     jump.speed = 0.2f;
     jump.loop = false;
     m_anim->AddClip("jump", jump);
-    
+
+    AnimationClip jumpSecond;
+    jumpSecond.frames = { 49, 50, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53 };
+    jumpSecond.speed = 0.1f;
+    jumpSecond.loop = false;
+    m_anim->AddClip("jumpSecond", jumpSecond);
 
     AnimationClip fall;
-    fall.frames = { 25,26,27 };
+    fall.frames = { 54, 55, 56 };
     fall.speed = 0.1f;
     fall.loop = false;
     m_anim->AddClip("fall", fall);
+
+    AnimationClip jumpLanding;
+    jumpLanding.frames = {57, 58, 59, 60, 61};
+    jumpLanding.speed = 0.1f;
+    jumpLanding.loop = false;
+    m_anim->AddClip("jumpLanding", jumpLanding);
+
+    AnimationClip roll;
+    roll.frames = { 62, 63, 64, 65, 66 };
+    roll.speed = 0.1f;
+    roll.loop = false;
+    m_anim->AddClip("roll", roll);
+
+    AnimationClip Hien;
+    Hien.frames = { 67, 68, 68, 68, 68, 68, 68, 69, 69 };
+    Hien.speed = 0.1f;
+    Hien.loop = false;
+    m_anim->AddClip("Hien", Hien);
+
+    AnimationClip Senten;
+    Senten.frames = { 70, 71, 72, 73, 74, 75, 76, 77, 78 };
+    Senten.speed = 0.1f;
+    Senten.loop = false;
+    m_anim->AddClip("Senten", Senten);
+
+    AnimationClip rollLanding;
+    rollLanding.frames = { 79, 80, 81 };
+    rollLanding.speed = 0.1f;
+    rollLanding.loop = false;
+    m_anim->AddClip("rollLanding", rollLanding);
+
+    AnimationClip wallHold;
+    wallHold.frames = { 82 };
+    wallHold.speed = 0.1f;
+    wallHold.loop = false;
+    m_anim->AddClip("wallHold", wallHold);
+
+    AnimationClip wallJump;
+    wallJump.frames = { 83, 84 };
+    wallJump.speed = 0.1f;
+    wallJump.loop = false;
+    m_anim->AddClip("wallJump", wallJump);
+
+    AnimationClip wallClimb;
+    wallClimb.frames = { 85, 86, 87, 88 };
+    wallClimb.speed = 0.1f;
+    wallClimb.loop = true;
+    m_anim->AddClip("wallClimb", wallClimb);
+
+    AnimationClip wallClimbUp;
+    wallClimbUp.frames = {89, 89, 90, 91, 91, 92, 93, 94,95, 96, 97, 97 };
+    wallClimbUp.speed = 0.1f;
+    wallClimbUp.loop = false;
+    m_anim->AddClip("wallClimbUp", wallClimbUp);
+
+    AnimationClip wallAttack;
+    wallAttack.frames = { 98, 98, 99, 100, 100, 101, 102, 102, 103, 103, 104, 104 };
+    wallAttack.speed = 0.1f;
+    wallAttack.loop = false;
+    m_anim->AddClip("wallAttack", wallAttack);
+
+    AnimationClip weakAttack1;
+    weakAttack1.frames = { 105, 106, 106, 107, 107, 107, 107, 107, 107, 107 };
+    weakAttack1.speed = 0.1f;
+    weakAttack1.loop = false;
+    m_anim->AddClip("weakAttack1", weakAttack1);
+
+    AnimationClip weakAttack2;
+    weakAttack2.frames = { 108, 109, 110, 110, 111, 111, 112, 113 };
+    weakAttack2.speed = 0.1f;
+    weakAttack2.loop = false;
+    m_anim->AddClip("weakAttack2", weakAttack2);
+
+    AnimationClip weakAttack3;
+    weakAttack3.frames = { 114, 115, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116 };
+    weakAttack3.speed = 0.1f;
+    weakAttack3.loop = false;
+    m_anim->AddClip("weakAttack3", weakAttack3);
+
+    AnimationClip attackEnd;
+    attackEnd.frames = { 117, 118, 118, 119, 119 };
+    attackEnd.speed = 0.1f;
+    attackEnd.loop = false;
+    m_anim->AddClip("attackEnd", attackEnd);
+
+    AnimationClip weakAttack4;
+    weakAttack4.frames = { 120, 120, 121, 122, 122, 122, 123, 123, 124, 125, 126, 126, 126, 127, 127, 128, 128, 128, 129, 129, 130, 130, 130, 131, 131, 132 };
+    weakAttack4.speed = 0.1f;
+    weakAttack4.loop = false;
+    m_anim->AddClip("weakAttack4", weakAttack4);
+
+    AnimationClip weakAirAttack1;
+    weakAirAttack1.frames = { 133, 134, 135, 135 };
+    weakAirAttack1.speed = 0.1f;
+    weakAirAttack1.loop = false;
+    m_anim->AddClip("weakAirAttack1", weakAirAttack1);
+
+    AnimationClip weakAirAttack2;
+    weakAirAttack2.frames = { 136, 137, 137, 137, 138 };
+    weakAirAttack2.speed = 0.1f;
+    weakAirAttack2.loop = false;
+    m_anim->AddClip("weakAirAttack2", weakAirAttack2);
+
+    AnimationClip weakAirAttack3;
+    weakAirAttack3.frames = { 139, 139, 140, 141, 141, 142, 143, 143, 143, 143, 143, 143, 143, 143, 143, 143, 143, 143, 144, 144, 144, 145, 145, 146, 146, 146 };
+    weakAirAttack3.speed = 0.1f;
+    weakAirAttack3.loop = false;
+    m_anim->AddClip("weakAirAttack3", weakAirAttack3);
+
+    AnimationClip strongAttack1;
+    strongAttack1.frames = { 147, 148, 149, 149, 150, 150, 151, 152, 152, 153, 153, 154, 155, 155, 156, 157, 157 };
+    strongAttack1.speed = 0.1f;
+    strongAttack1.loop = false;
+    m_anim->AddClip("strongAttack1", strongAttack1);
+
+    AnimationClip strongAttackEnd;
+    strongAttackEnd.frames = { 157 };
+    strongAttackEnd.speed = 0.2f;
+    strongAttackEnd.loop = false;
+    m_anim->AddClip("strongAttackEnd", strongAttackEnd);
+
+    AnimationClip strongAttack2;
+    strongAttack2.frames = { 158, 158, 159, 160, 160, 161, 162, 163, 163, 164, 164, 165, 165, 166, 166, 167, 168, 168, 168, 168 };
+    strongAttack2.speed = 0.1f;
+    strongAttack2.loop = false;
+    m_anim->AddClip("strongAttack2", strongAttack2);
+
+    AnimationClip Hayabusa;
+    Hayabusa.frames = { 169, 169, 170 };
+    Hayabusa.speed = 0.1f;
+    Hayabusa.loop = false;
+    m_anim->AddClip("Hayabusa", Hayabusa);
+
+    AnimationClip HayabusaHit;
+    HayabusaHit.frames = { 171, 171, 171, 172, 172, 173, 173, 174, 174, 175 };
+    HayabusaHit.speed = 0.1f;
+    HayabusaHit.loop = false;
+    m_anim->AddClip("HayabusaHit", HayabusaHit);
+
+    AnimationClip HayabusaGround;
+    HayabusaGround.frames = { 176 };
+    HayabusaGround.speed = 0.1f;
+    HayabusaGround.loop = false;
+    m_anim->AddClip("HayabusaGround", HayabusaGround);
+
+    AnimationClip Kunai;
+    Kunai.frames = { 177, 178, 179, 179, 180, 181 };
+    Kunai.speed = 0.1f;
+    Kunai.loop = false;
+    m_anim->AddClip("Kunai", Kunai);
+
+    AnimationClip KunaiAir;
+    KunaiAir.frames = { 182, 183, 184, 184 };
+    KunaiAir.speed = 0.1f;
+    KunaiAir.loop = false;
+    m_anim->AddClip("KunaiAir", KunaiAir);
+
+    AnimationClip KunaiSquat;
+    KunaiSquat.frames = { 185, 186, 186, 187, 187, 188, 188, 189, 190, 190 };
+    KunaiSquat.speed = 0.1f;
+    KunaiSquat.loop = false;
+    m_anim->AddClip("KunaiSquat", KunaiSquat);
+
+    AnimationClip hitTrap;
+    hitTrap.frames = { 191, 192, 193, 194, 195, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196, 196 };
+    hitTrap.speed = 0.1f;
+    hitTrap.loop = false;
+    m_anim->AddClip("trapHit", hitTrap);
+
+    AnimationClip hitGround;
+    hitGround.frames = { 197, 197, 197, 197, 197, 197, 197, 197, 197, 197, 197, 197, 197, 198, 199, 200, 201, 202 };
+    hitGround.speed = 0.1f;
+    hitGround.loop = false;
+    m_anim->AddClip("hitGround", hitGround);
+
+    AnimationClip hitAir;
+    hitAir.frames = { 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 204, 204, 205, 205, 206, 206, 207, 208, 209, 210, 211, 212, 213, 214, 214, 215, 215, 216 };
+    hitAir.speed = 0.1f;
+    hitAir.loop = false;
+    m_anim->AddClip("hitAir", hitAir);
+
+    AnimationClip dead;
+    dead.frames = { 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 218, 218, 219, 219, 220, 220, 221, 221, 222, 222, 223, 223 };
+    dead.speed = 0.1f;
+    dead.loop = false;
+    m_anim->AddClip("dead", dead);
 
     m_collision->SetRect(85, 192);
 
@@ -142,12 +417,24 @@ void PlayerEntity::UpdateMove(float deltaTime) {
     Vector2d move(0.0f, 0.0f);
     if (m_canMove) {
         if (input.IsDown(Action::DOWN)) {
-            if (input.IsDown(Action::LEFT))  move.x -= 0.5f;
-            if (input.IsDown(Action::RIGHT)) move.x += 0.5f;
+            if (input.IsDown(Action::LEFT)) {
+                move.x -= 0.5f;
+                m_dir = false;
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                move.x += 0.5f;
+                m_dir = true;
+            }
         }
         else {
-            if (input.IsDown(Action::LEFT))  move.x -= 1.0f;
-            if (input.IsDown(Action::RIGHT)) move.x += 1.0f;
+            if (input.IsDown(Action::LEFT)) {
+                move.x -= 1.0f;
+                m_dir = false;
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                move.x += 1.0f;
+                m_dir = true;
+            }
         }
     }
     move.normalize();
@@ -169,20 +456,35 @@ void PlayerEntity::UpdateMove(float deltaTime) {
     }
     
     m_velocity->Set(vel);
+
+    Vector2d scale = m_transform->GetScale();
+
+    scale.x = m_dir ? 1.0f : -1.0f;
+
+    m_transform->SetScale(scale);
 }
 
 void PlayerEntity::UpdateJump(float deltaTime) {
     if (!m_canStand) {
         return;
     }
+    if (!m_canMove) return;
 
     const Input& input = m_scene->GetGame()->GetInput();
 
     Vector2d vel = m_velocity->Get();
 
     if (input.IsTrigger(Action::JUMP)) {
+        if (m_squat) {
+            if (m_canStand)
+            {
+                ExitSquat();
+                m_drawOffset = Vector2d(0.0f, 0.0f);
+            }
+        }
+
         if (m_jumpCount == 0) {
-            vel.y = -800.0f;
+            vel.y = -600.0f;
 
             m_isGround = false;
             m_jumpCount++;
@@ -191,7 +493,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
             m_collision->SetRect(85, 150);
         }
         else if (m_jumpCount == 1) {
-            vel.y = -600.0f;
+            vel.y = -800.0f;
             m_jumpCount++;
         }
     }
@@ -263,6 +565,7 @@ void PlayerEntity::CheckCanStand()
 
 void PlayerEntity::EnterSquat()
 {
+    if (!m_canMove) return;
     float oldHeight = m_collision->GetHeight();
     float newHeight = 95.0f;
 
@@ -272,6 +575,8 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
+    m_drawOffset = Vector2d(0.0f, -48.0f);   // ã‚É48px
+    m_squat = true;
 }
 
 void PlayerEntity::ExitSquat()
@@ -285,103 +590,802 @@ void PlayerEntity::ExitSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(85, 192);
+    m_drawOffset = Vector2d(0.0f, 0.0f);
+    m_squat = false;
+}
+
+void PlayerEntity::SpawnKunai()
+{
+    Vector2d pos = GetPos();
+
+    pos.x += m_dir ? 40.0f : -40.0f;
+    pos.y -= 10.0f;
+
+    auto kunai = new KunaiActor(m_scene, pos, m_dir);
+
+    SpawnEffect(kunai);
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
-    const Input& input = m_scene->GetGame()->GetInput();
+    m_hit = false;
 
-    if (input.IsTrigger(Action::WEAK_ATTACK)) {
-        m_attack = true;
-        m_attackType = AttackType::WEAK_ATTACK;
-        m_attackTimer = 0.2f;
-        m_weakAttackIdx++;
+    const Input& input = m_scene->GetGame()->GetInput();
+    Vector2d pPos = m_transform->GetPosition();
+    if (m_canAttack) {
+        m_attackType = AttackType::NONE;
+        if (input.IsTrigger(Action::KUNAI)) {
+            if (m_kunai > 0) {
+                m_attack = true;
+                m_canAttack = false;
+                m_canMove = false;
+                if (m_squat) {
+                    m_attackType = AttackType::SQUAT_KUNAI;
+                    m_attackTimer = 0.5f;
+                    m_attackLockTimer = 0.3f;
+                    m_kunai--;
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiPending = true;
+                    m_anim->Play("KunaiSquat", true);
+                }
+                else if (!m_isGround) {
+                    m_attackType = AttackType::AIR_KUNAI;
+                    m_attackTimer = 0.2f;
+                    m_attackLockTimer = 0.1f;
+                    m_kunai--;
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiPending = true;
+                    m_anim->Play("KunaiAir", true);
+                }
+                else {
+                    m_attackType = AttackType::KUNAI;
+                    m_attackTimer = 0.3f;
+                    m_attackLockTimer = 0.3f;
+                    m_kunai--;
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiPending = true;
+                    m_anim->Play("Kunai", true);
+                }
+            }
+        }
+
+        if (input.IsTrigger(Action::WEAK_ATTACK) && m_attackType == AttackType::NONE) {
+            m_attack = true;
+            m_canAttack = false;
+            m_canMove = false;
+            if (m_squat) {
+                m_attackType = AttackType::SQUAT_ATTACK;
+                m_attackTimer = 0.4f;
+                m_attackLockTimer = 0.2f;
+                CheckAttackHit(squatAttack);
+                pPos.x += (m_dir ? 90.0f : -90.0f);
+                pPos.y -= 50.0f;
+                SpawnEffect(new EffectActor(m_scene, pPos, EffectType::SquatAttack, !m_dir));
+                m_anim->Play("squatAttack", true);
+            }
+            else if (!m_isGround) {
+                m_attackType = AttackType::AIR_ATTACK;
+                switch (m_airAttackIdx) {
+                case 0: {
+                    m_attackTimer = 0.2f;
+                    m_attackLockTimer = 0.1f;
+                    CheckAttackHit(airWeak1);
+                    if (m_hit) m_airAttackIdx++;
+                    auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack1, !m_dir);
+                    effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
+
+                    SpawnEffect(effect);
+                    m_anim->Play("weakAirAttack1", true);
+                    break;
+                }
+                case 1: {
+                    m_attackTimer = 0.3f;
+                    m_attackLockTimer = 0.2f;
+                    CheckAttackHit(airWeak2);
+                    if (m_hit) m_airAttackIdx++;
+                    auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack2, !m_dir);
+                    effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 0.0f });
+
+                    SpawnEffect(effect);
+                    m_anim->Play("weakAirAttack2", true);
+                    break;
+                }
+                case 2: {
+                    m_attackTimer = 1.3f;
+                    m_attackLockTimer = 1.3f;
+                    CheckAttackHit(airWeak3);
+                    if (m_hit) m_airAttackIdx++;
+                    auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack3, !m_dir);
+                    effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, -30.0f });
+
+                    SpawnEffect(effect);
+                    m_anim->Play("weakAirAttack3", true);
+                    break;
+                }
+                }
+            }
+            else {
+                m_attackType = AttackType::WEAK_ATTACK;
+                switch (m_weakAttackIdx) {
+                case 0:
+                    m_attackTimer = 0.8f;
+                    m_attackLockTimer = 0.13f;
+                    CheckAttackHit(weak1);
+                    pPos.x += (m_dir ? 100.0f : -100.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack1, !m_dir));
+                    m_anim->Play("weakAttack1", true);
+                    break;
+                case 1:
+                    m_attackTimer = 0.7f;
+                    m_attackLockTimer = 0.2f;
+                    CheckAttackHit(weak2);
+                    pPos.x += (m_dir ? 30.0f : -30.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack2, !m_dir));
+                    m_anim->Play("weakAttack2", true);
+                    break;
+                case 2:
+                    m_attackTimer = 1.2f;
+                    m_attackLockTimer = 0.25f;
+                    CheckAttackHit(weak3);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack3, !m_dir));
+                    m_anim->Play("weakAttack3", true);
+                    break;
+                case 3:
+                    m_attackTimer = 1.3f;
+                    m_attackLockTimer = 1.3f;
+                    CheckAttackHit(weak4);
+                    pPos.x += (m_dir ? 100.0f : -100.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::WeakAttack4, !m_dir));
+                    m_anim->Play("weakAttack4", true);
+                    break;
+                }
+                m_weakAttackIdx++;
+
+                Vector2d vel = m_velocity->Get();
+                vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+
+                m_velocity->Set(vel);
+            }
+        }
+
+
+        if (input.IsTrigger(Action::STRONG_ATTACK) && m_attackType == AttackType::NONE) {
+            if (m_squat) {
+                if (!m_canStand) {
+                    return;
+                }
+                else {
+                    ExitSquat();
+                }
+            }
+
+            m_attack = true;
+            m_canAttack = false;
+            m_canMove = false;
+            if (!m_isGround) {
+                m_HayabusaHit = false;
+                m_attackType = AttackType::HAYABUSA;
+                m_attackTimer = 0.9f;
+                m_attackLockTimer = 0.9f;
+                auto effect = new EffectActor(m_scene, GetPos(), EffectType::Hayabusa, !m_dir);
+                effect->SetFollowTarget(this, { m_dir ? 70.0f : -70.0f, 100.0f });
+
+                SpawnEffect(effect);
+            }
+            else {
+                m_attackType = AttackType::STRONG_ATTACK;
+
+                switch (m_strongAttackIdx) {
+                case 0:
+                    m_attackTimer = 0.9f;
+                    m_attackLockTimer = 0.4f;
+                    CheckAttackHit(strong1);
+                    pPos.x += (m_dir ? 70.0f : -70.0f);
+                    pPos.y -= 50.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack1, !m_dir));
+                    m_anim->Play("strongAttack1", true);
+                    break;
+                case 1:
+                    m_attackTimer = 1.0f;
+                    m_attackLockTimer = 1.0f;
+                    CheckAttackHit(strong2);
+                    pPos.x += (m_dir ? 70.0f : -70.0f);
+                    pPos.y -= 60.0f;
+                    SpawnEffect(new EffectActor(m_scene, pPos, EffectType::StrongAttack2, !m_dir));
+                    m_anim->Play("strongAttack2", true);
+                    break;
+                }
+
+                m_strongAttackIdx++;
+
+                Vector2d vel = m_velocity->Get();
+                vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+
+                m_velocity->Set(vel);
+            }
+        }
     }
 
-    if (input.IsTrigger(Action::STRONG_ATTACK)) {
-        m_attack = true;
-        m_attackType = AttackType::STRONG_ATTACK;
-        m_attackTimer = 0.3f;
-        m_strongAttackIdx++;
+    if (!m_canAttack)
+    {
+        m_attackLockTimer -= deltaTime;
+
+        if (m_attackLockTimer <= 0)
+        {
+            m_canAttack = true;
+        }
     }
 
     if (m_attack) {
         m_attackTimer -= deltaTime;
+
+        if (m_kunaiPending)
+        {
+            m_kunaiSpawnTimer -= deltaTime;
+            if (m_kunaiSpawnTimer <= 0.0f)
+            {
+                SpawnKunai();
+                m_kunaiPending = false;
+            }
+        }
+
+        if (m_attackType == AttackType::HAYABUSA) {
+            Vector2d vel = m_velocity->Get();
+            if (!m_HayabusaHit) {
+                CheckAttackHit(Hayabusa);
+                if (m_hit) {
+                    m_HayabusaHit = true;
+                    vel.x = m_dir ? -600.0f : 600.0f;
+                    vel.y = -600.0f;
+                }
+                else {
+                    vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+                }
+            }
+            m_velocity->Set(vel);
+        }
+
         if (m_attackTimer <= 0) {
             m_attack = false;
+            m_canMove = true;
+            m_HayabusaHit = false;
             m_weakAttackIdx = 0;
             m_strongAttackIdx = 0;
+            m_airAttackIdx = 0;
         }
     }
+    printf(
+        "weak=%d strong=%d type=%d attack=%d canAttack=%d\n",
+        m_weakAttackIdx,
+        m_strongAttackIdx,
+        (int)m_attackType,
+        m_attack,
+        m_canAttack
+    );
+}
 
+void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
+{
+    Vector2d attackPos = m_transform->GetPosition();
+
+    if (m_dir)
+    {
+        attackPos += hitbox.offset;
+    }
+    else
+    {
+        attackPos += Vector2d(-hitbox.offset.x, hitbox.offset.y);
+    }
+
+    for (Actor* actor : m_scene->GetActors())
+    {
+        if (actor->GetType() != ActorType::Enemy)
+        {
+            continue;
+        }
+
+        EnemyEntity* enemy = static_cast<EnemyEntity*>(actor);
+
+        CollisionComponent* col = enemy->GetCollision();
+
+        if (!col)
+        {
+            continue;
+        }
+
+        float diffX = attackPos.x - enemy->GetPos().x;
+        float diffY = attackPos.y - enemy->GetPos().y;
+
+        float overlapX = (hitbox.width * 0.5f + col->GetWidth() * 0.5f) - std::abs(diffX);
+        float overlapY = (hitbox.height * 0.5f + col->GetHeight() * 0.5f) - std::abs(diffY);
+
+        if (overlapX > 0 && overlapY > 0)
+        {
+            enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
+            m_hit = true;
+            m_combo++;
+
+            /*SpawnEffect(
+                new EffectActor( m_scene, enemy->GetPos(), EffectType::WeakAttack1, !m_dir )
+            );*/
+        }
+    }
 }
 
 void PlayerEntity::UpdateState() {
     if (m_hp->GetHP() <= 0) {
-        m_state = ActionState::DEAD;
+        ChangeState(ActionState::DEAD);
         return;
     }
 
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (m_attack) {
-        if (input.IsDown(Action::DOWN)) {
-            m_state = ActionState::SQUAT_ATTACK;
-            m_anim->Play("squatAttack");
-            m_collision->SetRect(90, 95);
+        if (input.IsTrigger(Action::KUNAI)) {
+            switch (m_attackType) {
+            case AttackType::SQUAT_KUNAI:
+                ChangeState(ActionState::KUNAI_SQUAT);
+                break;
+            case AttackType::AIR_KUNAI:
+                ChangeState(ActionState::KUNAI_AIR);
+                break;
+            case AttackType::KUNAI:
+                ChangeState(ActionState::KUNAI);
+                break;
+            }
+            return;
         }
-        m_state = ActionState::ATTACK;
-        m_anim->Play("attack");
+
+        if (m_state == ActionState::SQUAT_ATTACK) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::SQUAT);
+            }
+        }
+
+        if (m_squat && !(m_attackType == AttackType::SQUAT_KUNAI)) {
+            ChangeState(ActionState::SQUAT_ATTACK);
+            return;
+        }
+
+        
+
+        if (input.IsTrigger(Action::WEAK_ATTACK)) {
+            if (!m_isGround) {
+                switch (m_airAttackIdx) {
+                case 0:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK1);
+                    break;
+                case 1:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK1);
+                    break;
+                case 2:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK2);
+                    break;
+                case 3:
+                    ChangeState(ActionState::WEAK_AIR_ATTACK3);
+                    break;
+                }
+                return;
+            }
+
+            switch (m_weakAttackIdx) {
+            case 1:
+                ChangeState(ActionState::WEAK_ATTACK1);
+                break;
+            case 2:
+                ChangeState(ActionState::WEAK_ATTACK2);
+                break;
+            case 3:
+                ChangeState(ActionState::WEAK_ATTACK3);
+                break;
+            case 4:
+                ChangeState(ActionState::WEAK_ATTACK4);
+                break;
+            }
+        }
+
+        if ((m_state == ActionState::WEAK_ATTACK1) || (m_state == ActionState::WEAK_ATTACK2) || (m_state == ActionState::WEAK_ATTACK3)) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::ATTACK_END);
+            }
+            return;
+        }
+
+        if (input.IsTrigger(Action::STRONG_ATTACK)) {
+            if (!m_isGround) {
+                ChangeState(ActionState::HAYABUSA);
+                return;
+            }
+
+            switch (m_strongAttackIdx) {
+            case 1:
+                ChangeState(ActionState::STRONG_ATTACK1);
+                break;
+            case 2:
+                ChangeState(ActionState::STRONG_ATTACK2);
+                break;
+            }
+        }
+
+        if (m_state == ActionState::STRONG_ATTACK1) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::STRONG_ATTACK_END);
+            }
+            return;
+        }
+
+        if (m_state == ActionState::HAYABUSA) {
+            if (m_HayabusaHit) {
+                ChangeState(ActionState::HAYABUSA_HIT);
+                return;
+            }
+            if (m_isGround) {
+                ChangeState(ActionState::HAYABUSA_GROUND);
+                m_attackTimer = 0;
+                return;
+            }
+            
+        }
+
+        if (m_state == ActionState::HAYABUSA_HIT) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(ActionState::FALL);
+                m_attackTimer = 0;
+                m_attackType = AttackType::WEAK_ATTACK;
+            }
+            return;
+        }
+
+        
+        return;
+    }
+
+    if (m_state == ActionState::HAYABUSA_GROUND) {
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::JUMP_LANDING);
+        }
         return;
     }
 
     Vector2d vel = m_velocity->Get();
 
     if (!m_isGround) {
-        if (vel.y < 0) {
-            m_state = ActionState::JUMP;
-            m_anim->Play("jump");
+        if (input.IsTrigger(Action::JUMP)) {
+            if (m_jumpCount == 1) {
+                ChangeState(ActionState::JUMP_START);
+                return;
+            }
+            else if (m_jumpCount == 2) {
+                ChangeState(ActionState::JUMP_SECOND);
+                return;
+            }
         }
         else {
-            m_state = ActionState::FALL;
-            m_anim->Play("fall");
-        }
+            if (m_state == ActionState::JUMP_START) {
+                if (m_anim->IsFinished()) {
+                    ChangeState(ActionState::JUMP);
+                    return;
+                }
+            }
 
+            if (m_state == ActionState::JUMP) {
+                if (m_anim->IsFinished()) {
+                    ChangeState(ActionState::FALL);
+                    return;
+                }
+            }
+
+            if (m_squat) {
+                if (m_canStand)
+                {
+                    ExitSquat();
+                }
+            }
+            ChangeState(ActionState::FALL);
+        }
+        return;
+    }
+
+    if (m_state == ActionState::JUMP || m_state == ActionState::FALL) {
+        ChangeState(ActionState::JUMP_LANDING);
+        return;
+    }
+
+    if (m_state == ActionState::JUMP_LANDING) {
+        if (!(m_anim->IsFinished())) {
+            return;
+        }
+    }
+
+    if (m_state == ActionState::SQUAT_START) {
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::SQUAT);
+        }
         return;
     }
 
     if (input.IsDown(Action::DOWN)) {
+
         if (!m_squat)
         {
             EnterSquat();
-            m_squat = true;
+            ChangeState(ActionState::SQUAT_START);
+            return;
         }
-        m_state = ActionState::SQUAT;
-        if (vel.x == 0) {
-            m_anim->Play("squat");
+
+        // ‚µ‚á‚ª‚Ý‚È‚ª‚çˆÚ“®
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
+        {
+            ChangeState(ActionState::SQUAT_WALK);
+            return;
         }
-        else {
-            m_anim->Play("squatWalk");
+
+        if (m_squat) {
+            ChangeState(ActionState::SQUAT);
         }
         return;
     }
+    
 
-    if (m_squat)
-    {
+    if (m_squat) {
         if (m_canStand)
         {
             ExitSquat();
-            m_squat = false;
+        }
+        else {
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
+            {
+                ChangeState(ActionState::SQUAT_WALK);
+                return;
+            }
+
+            ChangeState(ActionState::SQUAT);
+            return;
         }
     }
+    
+    if (m_state == ActionState::RUN_START)
+    {
+        if (!(input.IsDown(Action::LEFT) || input.IsDown(Action::RIGHT)))
+        {
+            ChangeState(ActionState::STOP_SHORT);
+            return;
+        }
 
-    if (vel.x != 0) {
-        m_state = ActionState::RUN;
-        m_anim->Play("run");
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::RUN);
+        }
         return;
     }
 
-    m_state = ActionState::IDLE;
-    m_anim->Play("idle");
+    if (m_state == ActionState::RUN)
+    {
+        // ˆÚ“®ƒL[—£‚µ‚½
+        if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
+        {
+            ChangeState(ActionState::STOP_LONG);
+            return;
+        }
+        return;
+    }
+
+    if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
+    {
+        ChangeState(ActionState::RUN_START);
+        return;
+    }
+
+    if ((m_state == ActionState::STOP_SHORT) || (m_state == ActionState::STOP_LONG))
+    {
+        if (m_anim->IsFinished())
+        {
+            ChangeState(ActionState::IDLE);
+        }
+        return;
+    }
+
+    ChangeState(ActionState::IDLE);
+}
+
+void PlayerEntity::ChangeState(ActionState newState)
+{
+    if (m_state == newState)
+        return;
+
+    m_state = newState;
+
+    switch (m_state)
+    {
+    case ActionState::IDLE:
+        m_anim->Play("idle");
+        break;
+
+    case ActionState::RUN:
+        m_anim->Play("run");
+        break;
+
+    case ActionState::RUN_START:
+        m_anim->Play("runStart");
+        break;
+
+    case ActionState::STOP_SHORT:
+        m_anim->Play("stopShort");
+        break;
+
+    case ActionState::STOP_LONG:
+        m_anim->Play("stopLong");
+        break;
+
+    case ActionState::CHANGE_DIR:
+        m_anim->Play("changeDir");
+        break;
+
+    case ActionState::CHANGE_DIR_RUN:
+        m_anim->Play("changeDirRun");
+        break;
+    
+    case ActionState::SQUAT_START:
+        m_anim->Play("squatStart");
+        break;
+
+    case ActionState::SQUAT:
+        m_anim->Play("squat");
+        break;
+
+    case ActionState::SQUAT_IDLE:
+        m_anim->Play("squatIdle");
+        break;
+
+    case ActionState::SQUAT_WALK:
+        m_anim->Play("squatWalk");
+        break;
+
+    case ActionState::SQUAT_ATTACK:
+        m_anim->Play("squatAttack");
+        break;
+
+    case ActionState::JUMP_START:
+        m_anim->Play("jumpStart");
+        break;
+
+    case ActionState::JUMP:
+        m_anim->Play("jump");
+        break;
+
+    case ActionState::JUMP_SECOND:
+        m_anim->Play("jumpSecond");
+        break;
+
+    case ActionState::FALL:
+        m_anim->Play("fall");
+        break;
+
+    case ActionState::JUMP_LANDING:
+        m_anim->Play("jumpLanding");
+        break;
+
+    case ActionState::ROLL:
+        m_anim->Play("roll");
+        break;
+
+    case ActionState::HIEN:
+        m_anim->Play("Hien");
+        break;
+
+    case ActionState::SENTEN:
+        m_anim->Play("Senten");
+        break;
+
+    case ActionState::ROLL_LANDING:
+        m_anim->Play("rollLanding");
+        break;
+
+    case ActionState::WALL_HOLD:
+        m_anim->Play("wallHold");
+        break;
+
+    case ActionState::WALL_JUMP:
+        m_anim->Play("wallJump");
+        break;
+
+    case ActionState::WALL_CLIMB:
+        m_anim->Play("wallClimb");
+        break;
+
+    case ActionState::WALL_CLIMB_UP:
+        m_anim->Play("wallClimbUp");
+        break;
+
+    case ActionState::WEAK_ATTACK1:
+        m_anim->Play("weakAttack1");
+        break;
+
+    case ActionState::WEAK_ATTACK2:
+        m_anim->Play("weakAttack2");
+        break;
+
+    case ActionState::WEAK_ATTACK3:
+        m_anim->Play("weakAttack3");
+        break;
+
+    case ActionState::ATTACK_END:
+        m_anim->Play("attackEnd");
+        break;
+
+    case ActionState::WEAK_ATTACK4:
+        m_anim->Play("weakAttack4");
+        break;
+
+    case ActionState::WEAK_AIR_ATTACK1:
+        m_anim->Play("weakAirAttack1");
+        break;
+
+    case ActionState::WEAK_AIR_ATTACK2:
+        m_anim->Play("weakAirAttack2");
+        break;
+
+    case ActionState::WEAK_AIR_ATTACK3:
+        m_anim->Play("weakAirAttack3");
+        break;
+
+    case ActionState::STRONG_ATTACK1:
+        m_anim->Play("strongAttack1");
+        break;
+
+    case ActionState::STRONG_ATTACK2:
+        m_anim->Play("strongAttack2");
+        break;
+
+    case ActionState::HAYABUSA:
+        m_anim->Play("Hayabusa");
+        break;
+
+    case ActionState::HAYABUSA_HIT:
+        m_anim->Play("HayabusaHit");
+        break;
+
+    case ActionState::HAYABUSA_GROUND:
+        m_anim->Play("HayabusaGround");
+        break;
+
+    case ActionState::KUNAI:
+        m_anim->Play("Kunai");
+        break;
+
+    case ActionState::KUNAI_AIR:
+        m_anim->Play("KunaiAir");
+        break;
+
+    case ActionState::KUNAI_SQUAT:
+        m_anim->Play("KunaiSquat");
+        break;
+
+    case ActionState::HIT_TRAP:
+        m_anim->Play("hitTrap");
+        break;
+
+    case ActionState::HIT_GROUND:
+        m_anim->Play("hitGround");
+        break;
+
+    case ActionState::HIT_AIR:
+        m_anim->Play("hitAir");
+        break;
+
+    case ActionState::DEAD:
+        m_anim->Play("dead");
+        break;
+    }
 }
 
 void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
@@ -390,13 +1394,23 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     m_hp->Damage(damage);
     
     m_velocity->Set(knockback);
-
-    m_state = ActionState::HIT;
+    if (OnGround()) {
+        m_state = ActionState::HIT_GROUND;
+    }
+    else {
+        m_state = ActionState::HIT_AIR;
+    }
+    
 
     m_invincibleTime = 2.0f;
+    m_combo = 0;
 }
 
+void PlayerEntity::HitTrap() {
+    m_hp->Damage(10);
 
+    m_state = ActionState::HIT_TRAP;
+}
 
 std::string PlayerEntity::GetTexturePath() const {
     return "";

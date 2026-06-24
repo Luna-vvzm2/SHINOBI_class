@@ -11,7 +11,7 @@ class Component;
 enum class ActorType {
 	Player,
 	Block,
-	Ball,
+	Kunai,
 	Enemy,
 	Effect,
 	UI

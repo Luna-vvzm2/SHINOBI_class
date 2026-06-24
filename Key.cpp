@@ -13,6 +13,7 @@ void Key::Init() {
 	m_keyMap[I] = KEY_INPUT_I;
 	m_keyMap[Key::M] = KEY_INPUT_M;
 	m_keyMap[O] = KEY_INPUT_O;
+	m_keyMap[P] = KEY_INPUT_P;
 	m_keyMap[ESCAPE] = KEY_INPUT_ESCAPE;
 	m_keyMap[SPACE] = KEY_INPUT_SPACE;
 	m_keyMap[ENTER] = KEY_INPUT_RETURN;

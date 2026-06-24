@@ -43,6 +43,14 @@ void AnimationComponent::Play(const std::string& name, bool reset)
         m_sprite->SetFrame(m_currentClip->frames[0]);
 }
 
+bool AnimationComponent::IsFinished() const {
+    if (!m_currentClip) return true;
+
+    if (m_currentClip->loop) return false;
+
+    return m_frameIndex >= m_currentClip->frames.size() - 1;
+}
+
 // --------------------
 // 更新（フレーム切替）
 // --------------------
@@ -73,16 +81,7 @@ void AnimationComponent::Update(float deltaTime)
             if (m_currentClip->loop)
                 m_frameIndex = 0;
             else
-                m_frameIndex = static_cast<float>(last); // loop false keeps last frame
-        }
-
-        currentIndex = static_cast<int>(m_frameIndex);
-        m_sprite->SetFrame(frames[currentIndex]);
-
-        duration = m_currentClip->speed;
-        if (currentIndex >= 0 && currentIndex < static_cast<int>(m_currentClip->frameDurations.size()))
-        {
-            duration = m_currentClip->frameDurations[currentIndex];
+                m_frameIndex = (float)last; // ループなしは最後のフレーム
         }
 
         if (!m_currentClip->loop && currentIndex == last)

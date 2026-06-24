@@ -151,6 +151,7 @@
     <ClCompile Include="EnemyEntity.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="KunaiActor.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -159,7 +160,10 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GravityComponent.cpp" />
     <ClCompile Include="GroundBlock.cpp" />
-    <ClCompile Include="HitEffect.cpp" />
+    <ClCompile Include="HitEffect.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="HPBerUI.cpp" />
     <ClCompile Include="HPComponent.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -198,6 +202,7 @@
     <ClInclude Include="EnemyEntity.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="KunaiActor.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -206,7 +211,10 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GravityComponent.h" />
     <ClInclude Include="GroundBlock.h" />
-    <ClInclude Include="HitEffect.h" />
+    <ClInclude Include="HitEffect.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="HPBarUI.h" />
     <ClInclude Include="HPComponent.h" />
     <ClInclude Include="Input.h" />
@@ -234,6 +242,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\images\blocks\ground.png" />
+    <Image Include="assets\images\entities\players\musashi_sheet.PNG" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

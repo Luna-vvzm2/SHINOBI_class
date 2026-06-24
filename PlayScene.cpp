@@ -12,7 +12,8 @@
 #include "GunnerEnemyEntity.h"
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
-#include "HitEffect.h"
+#include "EffectActor.h"
+//#include "HitEffect.h"
 #include "GroundBlock.h"
 #include "HPBarUI.h"
 #include "BackGroundUI.h"
@@ -578,6 +579,7 @@ bool PlayScene::Init() {
 			case 1:
 				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
 				break;
+
 			}
 		}
 	}
@@ -631,7 +633,7 @@ bool PlayScene::Init() {
 		}
 	}
 	
-	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64}));
+	m_player = new PlayerEntity(this, Vector2d({200, 10000}), Vector2d({192, 64}));
 	AddActor(m_player);
 	
 	// ---- HP UI ì¬ ----
@@ -644,6 +646,7 @@ bool PlayScene::Init() {
 	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
 	AddBackActor(back);
 
+	EffectActor::LoadEffects();
 
 	float halfTile = m_mapData.tileSize * 0.5f;
 	m_camera.SetTileHalfSize(Vector2d(halfTile, halfTile));
@@ -726,7 +729,8 @@ void PlayScene::Update(float deltaTime) {
 void PlayScene::Draw() {
 	Renderer* renderer = m_game->GetRenderer();
 
-
+	// ‰¼”wŒi
+	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
 	// --- ƒAƒNƒ^[•`‰æ ---
 	drawActors(m_backactors);
@@ -750,6 +754,20 @@ void PlayScene::Draw() {
 		//DrawItemMenu();
 	}
 
+
+	// UŒ‚”ÍˆÍ•`‰æ --------------------------
+	Vector2d Pos = m_player->GetPos();
+	AttackHitbox Weak1{ Vector2d(50,100), 100, 100, 30 };
+	if (m_player->GetDir()) {
+		Pos.x += Weak1.offset.x;
+		Pos.y += Weak1.offset.y;
+	} 
+	else{
+		Pos.x -= Weak1.offset.x;
+		Pos.y += Weak1.offset.y;
+	}
+	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);
+	//------------------------------------------
 
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_comboCount, 0 }
@@ -775,12 +793,12 @@ void PlayScene::Draw() {
 #endif
 }
 
-void PlayScene::SpawnHitEffect(const Vector2d& pos) {
-	m_effect = new HitEffect(this, pos, {32, 32});
-	AddActor(m_effect);
-	std::cout << "Spawned HitEffect at: " << pos.x << ", " << pos.y << std::endl;
-	
-}
+//void PlayScene::SpawnHitEffect(const Vector2d& pos) {
+//	m_effect = new HitEffect(this, pos, {32, 32});
+//	AddActor(m_effect);
+//	std::cout << "Spawned HitEffect at: " << pos.x << ", " << pos.y << std::endl;
+//	
+//}
 
 void PlayScene::AddCombo() {
 	m_comboCount++;

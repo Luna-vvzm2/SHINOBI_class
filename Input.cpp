@@ -13,6 +13,7 @@ void Input::Init() {
     m_actionKeyMap[static_cast<size_t>(Action::RIGHT)] = { Key::RIGHT, Key::D };
     m_actionKeyMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Key::I };
     m_actionKeyMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Key::O };
+    m_actionKeyMap[static_cast<size_t>(Action::KUNAI)] = { Key::P };
     m_actionKeyMap[static_cast<size_t>(Action::JUMP)] = { Key::SPACE };
     m_actionKeyMap[static_cast<size_t>(Action::ESCAPE)] = { Key::ESCAPE };
     m_actionKeyMap[static_cast<size_t>(Action::ENTER)] = { Key::ENTER };
@@ -23,8 +24,8 @@ void Input::Init() {
     m_actionPadMap[static_cast<size_t>(Action::DOWN)] = { Joypad::DOWN };
     m_actionPadMap[static_cast<size_t>(Action::LEFT)] = { Joypad::LEFT };
     m_actionPadMap[static_cast<size_t>(Action::RIGHT)] = { Joypad::RIGHT };
-    m_actionPadMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Joypad::Y };
-    m_actionPadMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Joypad::X };
+    m_actionPadMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Joypad::X };
+    m_actionPadMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Joypad::Y };
     m_actionPadMap[static_cast<size_t>(Action::JUMP)] = { Joypad::A };
     m_actionPadMap[static_cast<size_t>(Action::ENTER)] = { Joypad::B };
     m_key.Init();
