@@ -45,6 +45,7 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
     bool GetDir() const { return m_dir; }
+    int GetCombo() const { return m_combo; }
 
     void CheckAttackHit(const AttackHitbox& hitbox);
     void TakeDamage(int damage, const Vector2d& knockback);

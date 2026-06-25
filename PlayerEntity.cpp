@@ -27,7 +27,6 @@ AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 10 };
 AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 10 };
 AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 30 };
 AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10 };
-AttackHitbox Kunai;
 
 
 PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
@@ -918,6 +917,7 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
 void PlayerEntity::UpdateState() {
     if (m_hp->GetHP() <= 0) {
         ChangeState(ActionState::DEAD);
+        m_canMove = false;
         return;
     }
 

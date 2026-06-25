@@ -16,6 +16,7 @@
 //#include "HitEffect.h"
 #include "GroundBlock.h"
 #include "HPBarUI.h"
+#include "EnemyHPBar.h"
 #include "BackGroundUI.h"
 
 #include "Camera.h"
@@ -242,8 +243,16 @@ void PlayScene::Draw() {
 	//------------------------------------------
 
 	std::vector<NumberInfo> comboInfo = {
-		{ (float)m_comboCount, 0 }
+		{ (float)m_player->GetCombo(), 0 }
 	};
+
+	// コンボ表示（m_comboCount が 1 以上なら表示）
+	if (m_player->GetCombo() > 0) {
+		const std::string& debugFont = m_game->GatDebugFont();
+		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
+		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
+		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
+	}
 
 	if (m_resultShown) {
 		const std::string& debugFont = m_game->GatDebugFont();
@@ -252,7 +261,7 @@ void PlayScene::Draw() {
 			Color(0, 0, 0),
 			debugFont,
 			32,
-			"{0} Combo",
+			"{0} Hits",
 			comboInfo,
 			false
 		);
