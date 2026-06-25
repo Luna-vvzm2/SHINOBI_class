@@ -6,7 +6,9 @@
 #include "HPComponent.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
+#include "PlayerEntity.h"
 #include "Vector2d.h"
+#include <cmath>
 
 ArmorEnemyEntity::ArmorEnemyEntity(Scene* scene, const Vector2d& pos)
 	: EnemyEntity(scene, pos, Vector2d(96, 190))
@@ -32,15 +34,17 @@ bool ArmorEnemyEntity::Init()
 
 static const float ARMOR_FIND_RANGE = 800.0f;          // search range
 static const float ARMOR_MOVE_SPEED = 120.0f;          // move speed
-static const float ARMOR_COOLDOWN = 0.4f;              // attack cooldown
-static const float ARMOR_ATTACK_RANGE = 120.0f;        // attack x range
-static const float ARMOR_ATTACK_HEIGHT_RANGE = 90.0f;  // attack y range
-static const int ARMOR_ATTACK_DAMAGE = 10;             // attack damage
+static const float ARMOR_COOLDOWN = 1.2f;              // attack cooldown
+static const float ARMOR_ATTACK_RANGE = 180.0f;        // explosion x range
+static const float ARMOR_ATTACK_HEIGHT_RANGE = 130.0f; // explosion y range
+static const float ARMOR_ATTACK_KNOCKBACK_X = 420.0f;  // explosion knockback x
+static const float ARMOR_ATTACK_KNOCKBACK_Y = -260.0f; // explosion knockback y
+static const int ARMOR_ATTACK_DAMAGE = 15;             // explosion damage
 static const float ARMOR_GUARD_RECOVER_TIME = 5.0f;    // guard recover seconds
 
-static const float ARMOR_PRE_TIME = 0.5f;              // pre motion
-static const float ARMOR_ATTACK_TIME = 0.3f;           // active motion
-static const float ARMOR_AFTER_TIME = 0.7f;            // after motion
+static const float ARMOR_PRE_TIME = 0.65f;             // pre motion
+static const float ARMOR_ATTACK_TIME = 0.15f;          // active motion
+static const float ARMOR_AFTER_TIME = 0.85f;           // after motion
 static const float ARMOR_RECHECK_TIME = 0.2f;          // state recheck time
 
 static const char* ARMOR_TEXTURE_IDLE = "assets/images/enemy/armor/idle.png";
@@ -54,9 +58,9 @@ float ArmorEnemyEntity::GetDirSign() const
 	return m_dir ? 1.0f : -1.0f;
 }
 
-bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playerHp) const
+bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player) const
 {
-	playerHp = nullptr;
+	player = nullptr;
 
 	if (m_scene == nullptr)
 	{
@@ -77,7 +81,7 @@ bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playe
 		}
 
 		playerPos = transform->GetPosition();
-		playerHp = actor->GetComponent<HPComponent>();
+		player = static_cast<PlayerEntity*>(actor);
 		return true;
 	}
 
@@ -152,6 +156,29 @@ void ArmorEnemyEntity::StartArmorsAttack()
 	m_actionLock = true;
 }
 
+void ArmorEnemyEntity::TriggerExplosion(const Vector2d& playerPos, PlayerEntity* player)
+{
+	if (player == nullptr)
+	{
+		return;
+	}
+
+	Vector2d myPos = m_transform->GetPosition();
+	float dx = playerPos.x - myPos.x;
+	float dy = playerPos.y - myPos.y;
+
+	if (std::fabs(dx) > ARMOR_ATTACK_RANGE || std::fabs(dy) > ARMOR_ATTACK_HEIGHT_RANGE)
+	{
+		return;
+	}
+
+	float knockbackX = dx < 0.0f ? -ARMOR_ATTACK_KNOCKBACK_X : ARMOR_ATTACK_KNOCKBACK_X;
+	player->TakeDamage(
+		ARMOR_ATTACK_DAMAGE,
+		Vector2d(knockbackX, ARMOR_ATTACK_KNOCKBACK_Y)
+	);
+}
+
 void ArmorEnemyEntity::Update(float deltaTime)
 {
 	if (deltaTime > 0.05f)
@@ -162,9 +189,9 @@ void ArmorEnemyEntity::Update(float deltaTime)
 	UpdateGuardRecover(deltaTime);
 
 	Vector2d playerPos = Vector2d::Zero();
-	HPComponent* playerHp = nullptr;
+	PlayerEntity* player = nullptr;
 
-	if (!TryGetPlayerInfo(playerPos, playerHp))
+	if (!TryGetPlayerInfo(playerPos, player))
 	{
 		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 		EnemyEntity::Update(deltaTime);
@@ -316,40 +343,7 @@ void ArmorEnemyEntity::Update(float deltaTime)
 
 			if (m_attackOnce == false)
 			{
-				float dx = playerPos.x - myPos.x;
-				float dy = distanceY;
-
-				bool hit = false;
-
-				if (m_dir == true)
-				{
-					if (dx > 0.0f && dx < ARMOR_ATTACK_RANGE)
-					{
-						hit = true;
-					}
-				}
-				else
-				{
-					if (dx < 0.0f && dx > -ARMOR_ATTACK_RANGE)
-					{
-						hit = true;
-					}
-				}
-
-				if (hit == true)
-				{
-					if (dy < 0.0f)
-					{
-						dy *= -1.0f;
-					}
-
-					if (dy < ARMOR_ATTACK_HEIGHT_RANGE && playerHp != nullptr)
-					{
-						playerHp->Damage(ARMOR_ATTACK_DAMAGE);
-						playerHp->SetInvincible(0.3f);
-					}
-				}
-
+				TriggerExplosion(playerPos, player);
 				m_attackOnce = true;
 			}
 		}

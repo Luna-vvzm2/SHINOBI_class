@@ -23,7 +23,6 @@ public:
 	void UpdateGravity(float deltaTime);
 	void UpdateAttack(float deltaTime);
 	void UpdateState();
-    //asdfghjk
 
     ActorType GetType() const override { return ActorType::Enemy; }
     CollisionComponent* GetCollision() const { return m_collision; }
@@ -42,8 +41,8 @@ protected:
     AnimationComponent* m_anim;
 
     bool m_dir;
-    float m_jumpSpeed;    // 繧ｸ繝｣繝ｳ繝鈴溷ｺｦ
-    float m_moveSpeed;    // 遘ｻ蜍暮溷ｺｦ
+    float m_jumpSpeed;    // ジャンプ速度
+    float m_moveSpeed;    // 移動速度
 
     int  m_guard;
     int  m_guardMax;
@@ -65,7 +64,7 @@ protected:
     float m_cooldownTimer;
     bool m_actionLock;
 
-    bool m_canMove;       // 遘ｻ蜍募庄蜷ｦ
+    bool m_canMove;       // 移動可否
 
     virtual std::string GetTexturePath() const override;
 

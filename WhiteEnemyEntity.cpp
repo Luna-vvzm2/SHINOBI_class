@@ -47,7 +47,6 @@ public:
 	bool Init() override
 	{
 		if (!EntityActor::Init()) return false;
-
 		m_velocity->SetVelocity(m_bulletVelocity);
 		m_collision->SetCircle(6.0f);
 		return true;
@@ -92,7 +91,6 @@ public:
 		int textureWidth = 0;
 		int textureHeight = 0;
 		GetGraphSize(handle, &textureWidth, &textureHeight);
-
 		float scaleX = textureWidth > 0 ? m_drawSize.x / static_cast<float>(textureWidth) : 1.0f;
 		float scaleY = textureHeight > 0 ? m_drawSize.y / static_cast<float>(textureHeight) : 1.0f;
 
@@ -119,11 +117,6 @@ public:
 private:
 	bool TryDamagePlayer()
 	{
-		if (m_scene == nullptr || m_collision == nullptr)
-		{
-			return false;
-		}
-
 		for (Actor* actor : m_scene->GetActors())
 		{
 			if (actor == nullptr || actor->GetType() != ActorType::Player || actor->IsDead())
@@ -146,10 +139,7 @@ private:
 		return false;
 	}
 
-	std::string GetTexturePath() const override
-	{
-		return m_texturePath;
-	}
+	std::string GetTexturePath() const override { return m_texturePath; }
 
 	Vector2d m_startPos;
 	Vector2d m_bulletVelocity;
@@ -186,7 +176,7 @@ bool WhiteEnemyEntity::Init()
 {
 	if (!EnemyEntity::Init()) return false;
 
-	m_sprite->SetDrawSize(96.0f, 190.0f);
+	m_transform->SetScale(Vector2d(0.5f, 0.5f));
 
 	m_anim = AddComponent<AnimationComponent>();
 	m_anim->SetSprite(m_sprite);
@@ -227,7 +217,7 @@ static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;
 static const int WHITE_SHURIKEN_DAMAGE = 5;
 static const float WHITE_SHURIKEN_SHOT_TIME = 16.0f / WHITE_ANIM_FPS;
 static const float WHITE_SHURIKEN_END_TIME = 24.0f / WHITE_ANIM_FPS;
-static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(96.0f, 96.0f);
+static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(48.0f, 48.0f);
 static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
@@ -376,6 +366,19 @@ float WhiteEnemyEntity::GetDirSign() const
 	return m_dir ? 1.0f : -1.0f;
 }
 
+void WhiteEnemyEntity::SetFacing(bool flipH)
+{
+	if (m_transform == nullptr)
+	{
+		return;
+	}
+
+	Vector2d scale = m_transform->GetScale();
+	float scaleX = std::fabs(scale.x);
+	scale.x = flipH ? -scaleX : scaleX;
+	m_transform->SetScale(scale);
+}
+
 void WhiteEnemyEntity::PrepareMoveTracking(float wantedMoveX)
 {
 	m_lastMoveStartPos = m_transform != nullptr ? m_transform->GetPosition() : Vector2d::Zero();
@@ -481,8 +484,14 @@ void WhiteEnemyEntity::PlaySheetMotion(
 
 	AnimationClip clip;
 	clip.frames = frames;
-	clip.frameDurations = frameDurations;
-	clip.speed = (2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE;
+	float totalDuration = 0.0f;
+	for (float duration : frameDurations)
+	{
+		totalDuration += duration;
+	}
+	clip.speed = frameDurations.empty()
+		? (2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE
+		: totalDuration / static_cast<float>(frameDurations.size());
 	clip.loop = loop;
 
 	m_anim->AddClip(motionName, clip);
@@ -769,10 +778,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 	float distanceY = playerPos.y - myPos.y;
 	float distance = distanceX;
 
-	if (m_sprite != nullptr)
-	{
-		m_sprite->SetFlipH(m_attackType == 0 ? distanceX >= 0.0f : m_dir);
-	}
+	SetFacing(m_attackType == 0 ? distanceX >= 0.0f : m_dir);
 
 
 	if (distance < 0.0f)
@@ -1057,10 +1063,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 	{
 		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
-		if (m_sprite != nullptr)
-		{
-			m_sprite->SetFlipH(m_dir);
-		}
+		SetFacing(m_dir);
 
 		m_attackTimer += deltaTime;
 		float attackTime = m_attackTimer;

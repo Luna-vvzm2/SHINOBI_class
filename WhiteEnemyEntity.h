@@ -41,6 +41,7 @@ private:
 	void UpdateDebugDamageInput();
 
 	float GetDirSign() const;
+	void SetFacing(bool flipH);
 	void PrepareMoveTracking(float wantedMoveX);
 
 private:

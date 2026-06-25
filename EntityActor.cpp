@@ -65,11 +65,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // 
+    // === Y•ûŒüˆÚ“® ===
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // 
+    // === Y•ûŒüÕ“Ëˆ— ===
     for (auto actor : m_scene->GetActors()) {
 
         Vector2d actorPos;
@@ -162,8 +162,10 @@ void EntityActor::MoveAndCollide(float deltaTime) {
                     playerPos.x = actorPos.x - aHalfW - halfW;
                 }
             }
+            vel.x = 0;
+            m_transform->SetPosition(playerPos);
         }
+
     }
     m_velocity->Set(vel);
 }
-

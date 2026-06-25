@@ -11,7 +11,6 @@ class SpriteComponent;
 // -------------------------------------------
 struct AnimationClip {
     std::vector<int> frames;
-    std::vector<float> frameDurations;
     float speed = 0.1f;
     bool loop = true;
 };
