@@ -572,7 +572,7 @@ bool PlayScene::Init() {
 
 	for (int y = 0; y < stage.height; ++y) {
 		for (int x = 0; x < stage.width; ++x) {
-			int tileID = mapLayer.tiles[y * stage.width + x];
+			int tileID = mapLayer.tiles[static_cast<std::vector<int, std::allocator<int>>::size_type>(y) * stage.width + x];
 			if (tileID == 0) continue; // ‹óƒ^ƒCƒ‹
 
 			Vector2d pos(x * tileSize, y * tileSize);
@@ -595,7 +595,7 @@ bool PlayScene::Init() {
 		for (int x = 0; x < stage.width; x++)
 		{
 			int objID =
-				objLayer.tiles[y * stage.width + x];
+				objLayer.tiles[static_cast<std::vector<int, std::allocator<int>>::size_type>(y) * stage.width + x];
 
 			Vector2d pos(x * tileSize, y * tileSize);
 
