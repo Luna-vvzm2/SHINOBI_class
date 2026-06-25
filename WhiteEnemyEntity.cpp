@@ -45,7 +45,7 @@ bool WhiteEnemyEntity::Init()
 }
 
 
-// Detection and spacing
+// 索敵範囲と距離判定
 static const float WHITE_TILE_SIZE = 104.0f;
 static const float WHITE_ENEMY_HALF_WIDTH = 48.0f;
 static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
@@ -60,19 +60,19 @@ static const float WHITE_SAME_FLOOR_Y_RANGE = WHITE_TILE_SIZE * 0.5f;
 static const float WHITE_STUCK_MOVE_EPS = 1.0f;
 static const float WHITE_STUCK_IDLE_TIME = 0.25f;
 
-// Movement
+// 移動関係
 static const float WHITE_APPROACH_SPEED = 120.0f;
 static const float WHITE_BACK_SPEED = 150.0f;
 static const float WHITE_FAR_APPROACH_SPEED = 250.0f;
 static const float WHITE_BULLET_SPEED = 250.0f;
 
-// Shared timing
+// 時間関係
 static const float WHITE_ACTION_TIME_SCALE = 1.5f;
 static const float WHITE_RECHECK_TIME = 0.2f * WHITE_ACTION_TIME_SCALE;
 static const float WHITE_ANIM_FPS = 24.0f;
 static const float WHITE_FRAME_TIME = 1.0f / WHITE_ANIM_FPS;
 
-// Shuriken attack
+// 手裏剣攻撃
 static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;
 static const int WHITE_SHURIKEN_DAMAGE = 5;
 static const float WHITE_SHURIKEN_SHOT_TIME = 16.0f / WHITE_ANIM_FPS;
@@ -81,7 +81,7 @@ static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(96.0f, 96.0f);
 static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
-// Sword attack
+// 剣攻撃
 static const float WHITE_SWORD_COOLDOWN = 0.15f * WHITE_ACTION_TIME_SCALE;
 static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE;
 static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;
@@ -92,7 +92,7 @@ static const float WHITE_SWORD_HIT_TIME = 20.0f / WHITE_ANIM_FPS;
 static const float WHITE_SWORD_ACTIVE_END_TIME = 29.0f / WHITE_ANIM_FPS;
 static const float WHITE_SWORD_END_TIME = 35.0f / WHITE_ANIM_FPS;
 
-// Textures and sprite sheets
+// 画像参照
 static const char* WHITE_TEXTURE_IDLE = "assets/images/enemy/white/idle.png";
 static const char* WHITE_TEXTURE_WALK = "assets/images/enemy/white/walk.png";
 static const char* WHITE_TEXTURE_SHURIKEN = "assets/images/enemy/white/shuriken.png";
@@ -107,7 +107,7 @@ static const int WHITE_SHEET_Y_NUM = 10;
 static const int WHITE_HIT_WEAK_X_NUM = 4;
 static const int WHITE_HIT_WEAK_Y_NUM = 1;
 
-// Damage reactions
+// ダメージ関係
 static const float WHITE_BLOW_MIN_KNOCKBACK = 180.0f;
 static const float WHITE_BLOW_LARGE_MIN_KNOCKBACK = 520.0f;
 static const int WHITE_DAMAGE_NONE = 0;
@@ -119,7 +119,7 @@ static const int WHITE_LARGE_BLOW_GROUND_FRAME_INDEX = 9;
 static const int WHITE_DEAD_FRAME = 37;
 static const float WHITE_DEAD_SHOW_TIME = 6.0f * WHITE_FRAME_TIME;
 
-// Attack motions
+// 攻撃アニメーション
 static const std::vector<int> WHITE_SHURIKEN_FRAMES = { 12, 13, 14, 12, 15, 16, 17, 18 };
 static const std::vector<float> WHITE_SHURIKEN_DURATIONS = {
 	4.0f / WHITE_ANIM_FPS,
@@ -144,7 +144,7 @@ static const std::vector<float> WHITE_SWORD_DURATIONS = {
 	3.0f / WHITE_ANIM_FPS
 };
 
-// Movement motions
+// 移動アニメーション
 static const std::vector<int> WHITE_IDLE_FRAMES = { 0, 1, 2, 3 };
 static const std::vector<float> WHITE_IDLE_DURATIONS = {
 	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
@@ -175,7 +175,7 @@ static const std::vector<float> WHITE_BACK_WALK_DURATIONS = {
 	(3.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE
 };
 
-// Damage reaction motions
+// ダメージアニメーション
 static const std::vector<int> WHITE_WEAK_HIT_FRAMES = { 0, 1, 2, 3 };
 static const std::vector<float> WHITE_WEAK_HIT_DURATIONS = {
 	5.0f * WHITE_FRAME_TIME,
@@ -584,8 +584,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 
 void WhiteEnemyEntity::Update(float deltaTime)
 {
-	UpdateDebugDamageInput();
-
 	if (m_damageState != WHITE_DAMAGE_NONE)
 	{
 		UpdateDamageMotion(deltaTime);
@@ -661,21 +659,21 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 	/*----------------
 
-			鬮ｴ謇假ｽｽ・･郢晢ｽｻ繝ｻ・ｶ鬮ｫ・ｲ繝ｻ・ｷ髯区ｻゑｽｽ・ｶ郢晢ｽｻ繝ｻ・ｸ繝ｻ縺､ﾂ鬯ｮ・ｫ陋ｹ繝ｻ・ｽ・ｽ繝ｻ・ｧ
-			||whiteState||
-			0 鬮ｯ貅ｯ・ｼ譁舌・郢晢ｽｻ繝ｻ・ｩ驛｢譎｢・ｽ・ｻ
-			1 鬮ｫ・ｰ隴会ｽｦ繝ｻ・ｽ繝ｻ・･鬯ｮ・ｴ鬩｢謳ｾ・ｽ・ｬ繝ｻ・ｬ髴取ｺｽ・ｧ莨懈蕗髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ
-			2 鬮ｯ貊薙・繝ｻ・｢郢晢ｽｻ・つ繝ｻ縺､ﾂ鬮ｫ・ｰ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ
-			3 鬮ｯ蜿･・ｸ・ｶ郢ｩ・ｧ郢晢ｽｻ繝ｻ・ｭ郢晢ｽｻ繝ｻ・｢鬩搾ｽｵ繝ｻ・ｺ髯ｷ莨夲ｽｽ・ｱ驕ｯ・ｶ繝ｻ・ｻ鬮ｫ・ｰ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ
-			4 鬮ｯ蜿･・ｸ・ｶ郢ｩ・ｧ郢晢ｽｻ繝ｻ・ｭ郢晢ｽｻ繝ｻ・｢鬩搾ｽｵ繝ｻ・ｺ髯ｷ莨夲ｽｽ・ｱ驕ｯ・ｶ繝ｻ・ｻ鬮ｯ・ｷ隰・∞・ｽ・ｽ繝ｻ・｣鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ
-			5 鬮ｫ・ｰ隴会ｽｦ繝ｻ・ｽ繝ｻ・･鬯ｮ・ｴ闔会ｽ｣郢晢ｽｻ
-			6 鬮ｮ蠑ｱ繝ｻ繝ｻ・ｽ繝ｻ・ｻ nashi
+		状態一覧
+		||whiteState||
+		0 待機・索敵
+		1 接近しながら手裏剣攻撃
+		2 後退しながら剣攻撃の再使用を待つ
+		3 停止して手裏剣攻撃
+		4 停止して剣攻撃
+		5 遠距離から接近
+		6 死亡
 
-			鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ郢晢ｽｻ繝ｻ・ｸ繝ｻ縺､ﾂ鬯ｮ・ｫ陋ｹ繝ｻ・ｽ・ｽ繝ｻ・ｧ
-			||attackType||
-			0 鬯ｩ蜍溪・繝ｻ・ｽ繝ｻ・ｻ鬮ｯ・ｷ鬮ｦ・ｪ郢晢ｽｻ
-			1 鬮ｫ・ｰ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ
-			2 鬮ｯ・ｷ隰・∞・ｽ・ｽ繝ｻ・｣鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ
+		攻撃タイプ
+		||attackType||
+		0 攻撃なし
+		1 手裏剣攻撃
+		2 剣攻撃
 
    ---------------*/
 
@@ -692,7 +690,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 				m_dir = false;
 			}
 
-			// Close range: sword when ready, back away while cooling down.
+			// 近距離では剣を使い、再使用待ちの間は後退する。
 			if (distance < WHITE_BACK_RANGE)
 			{
 				if (m_cooldownTimer <= 0.0f)
@@ -714,7 +712,6 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			{
 				m_whiteState = 1;
 			}
-			// 鬯ｯ・ｩ陋ｹ繝ｻ・ｽ・｣繝ｻ・ｰ鬩搾ｽｵ繝ｻ・ｺ髯ｷ・ｷ繝ｻ・ｶ鬩阪・繝ｻ繝ｻ・ｹ繝ｻ・ｧ髯ｷ闌ｨ・ｽ・ｷ郢晢ｽｻ繝ｻ・ｼ髯橸ｽ｢繝ｻ・ｽ鬨ｾ蠑ｱ繝ｻ隲ｱ繝ｻ閼ゅ・・｣驛｢譎｢・ｽ・ｻ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｿ
 			else
 			{
 				m_whiteState = 5;
@@ -747,7 +744,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 1:
-			// 鬮ｫ・ｰ隴会ｽｦ繝ｻ・ｽ繝ｻ・･鬯ｮ・ｴ陷ｿ・ｰ繝ｻ・ｻ繝ｻ・｣郢晢ｽｻ繝ｻ・ｰ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｪ鬩搾ｽｵ繝ｻ・ｺ髯滓坩・ｯ莨夲ｽｽ・ｽ髣・ｽｽ繝ｻ・ｬ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬩幢ｽ｢繝ｻ・ｧ郢晢ｽｻ繝ｻ・ｯ鬩幢ｽ｢隴趣ｽ｢繝ｻ・ｽ繝ｻ・ｼ鬩幢ｽ｢隴趣ｽ｢繝ｻ・ｽ繝ｻ・ｫ鬩幢ｽ｢繝ｻ・ｧ郢晢ｽｻ繝ｻ・ｿ鬩幢ｽ｢繝ｻ・ｧ郢晢ｽｻ繝ｻ・､鬩幢ｽ｢隴趣ｽ｢繝ｻ・｣繝ｻ・ｰ鬮ｯ貅ｯ・ｼ譁舌・髫ｨ繝ｻ・｣・ｰ
+			// 手裏剣の射程まで接近する。
 			PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
 			PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
 			m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
@@ -756,7 +753,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			{
 				m_actionLock = false;
 			}
-
+			// 剣の再使用待ち中は間合いを取る。
 			if (m_cooldownTimer <= 0.0f)
 			{
 				if (distance < WHITE_BACK_RANGE)
@@ -775,7 +772,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 2:
-			// close range: swing sword in place when ready, retreat while cooling down
+
 			if (m_cooldownTimer <= 0.0f)
 			{
 				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
@@ -796,7 +793,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 3:
-			// 鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・｡鬩幢ｽ｢繝ｻ・ｧ驛｢譎｢・ｽ・ｻ驕ｶ蛹・ｽｽ・ｧ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｩ鬩搾ｽｵ繝ｻ・ｺ驛｢譎｢・ｽ・ｻ郢晢ｽｻ隶難ｽ｣隲ｱ・ｪ髫ｴ蜿厄ｽｧ・ｫ繝ｻ・ｱ繝ｻ・ｬ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｪ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｮ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｧ鬮ｯ蜿･・ｸ・ｶ郢ｩ・ｧ郢晢ｽｻ繝ｻ・ｭ郢晢ｽｻ繝ｻ・｢鬩搾ｽｵ繝ｻ・ｺ髯ｷ莨夲ｽｽ・ｱ驕ｯ・ｶ繝ｻ・ｻ鬮ｫ・ｰ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ
+			// 手裏剣の射程内で停止する。
 			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -823,7 +820,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			// 鬮ｯ・ｷ隰・∞・ｽ・ｽ繝ｻ・｣
+			// 近距離で停止して剣を使う。
 			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -854,8 +851,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 6:
-			//sinumotion
-
+			// 死亡状態へ移行する。
 			SetState(Actor::State::Dead);
 			break;
 		}
@@ -896,13 +892,10 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			m_attackActive = true;
 		}
 
-		// 鬮ｫ・ｰ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ郢晢ｽｻ繝ｻ・ｵ驛｢・ｧ郢晢ｽｻ繝ｻ・ｽ繝ｻ・ｺ驛｢譎｢・ｽ・ｻ
-
 		if (attackTime >= WHITE_SHURIKEN_END_TIME)
 		{
 			m_attackType = 0;
 
-			// 鬮ｫ・ｰ郢晢ｽｻ闔荵昴・繝ｻ・｣髣包ｽｳ隶灘･・ｽｽ・ｮ繝ｻ・ｴ鬩搾ｽｵ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｮ鬮ｫ・ｰ繝ｻ・ｾ郢晢ｽｻ繝ｻ・ｻ鬮ｫ・ｰ繝ｻ・ｦ驛｢譎｢・ｽ・ｻ郢晢ｽｻ繝ｻ・ｸ髫ｶ譛ｱ螳ｦ繝ｻ・ｺ郢晢ｽｻ繝ｻ・ｭ陟托ｽｱ繝ｻ邇門ｰ・・・｣
 			m_cooldownTimer = WHITE_SHURIKEN_COOLDOWN;
 
 			m_actionTimer = 0.0f;
@@ -1012,21 +1005,3 @@ std::string WhiteEnemyEntity::GetTexturePath() const
 
 
 
-
-/* DEBUG DAMAGE TEST START
-static const int WHITE_DEBUG_DAMAGE = 10;
-static const Vector2d WHITE_DEBUG_KNOCKBACK = Vector2d(260.0f, -320.0f);
-
-void WhiteEnemyEntity::UpdateDebugDamageInput()
-{
-	static bool wasDebugDamageKeyDown = false;
-	bool isDebugDamageKeyDown = CheckHitKey(KEY_INPUT_H) != 0;
-
-	if (isDebugDamageKeyDown && !wasDebugDamageKeyDown)
-	{
-		TakeDamage(WHITE_DEBUG_DAMAGE, WHITE_DEBUG_KNOCKBACK);
-	}
-
-	wasDebugDamageKeyDown = isDebugDamageKeyDown;
-}
-// DEBUG DAMAGE TEST END*/
