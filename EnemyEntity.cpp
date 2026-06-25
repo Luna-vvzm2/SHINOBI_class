@@ -87,9 +87,9 @@ std::string EnemyEntity::GetTexturePath() const {
 
 /*
 
-å¼¾ç”ŸæE
+’e¶¬
     auto bullet =
-        new EnemyBullet(m_scene,ã€€GetPos());
+        new EnemyBullet(m_scene,@GetPos());
     
     m_scene->AddActor(bullet);
 

@@ -5,11 +5,6 @@
 #include "VelocityComponent.h"
 #include "CollisionComponent.h"
 #include "HPComponent.h"
-#include "PlayerEntity.h"
-#include "SpriteComponent.h"
-
-static const float ENEMY_BULLET_KNOCKBACK_X = 300.0f;
-static const float ENEMY_BULLET_KNOCKBACK_Y = -200.0f;
 
 EnemyBullet::EnemyBullet(
 	Scene* scene,
@@ -17,11 +12,7 @@ EnemyBullet::EnemyBullet(
 	const Vector2d& velocity,
 	float deleteRange,
 	const std::string& texturePath,
-	int damage,
-	const Vector2d& drawSize,
-	bool rotate,
-	float rotateInterval,
-	float rotateStep
+	int damage
 )
 	: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
 	, m_startPos(pos)
@@ -29,12 +20,6 @@ EnemyBullet::EnemyBullet(
 	, m_deleteRange(deleteRange)
 	, m_texturePath(texturePath)
 	, m_damage(damage)
-	, m_drawSize(drawSize)
-	, m_rotate(rotate)
-	, m_rotateInterval(rotateInterval)
-	, m_rotateStep(rotateStep)
-	, m_rotationAngle(0.0f)
-	, m_rotationTimer(0.0f)
 {
 }
 
@@ -44,11 +29,6 @@ bool EnemyBullet::Init()
 
 	m_velocity->SetVelocity(m_bulletVelocity);
 	m_collision->SetCircle(6.0f);
-	m_sprite->SetRotation(m_rotationAngle);
-	if (m_drawSize.x > 0.0f && m_drawSize.y > 0.0f)
-	{
-		m_sprite->SetDrawSize(m_drawSize.x, m_drawSize.y);
-	}
 
 	return true;
 }
@@ -59,17 +39,6 @@ void EnemyBullet::Update(float deltaTime)
 
 	Vector2d pos = m_transform->GetPosition();
 	Vector2d vel = m_velocity->GetVelocity();
-
-	if (m_rotate && m_rotateInterval > 0.0f)
-	{
-		m_rotationTimer += deltaTime;
-		while (m_rotationTimer >= m_rotateInterval)
-		{
-			m_rotationTimer -= m_rotateInterval;
-			m_rotationAngle += m_rotateStep;
-		}
-		m_sprite->SetRotation(m_rotationAngle);
-	}
 
 	pos += vel * deltaTime;
 	m_transform->SetPosition(pos);
@@ -111,14 +80,11 @@ bool EnemyBullet::TryDamagePlayer()
 			continue;
 		}
 
-		PlayerEntity* player = static_cast<PlayerEntity*>(actor);
-		if (player != nullptr)
+		HPComponent* playerHp = actor->GetComponent<HPComponent>();
+		if (playerHp != nullptr)
 		{
-			float knockbackX = player->GetPos().x < m_transform->GetPosition().x ? -ENEMY_BULLET_KNOCKBACK_X : ENEMY_BULLET_KNOCKBACK_X;
-			player->TakeDamage(
-				m_damage,
-				Vector2d(knockbackX, ENEMY_BULLET_KNOCKBACK_Y)
-			);
+			playerHp->Damage(m_damage);
+			playerHp->SetInvincible(0.3f);
 		}
 
 		return true;

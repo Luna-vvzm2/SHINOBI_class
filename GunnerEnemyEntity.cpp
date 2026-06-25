@@ -43,7 +43,6 @@ static const float GUNNER_RECHECK_TIME = 0.2f;          // state recheck time
 static const int GUNNER_SHOT_COUNT = 3;                 // shot count
 static const float GUNNER_SHOT_TIME[GUNNER_SHOT_COUNT] = { 0.8f, 1.3f, 1.8f };
 static const float GUNNER_ATTACK_END_TIME = 3.2f;       // attack end time
-static const int GUNNER_BULLET_DAMAGE = 10;             // bullet damage
 
 static const char* GUNNER_TEXTURE_IDLE = "assets/images/enemy/gunner/idle.png";
 static const char* GUNNER_TEXTURE_WALK = "assets/images/enemy/gunner/walk.png";
@@ -358,8 +357,7 @@ void GunnerEnemyEntity::Update(float deltaTime)
 						bulletPos,
 						bulletVel,
 						GUNNER_BULLET_DELETE_RANGE,
-						"assets/images/enemy/bullet/gunner.png",
-						GUNNER_BULLET_DAMAGE
+						"assets/images/enemy/bullet/gunner.png"
 					)
 				);
 

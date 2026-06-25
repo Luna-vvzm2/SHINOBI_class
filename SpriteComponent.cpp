@@ -150,7 +150,7 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
     );
 
     if (ret == -1) {
-        std::cerr << "[ERROR] •ªŠ„‰æ‘œ“Ç‚Ýž‚ÝŽ¸”s:  " << path << std::endl;
+        std::cerr << "[ERROR] •ªŠ„‰æ‘œ“Ç‚Ýž‚ÝŽ¸”s: " << path << std::endl;
         return false;
     }
 

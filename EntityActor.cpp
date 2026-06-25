@@ -149,17 +149,16 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapX > 0 && overlapY > 0) {
             // === X方向補正 ===
-            if (diffX > 0) { // ブロック右側（左に押し戻す）
-                playerPos.x = actorPos.x + aHalfW + halfW;
+            if (overlapX < overlapY) {
+                if (diffX > 0) { // ブロック右側（左に押し戻す）
+                    playerPos.x = actorPos.x + aHalfW + halfW;
+                }
+                else { // 左側（右に押し戻す）
+                    playerPos.x = actorPos.x - aHalfW - halfW;
+                }
             }
-            else { // 左側（右に押し戻す）
-                playerPos.x = actorPos.x - aHalfW - halfW;
-            }
-
-            vel.x = 0;
-            m_transform->SetPosition(playerPos);
         }
-
     }
     m_velocity->Set(vel);
 }
+

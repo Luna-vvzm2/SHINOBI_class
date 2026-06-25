@@ -2,16 +2,166 @@
 #include "Scene.h"
 #include "Actor.h"
 #include "PlayerEntity.h"
-#include "EnemyBullet.h"
+#include "EntityActor.h"
+#include "CollisionComponent.h"
 #include "GravityComponent.h"
 #include "VelocityComponent.h"
 #include "TransformComponent.h"
 #include "HPComponent.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
+#include "Game.h"
+#include "Renderer.h"
 #include "Vector2d.h"
 #include <DxLib.h>
 #include <cmath>
+
+class WhiteShurikenBullet : public EntityActor
+{
+public:
+	WhiteShurikenBullet(
+		Scene* scene,
+		const Vector2d& pos,
+		const Vector2d& velocity,
+		float deleteRange,
+		const std::string& texturePath,
+		int damage,
+		const Vector2d& drawSize,
+		float rotateInterval,
+		float rotateStep
+	)
+		: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
+		, m_startPos(pos)
+		, m_bulletVelocity(velocity)
+		, m_deleteRange(deleteRange)
+		, m_texturePath(texturePath)
+		, m_damage(damage)
+		, m_drawSize(drawSize)
+		, m_rotateInterval(rotateInterval)
+		, m_rotateStep(rotateStep)
+		, m_rotationAngle(0.0f)
+		, m_rotationTimer(0.0f)
+	{
+	}
+
+	bool Init() override
+	{
+		if (!EntityActor::Init()) return false;
+
+		m_velocity->SetVelocity(m_bulletVelocity);
+		m_collision->SetCircle(6.0f);
+		return true;
+	}
+
+	void Update(float deltaTime) override
+	{
+		Actor::Update(deltaTime);
+
+		m_rotationTimer += deltaTime;
+		while (m_rotateInterval > 0.0f && m_rotationTimer >= m_rotateInterval)
+		{
+			m_rotationTimer -= m_rotateInterval;
+			m_rotationAngle += m_rotateStep;
+		}
+
+		Vector2d pos = m_transform->GetPosition();
+		pos += m_velocity->GetVelocity() * deltaTime;
+		m_transform->SetPosition(pos);
+
+		if ((pos - m_startPos).length() > m_deleteRange || TryDamagePlayer())
+		{
+			SetState(Actor::State::Dead);
+		}
+	}
+
+	void Draw() override
+	{
+		if (IsDead() || m_scene == nullptr || m_sprite == nullptr || m_transform == nullptr)
+		{
+			return;
+		}
+
+		Game* game = m_scene->GetGame();
+		Renderer* renderer = game != nullptr ? game->GetRenderer() : nullptr;
+		int handle = m_sprite->GetHandle();
+		if (renderer == nullptr || handle < 0)
+		{
+			return;
+		}
+
+		int textureWidth = 0;
+		int textureHeight = 0;
+		GetGraphSize(handle, &textureWidth, &textureHeight);
+
+		float scaleX = textureWidth > 0 ? m_drawSize.x / static_cast<float>(textureWidth) : 1.0f;
+		float scaleY = textureHeight > 0 ? m_drawSize.y / static_cast<float>(textureHeight) : 1.0f;
+
+		renderer->DrawSpriteEx(
+			m_transform->GetPosition(),
+			scaleX,
+			scaleY,
+			m_rotationAngle,
+			handle,
+			true,
+			Vector2d(static_cast<float>(textureWidth), static_cast<float>(textureHeight)) * 0.5f
+		);
+
+#ifdef _DEBUG
+		if (m_collision != nullptr)
+		{
+			m_collision->DrawDebug();
+		}
+#endif
+	}
+
+	ActorType GetType() const override { return ActorType::Ball; }
+
+private:
+	bool TryDamagePlayer()
+	{
+		if (m_scene == nullptr || m_collision == nullptr)
+		{
+			return false;
+		}
+
+		for (Actor* actor : m_scene->GetActors())
+		{
+			if (actor == nullptr || actor->GetType() != ActorType::Player || actor->IsDead())
+			{
+				continue;
+			}
+
+			CollisionComponent* playerCollision = actor->GetComponent<CollisionComponent>();
+			if (playerCollision == nullptr || !m_collision->CheckCollision(playerCollision))
+			{
+				continue;
+			}
+
+			PlayerEntity* player = static_cast<PlayerEntity*>(actor);
+			float knockbackX = player->GetPos().x < m_transform->GetPosition().x ? -300.0f : 300.0f;
+			player->TakeDamage(m_damage, Vector2d(knockbackX, -200.0f));
+			return true;
+		}
+
+		return false;
+	}
+
+	std::string GetTexturePath() const override
+	{
+		return m_texturePath;
+	}
+
+	Vector2d m_startPos;
+	Vector2d m_bulletVelocity;
+	float m_deleteRange;
+	std::string m_texturePath;
+	int m_damage;
+	Vector2d m_drawSize;
+	float m_rotateInterval;
+	float m_rotateStep;
+	float m_rotationAngle;
+	float m_rotationTimer;
+};
 
 WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
 	: EnemyEntity(scene, pos, Vector2d(96, 190))
@@ -46,7 +196,7 @@ bool WhiteEnemyEntity::Init()
 }
 
 
-// Detection and spacing
+// 邏｢謨ｵ遽・峇縺ｨ霍晞屬蛻､螳・
 static const float WHITE_TILE_SIZE = 104.0f;
 static const float WHITE_ENEMY_HALF_WIDTH = 48.0f;
 static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
@@ -61,19 +211,19 @@ static const float WHITE_SAME_FLOOR_Y_RANGE = WHITE_TILE_SIZE * 0.5f;
 static const float WHITE_STUCK_MOVE_EPS = 1.0f;
 static const float WHITE_STUCK_IDLE_TIME = 0.25f;
 
-// Movement
+// 遘ｻ蜍暮未菫・
 static const float WHITE_APPROACH_SPEED = 120.0f;
 static const float WHITE_BACK_SPEED = 150.0f;
 static const float WHITE_FAR_APPROACH_SPEED = 250.0f;
 static const float WHITE_BULLET_SPEED = 250.0f;
 
-// Shared timing
+// 譎る俣髢｢菫・
 static const float WHITE_ACTION_TIME_SCALE = 1.5f;
 static const float WHITE_RECHECK_TIME = 0.2f * WHITE_ACTION_TIME_SCALE;
 static const float WHITE_ANIM_FPS = 24.0f;
 static const float WHITE_FRAME_TIME = 1.0f / WHITE_ANIM_FPS;
 
-// Shuriken attack
+// 謇玖｣丞殴謾ｻ謦・
 static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;
 static const int WHITE_SHURIKEN_DAMAGE = 5;
 static const float WHITE_SHURIKEN_SHOT_TIME = 16.0f / WHITE_ANIM_FPS;
@@ -82,7 +232,7 @@ static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(96.0f, 96.0f);
 static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
-// Sword attack
+// 蜑｣謾ｻ謦・
 static const float WHITE_SWORD_COOLDOWN = 0.15f * WHITE_ACTION_TIME_SCALE;
 static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE;
 static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;
@@ -93,7 +243,7 @@ static const float WHITE_SWORD_HIT_TIME = 20.0f / WHITE_ANIM_FPS;
 static const float WHITE_SWORD_ACTIVE_END_TIME = 29.0f / WHITE_ANIM_FPS;
 static const float WHITE_SWORD_END_TIME = 35.0f / WHITE_ANIM_FPS;
 
-// Textures and sprite sheets
+// 逕ｻ蜒丞盾辣ｧ
 static const char* WHITE_TEXTURE_IDLE = "assets/images/enemy/white/idle.png";
 static const char* WHITE_TEXTURE_WALK = "assets/images/enemy/white/walk.png";
 static const char* WHITE_TEXTURE_SHURIKEN = "assets/images/enemy/white/shuriken.png";
@@ -108,7 +258,7 @@ static const int WHITE_SHEET_Y_NUM = 10;
 static const int WHITE_HIT_WEAK_X_NUM = 4;
 static const int WHITE_HIT_WEAK_Y_NUM = 1;
 
-// Damage reactions
+// 繝繝｡繝ｼ繧ｸ髢｢菫・
 static const float WHITE_BLOW_MIN_KNOCKBACK = 180.0f;
 static const float WHITE_BLOW_LARGE_MIN_KNOCKBACK = 520.0f;
 static const int WHITE_DAMAGE_NONE = 0;
@@ -120,7 +270,7 @@ static const int WHITE_LARGE_BLOW_GROUND_FRAME_INDEX = 9;
 static const int WHITE_DEAD_FRAME = 37;
 static const float WHITE_DEAD_SHOW_TIME = 6.0f * WHITE_FRAME_TIME;
 
-// Attack motions
+// 謾ｻ謦・い繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ
 static const std::vector<int> WHITE_SHURIKEN_FRAMES = { 12, 13, 14, 12, 15, 16, 17, 18 };
 static const std::vector<float> WHITE_SHURIKEN_DURATIONS = {
 	4.0f / WHITE_ANIM_FPS,
@@ -145,7 +295,7 @@ static const std::vector<float> WHITE_SWORD_DURATIONS = {
 	3.0f / WHITE_ANIM_FPS
 };
 
-// Movement motions
+// 遘ｻ蜍輔い繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ
 static const std::vector<int> WHITE_IDLE_FRAMES = { 0, 1, 2, 3 };
 static const std::vector<float> WHITE_IDLE_DURATIONS = {
 	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
@@ -176,7 +326,7 @@ static const std::vector<float> WHITE_BACK_WALK_DURATIONS = {
 	(3.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE
 };
 
-// Damage reaction motions
+// 繝繝｡繝ｼ繧ｸ繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ
 static const std::vector<int> WHITE_WEAK_HIT_FRAMES = { 0, 1, 2, 3 };
 static const std::vector<float> WHITE_WEAK_HIT_DURATIONS = {
 	5.0f * WHITE_FRAME_TIME,
@@ -654,21 +804,21 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 
 		/*----------------
 
+		状態一覧
+		||whiteState||
+		0 待機・索敵
+		1 接近しながら手裏剣攻撃
+		2 後退しながら剣攻撃の再使用を待つ
+		3 停止して手裏剣攻撃
+		4 停止して剣攻撃
+		5 遠距離から接近
+		6 死亡
 
-				||whiteState||
-				0
-				1
-				2
-				3
-				4
-				5
-				6  nashi
-
-
-				||attackType||
-				0
-				1
-				2
+		攻撃タイプ
+		||attackType||
+		0 攻撃なし
+		1 手裏剣攻撃
+		2 剣攻撃
 
 	   ---------------*/
 
@@ -685,33 +835,32 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 					m_dir = false;
 				}
 
-				// Close range: sword when ready, back away while cooling down.
-				if (distance < WHITE_BACK_RANGE)
+			// 近距離では剣を使い、再使用待ちの間は後退する。
+			if (distance < WHITE_BACK_RANGE)
+			{
+				if (m_cooldownTimer <= 0.0f)
 				{
-					if (m_cooldownTimer <= 0.0f)
-					{
-						m_whiteState = 4;
-					}
-					else
-					{
-						m_whiteState = 2;
-					}
+					m_whiteState = 4;
 				}
-				//
-				else if (distance < WHITE_STOP_SHURIKEN_RANGE)
-				{
-					m_whiteState = 3;
-				}
-				// 
-				else if (distance < WHITE_SHURIKEN_RANGE)
-				{
-					m_whiteState = 1;
-				}
-				// 
 				else
 				{
-					m_whiteState = 5;
+					m_whiteState = 2;
 				}
+			}
+
+			else if (distance < WHITE_STOP_SHURIKEN_RANGE)
+			{
+				m_whiteState = 3;
+			}
+
+			else if (distance < WHITE_SHURIKEN_RANGE)
+			{
+				m_whiteState = 1;
+			}
+			else
+			{
+				m_whiteState = 5;
+			}
 
 				m_actionTimer = 0.0f;
 				m_actionLock = true;
@@ -739,48 +888,48 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				m_actionLock = false;
 				break;
 
-			case 1:
-				// 
-				PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
-				PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
-				m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
+		case 1:
+			// 手裏剣の射程まで接近する。
+			PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
+			PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
+			m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
 
-				if (distance < WHITE_BACK_RANGE || distance > WHITE_SHURIKEN_RANGE)
+			if (distance < WHITE_BACK_RANGE || distance > WHITE_SHURIKEN_RANGE)
+			{
+				m_actionLock = false;
+			}
+			// 剣の再使用待ち中は間合いを取る。
+			if (m_cooldownTimer <= 0.0f)
+			{
+				if (distance < WHITE_BACK_RANGE)
 				{
-					m_actionLock = false;
-				}
-
-				if (m_cooldownTimer <= 0.0f)
-				{
-					if (distance < WHITE_BACK_RANGE)
-					{
-						StartSwordAttack();
-					}
-					else
-					{
-						StartShurikenAttack();
-					}
-				}
-				else if (m_actionTimer >= WHITE_RECHECK_TIME)
-				{
-					m_actionLock = false;
-				}
-				break;
-
-			case 2:
-				// close range: swing sword in place when ready, retreat while cooling down
-				if (m_cooldownTimer <= 0.0f)
-				{
-					PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
-					m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 					StartSwordAttack();
 				}
 				else
 				{
-					PlaySheetMotion("back_walk", WHITE_WALK_FRAMES, WHITE_BACK_WALK_DURATIONS, true);
-					PrepareMoveTracking(-WHITE_BACK_SPEED * dir);
-					m_velocity->SetVelocity(Vector2d(-WHITE_BACK_SPEED * dir, 0.0f));
+					StartShurikenAttack();
 				}
+			}
+			else if (m_actionTimer >= WHITE_RECHECK_TIME)
+			{
+				m_actionLock = false;
+			}
+			break;
+
+		case 2:
+
+			if (m_cooldownTimer <= 0.0f)
+			{
+				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
+				m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+				StartSwordAttack();
+			}
+			else
+			{
+				PlaySheetMotion("back_walk", WHITE_WALK_FRAMES, WHITE_BACK_WALK_DURATIONS, true);
+				PrepareMoveTracking(-WHITE_BACK_SPEED * dir);
+				m_velocity->SetVelocity(Vector2d(-WHITE_BACK_SPEED * dir, 0.0f));
+			}
 
 				if (distance >= WHITE_BACK_RANGE || m_actionTimer >= WHITE_RECHECK_TIME)
 				{
@@ -788,10 +937,10 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				}
 				break;
 
-			case 3:
-				// 
-				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
-				m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+		case 3:
+			// 手裏剣の射程内で停止する。
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
+			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 				if (distance < WHITE_BACK_RANGE || distance >= WHITE_SHURIKEN_RANGE)
 				{
@@ -815,10 +964,10 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				}
 				break;
 
-			case 4:
-				// 
-				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
-				m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+		case 4:
+			// 近距離で停止して剣を使う。
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
+			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 				if (m_cooldownTimer <= 0.0f)
 				{
@@ -846,194 +995,151 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				}
 				break;
 
-			case 6:
-				//
-				//
-
-				SetState(Actor::State::Dead);
-				break;
-			}
+		case 6:
+			// 死亡状態へ移行する。
+			SetState(Actor::State::Dead);
+			break;
 		}
-		else if (m_attackType == 1)
-		{
-			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+	}
+	else if (m_attackType == 1)
+	{
+		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			m_attackTimer += deltaTime;
 			float attackTime = m_attackTimer;
 
 			m_attackType = 1;
 
-			// 0.7
-
-			/*if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					int bulletIndex = i * 3 + j;
-
-					if (white->bulletActive[bulletIndex] == false)
-					{
-						white->bulletActive[bulletIndex] = true;
-
-						white->bulletMuki[bulletIndex] = white->attackDir[i];
-						white->bulletX[bulletIndex] = white->x[i] + 16.0f * white->attackDir[i];
-						white->bulletY[bulletIndex] = white->y[i] - 16.0f;
-
-						break;
-					}
-				}
 
 
-
-			if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
-			{
-				float dir = GetDirSign();
-				Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 16.0f);
-				Vector2d bulletVel(WHITE_BULLET_SPEED * dir, 0.0f);
-
-				m_scene->SpawnActor(
-					new EnemyBullet(
-						m_scene,
-						bulletPos,
-						bulletVel,
-						WHITE_BULLET_DELETE_RANGE,
-						WHITE_TEXTURE_SHURIKEN_BULLET,
-						WHITE_SHURIKEN_DAMAGE,
-						WHITE_SHURIKEN_BULLET_DRAW_SIZE,
-						true,
-						WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL,
-						WHITE_SHURIKEN_BULLET_ROTATE_STEP
-					)
-				);
-
-				m_attackOnce = true;
-				m_attackActive = true;
-			}
-
-			// 		// 0.7
-
-			if (attackTime >= WHITE_SHURIKEN_END_TIME)
-			{
-				m_attackType = 0;
-
-				//
-				m_cooldownTimer = WHITE_SHURIKEN_COOLDOWN;
-
-				m_actionTimer = 0.0f;
-				m_actionLock = false;
-				m_attackOnce = false;
-				m_attackType = 0;
-			}
-		}
-		else if (m_attackType == 2)
+		if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
 		{
-			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+			float dir = GetDirSign();
+			Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 16.0f);
+			Vector2d bulletVel(WHITE_BULLET_SPEED * dir, 0.0f);
 
-			if (m_sprite != nullptr)
-			{
-				m_sprite->SetFlipH(m_dir);
-			}
+			m_scene->SpawnActor(
+				new WhiteShurikenBullet(
+					m_scene,
+					bulletPos,
+					bulletVel,
+					WHITE_BULLET_DELETE_RANGE,
+					WHITE_TEXTURE_SHURIKEN_BULLET,
+					WHITE_SHURIKEN_DAMAGE,
+					WHITE_SHURIKEN_BULLET_DRAW_SIZE,
+					WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL,
+					WHITE_SHURIKEN_BULLET_ROTATE_STEP
+				)
+			);
 
-			m_attackTimer += deltaTime;
-			float attackTime = m_attackTimer;
-
-			m_attackActive = attackTime >= WHITE_SWORD_HIT_TIME && attackTime < WHITE_SWORD_ACTIVE_END_TIME;
-
-			if (m_attackActive == true && m_attackOnce == false)
-			{
-				float attackRange = WHITE_SWORD_ATTACK_RANGE;
-				float heightRange = WHITE_SWORD_HEIGHT_RANGE;
-
-				float dx = playerPos.x - myPos.x;
-				float dy = playerPos.y - myPos.y;
-
-				bool hit = false;
-
-				if (m_dir == true)
-				{
-					if (dx > 0.0f && dx < attackRange)
-					{
-						hit = true;
-					}
-				}
-				else
-				{
-					if (dx < 0.0f && dx > -attackRange)
-					{
-						hit = true;
-					}
-				}
-
-				if (hit == true)
-				{
-					if (dy < 0.0f)
-					{
-						dy *= -1.0f;
-					}
-
-					if (dy < heightRange)
-					{
-						if (player != nullptr)
-						{
-							float knockbackX = playerPos.x < myPos.x ? -WHITE_SWORD_KNOCKBACK_X : WHITE_SWORD_KNOCKBACK_X;
-							player->TakeDamage(
-								WHITE_SWORD_DAMAGE,
-								Vector2d(knockbackX, WHITE_SWORD_KNOCKBACK_Y)
-							);
-							m_attackOnce = true;
-						}
-					}
-				}
-			}
-
-			if (attackTime >= WHITE_SWORD_END_TIME)
-			{
-				m_cooldownTimer = WHITE_SWORD_COOLDOWN;
-				m_actionTimer = 0.0f;
-				m_actionLock = false;
-				m_attackOnce = false;
-				m_attackActive = false;
-				m_attackType = 0;
-			}
+			m_attackOnce = true;
+			m_attackActive = true;
 		}
 
-		//
-		//
-
-		//
-
-		//
-		/*for (int j = 0; j < 3; j++)
+		if (attackTime >= WHITE_SHURIKEN_END_TIME)
 		{
-			int bulletIndex = i * 3 + j;
+			m_attackType = 0;
 
-			if (white->bulletActive[bulletIndex] == true)
-			{
-				white->bulletX[bulletIndex] += WHITE_BULLET_SPEED * white->bulletMuki[bulletIndex] * dt;
+			m_cooldownTimer = WHITE_SHURIKEN_COOLDOWN;
 
-			}
-		}*/
-
-			EnemyEntity::Update(deltaTime);
-
-			if (m_hasLastMove && m_attackType == 0)
-			{
-				Vector2d movedPos = m_transform != nullptr ? m_transform->GetPosition() : Vector2d::Zero();
-				float movedX = movedPos.x - m_lastMoveStartPos.x;
-				bool wantedMove = m_lastWantedMoveX > WHITE_STUCK_MOVE_EPS || m_lastWantedMoveX < -WHITE_STUCK_MOVE_EPS;
-				bool blockedMove = movedX > -WHITE_STUCK_MOVE_EPS && movedX < WHITE_STUCK_MOVE_EPS;
-
-				if (wantedMove && blockedMove)
-				{
-					PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
-					m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
-					m_actionLock = false;
-				}
-			}
-
-			m_hasLastMove = false;
+			m_actionTimer = 0.0f;
+			m_actionLock = false;
+			m_attackOnce = false;
+			m_attackType = 0;
 		}
 	}
+	else if (m_attackType == 2)
+	{
+		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+
+		if (m_sprite != nullptr)
+		{
+			m_sprite->SetFlipH(m_dir);
+		}
+
+		m_attackTimer += deltaTime;
+		float attackTime = m_attackTimer;
+
+		m_attackActive = attackTime >= WHITE_SWORD_HIT_TIME && attackTime < WHITE_SWORD_ACTIVE_END_TIME;
+
+		if (m_attackActive == true && m_attackOnce == false)
+		{
+			float attackRange = WHITE_SWORD_ATTACK_RANGE;
+			float heightRange = WHITE_SWORD_HEIGHT_RANGE;
+
+			float dx = playerPos.x - myPos.x;
+			float dy = playerPos.y - myPos.y;
+
+			bool hit = false;
+
+			if (m_dir == true)
+			{
+				if (dx > 0.0f && dx < attackRange)
+				{
+					hit = true;
+				}
+			}
+			else
+			{
+				if (dx < 0.0f && dx > -attackRange)
+				{
+					hit = true;
+				}
+			}
+
+			if (hit == true)
+			{
+				if (dy < 0.0f)
+				{
+					dy *= -1.0f;
+				}
+
+				if (dy < heightRange)
+				{
+					if (player != nullptr)
+					{
+						float knockbackX = playerPos.x < myPos.x ? -WHITE_SWORD_KNOCKBACK_X : WHITE_SWORD_KNOCKBACK_X;
+						player->TakeDamage(
+							WHITE_SWORD_DAMAGE,
+							Vector2d(knockbackX, WHITE_SWORD_KNOCKBACK_Y)
+						);
+						m_attackOnce = true;
+					}
+				}
+			}
+		}
+
+		if (attackTime >= WHITE_SWORD_END_TIME)
+		{
+			m_cooldownTimer = WHITE_SWORD_COOLDOWN;
+			m_actionTimer = 0.0f;
+			m_actionLock = false;
+			m_attackOnce = false;
+			m_attackActive = false;
+			m_attackType = 0;
+		}
+	}
+
+
+	EnemyEntity::Update(deltaTime);
+
+	if (m_hasLastMove && m_attackType == 0)
+	{
+		Vector2d movedPos = m_transform != nullptr ? m_transform->GetPosition() : Vector2d::Zero();
+		float movedX = movedPos.x - m_lastMoveStartPos.x;
+		bool wantedMove = m_lastWantedMoveX > WHITE_STUCK_MOVE_EPS || m_lastWantedMoveX < -WHITE_STUCK_MOVE_EPS;
+		bool blockedMove = movedX > -WHITE_STUCK_MOVE_EPS && movedX < WHITE_STUCK_MOVE_EPS;
+
+		if (wantedMove && blockedMove)
+		{
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
+			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+			m_actionLock = false;
+		}
+	}
+
+	m_hasLastMove = false;
+}
 
 std::string WhiteEnemyEntity::GetTexturePath() const
 {
@@ -1043,21 +1149,3 @@ std::string WhiteEnemyEntity::GetTexturePath() const
 
 
 
-
-/* DEBUG DAMAGE TEST START
-static const int WHITE_DEBUG_DAMAGE = 10;
-static const Vector2d WHITE_DEBUG_KNOCKBACK = Vector2d(260.0f, -320.0f);
-
-void WhiteEnemyEntity::UpdateDebugDamageInput()
-{
-	static bool wasDebugDamageKeyDown = false;
-	bool isDebugDamageKeyDown = CheckHitKey(KEY_INPUT_H) != 0;
-
-	if (isDebugDamageKeyDown && !wasDebugDamageKeyDown)
-	{
-		TakeDamage(WHITE_DEBUG_DAMAGE, WHITE_DEBUG_KNOCKBACK);
-	}
-
-	wasDebugDamageKeyDown = isDebugDamageKeyDown;
-}
-// DEBUG DAMAGE TEST END*/
