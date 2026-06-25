@@ -70,7 +70,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_canStand(true)
     , m_canCharge(true)
 
-    , m_drawOffset(Vector2d(0.0f, 0.0f))
+    , m_drawOffset(Vector2d(0.0f, -20.0f))
 {
 }
 
@@ -372,7 +372,7 @@ bool PlayerEntity::Init() {
     dead.loop = false;
     m_anim->AddClip("dead", dead);
 
-    m_collision->SetRect(85, 192);
+    m_collision->SetRect(85, 152);
 
     m_anim->Play("idle");
 
@@ -478,7 +478,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
             if (m_canStand)
             {
                 ExitSquat();
-                m_drawOffset = Vector2d(0.0f, 0.0f);
+                m_drawOffset = Vector2d(0.0f, -20.0f);
             }
         }
 
@@ -512,7 +512,7 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
         m_jumpCount = 0;
         if (!m_squat)
         {
-            m_collision->SetRect(85, 192);
+            m_collision->SetRect(85, 152);
         }
     }
 }
@@ -527,7 +527,7 @@ void PlayerEntity::CheckCanStand()
     Vector2d standPos = m_transform->GetPosition();
 
     float squatHeight = m_collision->GetHeight();
-    float standHeight = 192.0f;
+    float standHeight = 152.0f;
 
     standPos.y -= (standHeight - squatHeight) * 0.5f;
 
@@ -572,6 +572,7 @@ void PlayerEntity::EnterSquat()
 
     pos.y += (oldHeight - newHeight) * 0.5f;
 
+
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
     m_drawOffset = Vector2d(0.0f, -48.0f);   // ã‚É48px
@@ -588,8 +589,8 @@ void PlayerEntity::ExitSquat()
     pos.y -= (newHeight - oldHeight) * 0.5f;
 
     m_transform->SetPosition(pos);
-    m_collision->SetRect(85, 192);
-    m_drawOffset = Vector2d(0.0f, 0.0f);
+    m_collision->SetRect(85, 152);
+    m_drawOffset = Vector2d(0.0f, -20.0f);
     m_squat = false;
 }
 
@@ -856,14 +857,6 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             m_airAttackIdx = 0;
         }
     }
-    printf(
-        "weak=%d strong=%d type=%d attack=%d canAttack=%d\n",
-        m_weakAttackIdx,
-        m_strongAttackIdx,
-        (int)m_attackType,
-        m_attack,
-        m_canAttack
-    );
 }
 
 void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
