@@ -11,7 +11,7 @@ public:
 
 	bool Init() override;
 	void Update(float deltaTime) override;
-	void TakeDamage(int damage, const Vector2d& knockback) override;
+	void TakeDamage(int damage, const Vector2d& knockback);
 
 	std::string GetTexturePath() const override;
 

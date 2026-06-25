@@ -59,37 +59,15 @@ void EnemyEntity::Update(float deltaTime) {
     MoveAndCollide(deltaTime);
 }
 
-void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
-{
-    if (m_hp == nullptr)
-    {
-        return;
-    }
-
-    m_hp->Damage(damage);
-
-    if (m_hp->GetHP() <= 0)
-    {
-        OnDeadFromDamage(damage, knockback);
-        return;
-    }
-
-    OnDamaged(damage, knockback);
-}
-
-void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
-{
-    SetState(Actor::State::Dead);
-}
 std::string EnemyEntity::GetTexturePath() const {
     return "";
 }
 
 /*
 
-å¼¾ç”Ÿæˆ
+’e¶¬
     auto bullet =
-        new EnemyBullet(m_scene,ã€€GetPos());
+        new EnemyBullet(m_scene,@GetPos());
     
     m_scene->AddActor(bullet);
 

@@ -37,7 +37,6 @@ public:
     int GetCurrentFrame() const { return m_currentFrame; }
     void SetDrawSize(float w, float h) { m_drawW = w; m_drawH = h; }
     void SetFlipH(bool flipH) { m_flipH = flipH; }
-    void SetRotation(float angle) { m_rotation = angle; }
 
     int GetHandle() const { return m_handle; }
 
@@ -51,7 +50,6 @@ private:
     float m_drawW = 0;
     float m_drawH = 0;
     bool m_flipH = false;
-    float m_rotation = 0.0f;
 
     std::vector<int> m_frames;   // 分割されたフレームのハンドル
     int m_currentFrame = 0;      // 現在のフレーム番号

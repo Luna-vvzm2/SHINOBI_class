@@ -14,7 +14,7 @@ std::unordered_map<std::string, int>
 SpriteComponent::s_textureCache;
 
 // --------------------
-// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
 // --------------------
 SpriteComponent::SpriteComponent(Actor* actor)
     : Component(actor)
@@ -34,13 +34,13 @@ SpriteComponent::SpriteComponent(Actor* actor, const std::string& texturePath)
 }
 
 // --------------------
-// ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+// ƒfƒXƒgƒ‰ƒNƒ^
 // --------------------
 SpriteComponent::~SpriteComponent() {
 }
 
 // --------------------
-// åˆæœŸåŒ–
+// ‰Šú‰»
 // --------------------
 bool SpriteComponent::Init() {
     if (!m_texturePath.empty())
@@ -49,12 +49,12 @@ bool SpriteComponent::Init() {
 }
 
 // --------------------
-// æ›´æ–°ï¼ˆç‰¹ã«ãªã—ï¼‰
+// XVi“Á‚É‚È‚µj
 // --------------------
 void SpriteComponent::Update(float deltaTime) {}
 
 // --------------------
-// æç”»
+// •`‰æ
 // --------------------
 void SpriteComponent::Draw() {
     if (m_handle == -1) {
@@ -87,9 +87,9 @@ void SpriteComponent::Draw() {
     int texW = 0, texH = 0;
     GetGraphSize(m_handle, &texW, &texH);
 
-    // Collision ã®ä½ç½®ã¨ã‚µã‚¤ã‚ºã«åˆã‚ã›ã¦æç”»
+    // Collision ‚ÌˆÊ’u‚ÆƒTƒCƒY‚É‡‚í‚¹‚Ä•`‰æ
     Vector2d pos = transform->GetPosition();
-    // â˜… Transform ã® scale ã‚’ãã®ã¾ã¾ä½¿ã†
+    // š Transform ‚Ì scale ‚ğ‚»‚Ì‚Ü‚Üg‚¤
     Vector2d scale = transform->GetScale();
     if (m_drawH > 0.0f && texH > 0)
     {
@@ -105,21 +105,21 @@ void SpriteComponent::Draw() {
     }
 
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, m_rotation, m_handle,
+        pos, scale.x, scale.y, 0.0f, m_handle,
         true, Vector2d(static_cast<float>(texW), static_cast<float>(texH)) * 0.5f, 255, m_flipH, false
     );
 }
 
 // --------------------
-// åˆ†å‰²ç”»åƒèª­ã¿è¾¼ã¿
+// •ªŠ„‰æ‘œ“Ç‚İ‚İ
 // --------------------
 bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum)
 {
-    // ã¾ãšç”»åƒå…¨ä½“ã‚’èª­ã¿è¾¼ã¿ã€ã‚µã‚¤ã‚ºã‚’å–å¾—
+    // ‚Ü‚¸‰æ‘œ‘S‘Ì‚ğ“Ç‚İ‚İAƒTƒCƒY‚ğæ“¾
     int total = xNum * yNum;
     int tempHandle = LoadGraph(path.c_str());
     if (tempHandle == -1) {
-        std::cerr << "[ERROR] ç”»åƒèª­ã¿è¾¼ã¿å¤±æ•—: " << path << std::endl;
+        std::cerr << "[ERROR] ‰æ‘œ“Ç‚İ‚İ¸”s: " << path << std::endl;
         return false;
     }
 
@@ -127,14 +127,14 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
     GetGraphSize(tempHandle, &texW, &texH);
     DeleteGraph(tempHandle);
 
-    // å„ãƒ•ãƒ¬ãƒ¼ãƒ ã®å¹…ãƒ»é«˜ã•
+    // ŠeƒtƒŒ[ƒ€‚Ì•E‚‚³
     int frameW = texW / xNum;
     int frameH = texH / yNum;
 
-    // ãƒ•ãƒ¬ãƒ¼ãƒ é…åˆ—ç¢ºä¿
+    // ƒtƒŒ[ƒ€”z—ñŠm•Û
     m_frames.resize(total);
 
-    // æ­£ã—ã„å¹…ãƒ»é«˜ã•ã§åˆ†å‰²èª­ã¿è¾¼ã¿
+    // ³‚µ‚¢•E‚‚³‚Å•ªŠ„“Ç‚İ‚İ
     int ret = LoadDivGraph(
         path.c_str(),
         total,
@@ -146,24 +146,24 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
     );
 
     if (ret == -1) {
-        std::cerr << "[ERROR] åˆ†å‰²ç”»åƒèª­ã¿è¾¼ã¿å¤±æ•—: " << path << std::endl;
+        std::cerr << "[ERROR] •ªŠ„‰æ‘œ“Ç‚İ‚İ¸”s: " << path << std::endl;
         return false;
     }
 
-    // åˆæœŸãƒ•ãƒ¬ãƒ¼ãƒ ã‚’è¨­å®š
+    // ‰ŠúƒtƒŒ[ƒ€‚ğİ’è
     m_currentFrame = 0;
     m_handle = m_frames[0];
 
     SetSize((float)frameW, (float)frameH);
 
-    std::cout << "åˆ†å‰²ç”»åƒèª­ã¿è¾¼ã¿æˆåŠŸ: " << path
-        << " (ãƒ•ãƒ¬ãƒ¼ãƒ : " << total << ")" << std::endl;
+    std::cout << "•ªŠ„‰æ‘œ“Ç‚İ‚İ¬Œ÷: " << path
+        << " (ƒtƒŒ[ƒ€: " << total << ")" << std::endl;
 
     return true;
 }
 
 // --------------------
-// æŒ‡å®šãƒ•ãƒ¬ãƒ¼ãƒ ã«åˆ‡æ›¿
+// w’èƒtƒŒ[ƒ€‚ÉØ‘Ö
 // --------------------
 void SpriteComponent::SetFrame(int index)
 {
@@ -175,7 +175,7 @@ void SpriteComponent::SetFrame(int index)
 }
 
 // --------------------
-// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’ç›´æ¥ã‚»ãƒƒãƒˆ
+// ƒeƒNƒXƒ`ƒƒ‚ğ’¼ÚƒZƒbƒg
 // --------------------
 void SpriteComponent::SetTexture(int handle)
 {
@@ -183,7 +183,7 @@ void SpriteComponent::SetTexture(int handle)
 }
 
 // --------------------
-// å˜ä¸€ç”»åƒèª­ã¿è¾¼ã¿
+// ’Pˆê‰æ‘œ“Ç‚İ‚İ
 // --------------------
 bool SpriteComponent::LoadTexture(const std::string& path) {
     auto it = s_textureCache.find(path);
@@ -194,7 +194,7 @@ bool SpriteComponent::LoadTexture(const std::string& path) {
     else {
         m_handle = LoadGraph(path.c_str());
         if (m_handle == -1) {
-            std::cerr << "[ERROR] ç”»åƒèª­ã¿è¾¼ã¿å¤±æ•—: " << path << std::endl;
+            std::cerr << "[ERROR] ‰æ‘œ“Ç‚İ‚İ¸”s: " << path << std::endl;
             m_width = 32;
             m_height = 32;
 

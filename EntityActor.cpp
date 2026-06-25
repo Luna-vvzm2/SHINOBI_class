@@ -65,11 +65,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // === Yéš´ãƒ»ï½½ï½¹é™·ï½·é©¢æ¾ï½½ï½§ãƒ»ï½»é™·ãƒ» ===
+    // 
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === Yéš´ãƒ»ï½½ï½¹é™·ï½·é¬˜é¯‰ï½½ï½¡è­ä¼šï½½ï½ªç«æ™¢ï½¿ï½½é¨¾ãƒ» ===
+    // 
     for (auto actor : m_scene->GetActors()) {
 
         Vector2d actorPos;
@@ -105,11 +105,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
         if (overlapY > 0 && overlapX > 0) {
             if (overlapY < overlapX) {
-                if (diffY > 0) {
+                if (diffY > 0) { // ‰º‚©‚ç“–‚½‚Á‚½
                     playerPos.y = actorPos.y + aHalfH + halfH;
                     vel.y = 0;
                 }
-                else { 
+                else { // ã‚Éæ‚Á‚½
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 
@@ -120,12 +120,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         }
     }
 
-    // === Xéš´ãƒ»ï½½ï½¹é™·ï½·é©¢æ¾ï½½ï½§ãƒ»ï½»é™·ãƒ» ===
+    // === X•ûŒüˆÚ“® ===
     pos = m_transform->GetPosition();
     pos.x += vel.x * deltaTime;
     m_transform->SetPosition(pos);
 
-    // === Xéš´ãƒ»ï½½ï½¹é™·ï½·é¬˜é¯‰ï½½ï½¡è­ä¼šï½½ï½ªç«æ™¢ï½¿ï½½é¨¾ãƒ» ===
+    // === X•ûŒüÕ“Ëˆ— ===
     for (auto actor : m_scene->GetActors()) {
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
@@ -153,19 +153,16 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         float overlapY = (halfH + aHalfH) - std::abs(diffY);
 
         if (overlapX > 0 && overlapY > 0) {
-            // === Xè­ï½¹èœ·é¡Œï½£æ‡ˆï½­ï½£ ===
+            // === X•ûŒü•â³ ===
             if (overlapX < overlapY) {
-                if (diffX > 0) { // ç¹æ‚¶ÎŸç¹ãƒ»ã‘èœ¿ï½³è››ï½´ãƒ»äº¥ï½·ï½¦ç¸ºï½«è¬šï½¼ç¸ºç²ç¶¾ç¸ºå‘»ï½¼ãƒ»
+                if (diffX > 0) { // ƒuƒƒbƒN‰E‘¤i¶‚É‰Ÿ‚µ–ß‚·j
                     playerPos.x = actorPos.x + aHalfW + halfW;
                 }
-                else { // èŸ¾ï½¦è››ï½´ãƒ»äº¥æ‰¿ç¸ºï½«è¬šï½¼ç¸ºç²ç¶¾ç¸ºå‘»ï½¼ãƒ»
+                else { // ¶‘¤i‰E‚É‰Ÿ‚µ–ß‚·j
                     playerPos.x = actorPos.x - aHalfW - halfW;
                 }
             }
-            vel.x = 0;
-            m_transform->SetPosition(playerPos);
         }
-
     }
     m_velocity->Set(vel);
 }
