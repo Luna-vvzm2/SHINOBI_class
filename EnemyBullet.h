@@ -13,11 +13,7 @@ public:
 		const Vector2d& velocity,
 		float deleteRange,
 		const std::string& texturePath,
-		int damage = 10,
-		const Vector2d& drawSize = Vector2d::Zero(),
-		bool rotate = false,
-		float rotateInterval = 0.0f,
-		float rotateStep = 0.0f
+		int damage = 10
 	);
 
 	bool Init() override;
@@ -35,10 +31,4 @@ private:
 	float m_deleteRange;
 	std::string m_texturePath;
 	int m_damage;
-	Vector2d m_drawSize;
-	bool m_rotate;
-	float m_rotateInterval;
-	float m_rotateStep;
-	float m_rotationAngle;
-	float m_rotationTimer;
 };
