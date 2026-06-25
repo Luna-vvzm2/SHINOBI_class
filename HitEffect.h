@@ -25,6 +25,5 @@ private:
     float m_timer;      // Œo‰ßŽžŠÔ
 
 
-protected:
-    std::string GetTexturePath() const override;
+
 };

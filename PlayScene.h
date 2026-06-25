@@ -3,12 +3,16 @@
 #include "Vector2d.h"
 #include "Camera.h"
 #include "MapData.h"
-
+#include "ShurikenUI.h"
+#include "MoneyUI.h"
+#include <unordered_map>
 
 class PlayerEntity;
 class HitEffect;
-
-
+class EnemyEntity;
+class HPBarUI;
+class EnemyHPBar;
+class MoneyUI;
 
 class PlayScene : public Scene
 {
@@ -46,9 +50,17 @@ private:
 	Camera m_camera;
 
 	int m_stageIndex;
-	int m_comboCount;
+	int m_comboCount = 0;
+	float m_comboTimer = 0.0f; // コンボ表示の残り時間（秒）
+	const float COMBO_DISPLAY_TIME = 2.0f; // コンボ表示時間（秒）
 	int m_currentStage;
 	bool m_resultShown = false;
+
+	ShurikenUI* m_shurikenUI = nullptr;
+
+	MoneyUI* m_moneyUI = nullptr;
+
+	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
 
 	enum class MenuState
 	{
@@ -113,4 +125,5 @@ private:
 
 	const float m_cursorRepeatDelay = 0.3f; // 最初の待ち時間
 	const float m_cursorRepeatInterval = 0.08f; // 連続移動間隔
+	
 };

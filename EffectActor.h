@@ -57,6 +57,7 @@ public:
 	static bool LoadEffects();
 	static const EffectData* GetEffectData(EffectType type);
 	void SetFollowTarget(Actor* target, const Vector2d& offset);
+
 protected:
 
 	TransformComponent* m_transform;

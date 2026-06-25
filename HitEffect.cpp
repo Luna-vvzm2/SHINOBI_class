@@ -57,7 +57,3 @@ void HitEffect::Update(float deltaTime)
 }
 
 
-std::string HitEffect::GetTexturePath() const
-{
-    return "";
-}

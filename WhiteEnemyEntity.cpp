@@ -685,7 +685,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 					m_dir = false;
 				}
 
-				// Close range: sword when ready, back away while cooling down.
 				if (distance < WHITE_BACK_RANGE)
 				{
 					if (m_cooldownTimer <= 0.0f)
@@ -697,17 +696,14 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 						m_whiteState = 2;
 					}
 				}
-				//
 				else if (distance < WHITE_STOP_SHURIKEN_RANGE)
 				{
 					m_whiteState = 3;
 				}
-				// 
 				else if (distance < WHITE_SHURIKEN_RANGE)
 				{
 					m_whiteState = 1;
 				}
-				// 
 				else
 				{
 					m_whiteState = 5;
@@ -740,7 +736,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				break;
 
 			case 1:
-				// 
 				PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
 				PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
 				m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
@@ -768,7 +763,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				break;
 
 			case 2:
-				// close range: swing sword in place when ready, retreat while cooling down
 				if (m_cooldownTimer <= 0.0f)
 				{
 					PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
@@ -789,7 +783,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				break;
 
 			case 3:
-				// 
 				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 				m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -816,7 +809,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 				break;
 
 			case 4:
-				// 
 				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 				m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -997,12 +989,6 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 			}
 		}
 
-		//
-		//
-
-		//
-
-		//
 		/*for (int j = 0; j < 3; j++)
 		{
 			int bulletIndex = i * 3 + j;
@@ -1039,10 +1025,6 @@ std::string WhiteEnemyEntity::GetTexturePath() const
 {
 	return WHITE_TEXTURE_IDLE;
 }
-
-
-
-
 
 /* DEBUG DAMAGE TEST START
 static const int WHITE_DEBUG_DAMAGE = 10;

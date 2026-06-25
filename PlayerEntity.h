@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityActor.h"
 #include "Vector2d.h"
+#include <functional>
 
 struct AttackHitbox
 {
@@ -34,7 +35,7 @@ public:
     void UpdateAttack(float deltaTime);
     void UpdateState();
     void ChangeState(ActionState newState);
-
+    void UpdateDead(float deltaTime); // 死亡時の専用アップデート
 
     ActorType GetType() const override { return ActorType::Player; }
     CollisionComponent* GetCollision() const { return m_collision; }
@@ -71,6 +72,14 @@ public:
     };
 
     Vector2d GetDrawOffset() const { return m_drawOffset; }
+    // ★追加: 手裏剣の数を返す関数
+    int GetShurikenCount() const { return m_shurikenCount; }
+
+    std::function<void(int newMoney, int oldMoney)> OnMoneyChanged; // コールバック
+    int GetMoney() const { return m_money; }
+    void SetMoney(int amount);
+    void AddMoney(int delta);
+    
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -116,6 +125,13 @@ private:
     bool m_canCharge;
 
     Vector2d m_drawOffset;
+
+    bool m_isDeadTriggered = false; // 死亡時の初回処理用フラグ
+
+    // ---- 手裏剣所持数 ----
+    int m_shurikenCount = 5;   // 初期所持数
+
+    int m_money = 0;
 
     std::string GetTexturePath() const override;
 
