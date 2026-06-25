@@ -89,4 +89,5 @@ void AnimationComponent::Update(float deltaTime)
             break;
         }
     }
+    m_sprite->SetFrame(frames[m_frameIndex]);
 }
