@@ -42,6 +42,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_kunaiPending(false)
 
     , m_dir(true)
+    , m_prevDir(true)
     , m_jumpSpeed(0.0f)
     , m_moveSpeed(290.0f)
     , m_dashSpeed(350.0f)
@@ -62,15 +63,14 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_canAttack(true)
     , m_attackLockTimer(0.0f)
 
-    , m_hitTimer(0.0f)
+    , m_getHit(false)
+    , m_getHitTimer(0.0f)
     , m_invincibleTime(0.0f)
 
     , m_canMove(true)
     , m_squat(false)
     , m_canStand(true)
     , m_canCharge(true)
-
-    , m_drawOffset(Vector2d(0.0f, -20.0f))
 {
 }
 
@@ -175,7 +175,7 @@ bool PlayerEntity::Init() {
     m_anim->AddClip("jump", jump);
 
     AnimationClip jumpSecond;
-    jumpSecond.frames = { 49, 50, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53 };
+    jumpSecond.frames = { 49, 50, 51, 52, 52, 52, 52, 52, 52, 52, 52, 53 };
     jumpSecond.speed = 0.1f;
     jumpSecond.loop = false;
     m_anim->AddClip("jumpSecond", jumpSecond);
@@ -361,10 +361,16 @@ bool PlayerEntity::Init() {
     m_anim->AddClip("hitGround", hitGround);
 
     AnimationClip hitAir;
-    hitAir.frames = { 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 204, 204, 205, 205, 206, 206, 207, 208, 209, 210, 211, 212, 213, 214, 214, 215, 215, 216 };
+    hitAir.frames = { 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 203, 204, 204, 205, 205, 206, 206, 207, 208 };
     hitAir.speed = 0.1f;
     hitAir.loop = false;
     m_anim->AddClip("hitAir", hitAir);
+
+    AnimationClip hitAirLanding;
+    hitAirLanding.frames = { 209, 210, 211, 212, 213, 214, 214, 215, 215, 216 };
+    hitAirLanding.speed = 0.1f;
+    hitAirLanding.loop = false;
+    m_anim->AddClip("hitAir", hitAirLanding);
 
     AnimationClip dead;
     dead.frames = { 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 217, 218, 218, 219, 219, 220, 220, 221, 221, 222, 222, 223, 223 };
@@ -373,6 +379,7 @@ bool PlayerEntity::Init() {
     m_anim->AddClip("dead", dead);
 
     m_collision->SetRect(85, 152);
+    m_sprite->SetDrawOffset(0.0f, -20.0f);
 
     m_anim->Play("idle");
 
@@ -404,6 +411,14 @@ void PlayerEntity::Update(float deltaTime) {
 
 void PlayerEntity::UpdateInvincible(float deltaTime)
 {
+    if (m_getHit) {
+        m_getHitTimer -= deltaTime;
+        if (m_getHitTimer <= 0.0f) {
+            m_getHit = false;
+            m_canMove = true;
+        }
+    }
+
     if (m_invincibleTime > 0.0f)
     {
         m_invincibleTime -= deltaTime;
@@ -412,6 +427,7 @@ void PlayerEntity::UpdateInvincible(float deltaTime)
 
 void PlayerEntity::UpdateMove(float deltaTime) {
     const Input& input = m_scene->GetGame()->GetInput();
+    m_prevDir = m_dir;
 
     Vector2d move(0.0f, 0.0f);
     if (m_canMove) {
@@ -457,8 +473,12 @@ void PlayerEntity::UpdateMove(float deltaTime) {
     m_velocity->Set(vel);
 
     Vector2d scale = m_transform->GetScale();
-
-    scale.x = m_dir ? 1.0f : -1.0f;
+    if (m_state == ActionState::CHANGE_DIR_RUN) {
+        scale.x = m_dir ? -1.0f : 1.0f;
+    }
+    else {
+        scale.x = m_dir ? 1.0f : -1.0f;
+    }
 
     m_transform->SetScale(scale);
 }
@@ -475,11 +495,8 @@ void PlayerEntity::UpdateJump(float deltaTime) {
 
     if (input.IsTrigger(Action::JUMP)) {
         if (m_squat) {
-            if (m_canStand)
-            {
-                ExitSquat();
-                m_drawOffset = Vector2d(0.0f, -20.0f);
-            }
+            ExitSquat();
+            m_sprite->SetDrawOffset(0.0f, -20.0f);
         }
 
         if (m_jumpCount == 0) {
@@ -494,12 +511,24 @@ void PlayerEntity::UpdateJump(float deltaTime) {
         else if (m_jumpCount == 1) {
             vel.y = -800.0f;
             m_jumpCount++;
+            m_jumpTime = 0.0f;
         }
     }
 
     if (input.IsDown(Action::JUMP) && m_jumpCount == 1 && m_jumpTime < m_maxJumpTime) {
         vel.y += -1500.0f * deltaTime;
         m_jumpTime += deltaTime;
+    }
+
+    if (m_jumpCount >= 2) {
+        m_jumpTime += deltaTime;
+        if (m_jumpTime > 0.2f) {
+            float dir = m_dir ? 1.0f : -1.0f;
+            float angle = fabs(m_transform->GetAngle()) + deltaTime * 40;
+            if (angle >= 12.6f) angle = 12.6f;
+
+            m_transform->SetAngle(angle * dir);
+        }
     }
 
     m_velocity->Set(vel);
@@ -510,6 +539,7 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     
     if (m_isGround) {
         m_jumpCount = 0;
+        m_transform->SetAngle(0.0f);
         if (!m_squat)
         {
             m_collision->SetRect(85, 152);
@@ -575,14 +605,14 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
-    m_drawOffset = Vector2d(0.0f, -48.0f);   // ã‚É48px
+    m_sprite->SetDrawOffset(0.0f, -48.0f);   // ã‚É48px
     m_squat = true;
 }
 
 void PlayerEntity::ExitSquat()
 {
     float oldHeight = m_collision->GetHeight();
-    float newHeight = 192.0f;
+    float newHeight = 152.0f;
 
     Vector2d pos = m_transform->GetPosition();
 
@@ -590,7 +620,7 @@ void PlayerEntity::ExitSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(85, 152);
-    m_drawOffset = Vector2d(0.0f, -20.0f);
+    m_sprite->SetDrawOffset(0.0f, -20.0f);
     m_squat = false;
 }
 
@@ -914,6 +944,41 @@ void PlayerEntity::UpdateState() {
         return;
     }
 
+    if (m_getHit) {
+        if (m_isGround) {
+            if (!(m_state == ActionState::HIT_AIR)) {
+                ChangeState(ActionState::HIT_GROUND);
+                m_canMove = false;
+                printf("ground\n");
+                return;
+            }
+            return;
+        }
+        else {
+            ChangeState(ActionState::HIT_AIR);
+            m_canMove = false;
+            printf("air\n");
+            return;
+        }
+    }
+
+    if (m_state == ActionState::HIT_AIR) {
+        if (!m_isGround) {
+            return;
+        }
+
+        ChangeState(ActionState::HIT_AIR_LANDING);
+        return;
+    }
+
+    if (m_state == ActionState::HIT_AIR_LANDING) {
+        if (!(m_anim->IsFinished())) {
+            return;
+        }
+        m_canMove = true;
+        m_getHit = false;
+    }
+
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (m_attack) {
@@ -977,6 +1042,7 @@ void PlayerEntity::UpdateState() {
                 break;
             case 4:
                 ChangeState(ActionState::WEAK_ATTACK4);
+                m_weakAttackIdx++;
                 break;
             }
         }
@@ -1001,6 +1067,7 @@ void PlayerEntity::UpdateState() {
                 break;
             case 2:
                 ChangeState(ActionState::STRONG_ATTACK2);
+                m_strongAttackIdx++;
                 break;
             }
         }
@@ -1057,6 +1124,7 @@ void PlayerEntity::UpdateState() {
                 return;
             }
             else if (m_jumpCount == 2) {
+                m_jumpCount++;
                 ChangeState(ActionState::JUMP_SECOND);
                 return;
             }
@@ -1076,13 +1144,12 @@ void PlayerEntity::UpdateState() {
                 }
             }
 
-            if (m_squat) {
-                if (m_canStand)
-                {
-                    ExitSquat();
+            if (m_state == ActionState::JUMP_SECOND) {
+                if (m_anim->IsFinished()) {
+                    ChangeState(ActionState::FALL);
+                    return;
                 }
             }
-            ChangeState(ActionState::FALL);
         }
         return;
     }
@@ -1163,12 +1230,27 @@ void PlayerEntity::UpdateState() {
 
     if (m_state == ActionState::RUN)
     {
+        if (m_prevDir != m_dir)
+        {
+            ChangeState(ActionState::CHANGE_DIR_RUN);
+            return;
+        }
+
         // ˆÚ“®ƒL[—£‚µ‚½
         if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
         {
             ChangeState(ActionState::STOP_LONG);
             return;
         }
+        return;
+    }
+
+    if (m_state == ActionState::CHANGE_DIR_RUN) {
+        if (!(m_anim->IsFinished())) {
+            m_velocity->Set(Vector2d(0.0f, 0.0f));
+            return;
+        }
+        ChangeState(ActionState::RUN);
         return;
     }
 
@@ -1180,6 +1262,12 @@ void PlayerEntity::UpdateState() {
 
     if ((m_state == ActionState::STOP_SHORT) || (m_state == ActionState::STOP_LONG))
     {
+        if (m_prevDir != m_dir)
+        {
+            ChangeState(ActionState::CHANGE_DIR_RUN);
+            return;
+        }
+
         if (m_anim->IsFinished())
         {
             ChangeState(ActionState::IDLE);
@@ -1375,6 +1463,10 @@ void PlayerEntity::ChangeState(ActionState newState)
         m_anim->Play("hitAir");
         break;
 
+    case ActionState::HIT_AIR_LANDING:
+        m_anim->Play("hitAirLanding");
+        break;
+
     case ActionState::DEAD:
         m_anim->Play("dead");
         break;
@@ -1387,15 +1479,10 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     m_hp->Damage(damage);
     
     m_velocity->Set(knockback);
-    if (OnGround()) {
-        m_state = ActionState::HIT_GROUND;
-    }
-    else {
-        m_state = ActionState::HIT_AIR;
-    }
     
-
-    m_invincibleTime = 2.0f;
+    m_getHit = true;
+    m_getHitTimer = 0.5f;
+    m_invincibleTime = 1.5f;
     m_combo = 0;
 }
 

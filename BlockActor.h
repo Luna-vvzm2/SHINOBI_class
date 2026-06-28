@@ -9,7 +9,7 @@ class CollisionComponent;
 class BlockActor : public Actor
 {
 public:
-	explicit BlockActor(Scene* scene, const Vector2d& pos = Vector2d::Zero(), const Vector2d& size = { 32,32 });
+	explicit BlockActor(Scene* scene, const Vector2d& pos = Vector2d::Zero(), const Vector2d& colSize = { 104,104 }, const Vector2d& texSize = { 104,104 });
 	virtual ~BlockActor() override = default;
 
 	bool Init() override;
@@ -27,6 +27,7 @@ protected:
 
 	Vector2d m_initialPos;
 	Vector2d m_initialSize;
+	Vector2d m_texSize;
 
 	TransformComponent* m_transform;
 	SpriteComponent* m_sprite;

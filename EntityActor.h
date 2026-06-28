@@ -62,6 +62,7 @@ public:
         HIT,
         HIT_GROUND,
         HIT_AIR,
+        HIT_AIR_LANDING,
         HIT_TRAP,
 
         ROLL,

@@ -15,6 +15,12 @@
 #include "EffectActor.h"
 //#include "HitEffect.h"
 #include "GroundBlock.h"
+#include "ClearBlock.h"
+#include "HouseBlock.h"
+#include "YaguraSBlock.h"
+#include "YaguraMBlock.h"
+#include "YaguraLBlock.h"
+#include "YaguraLLBlock.h"
 #include "HPBarUI.h"
 #include "EnemyHPBar.h"
 #include "BackGroundUI.h"
@@ -76,7 +82,28 @@ bool PlayScene::Init() {
 			case 1:
 				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
 				break;
-
+			case 2:
+				AddActor(new ClearBlock(this, pos, Vector2d(tileSize, tileSize)));
+				break;
+			case 5:
+				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
+				AddActor(new HouseBlock(this, pos, Vector2d(tileSize * 4.0f, tileSize)));
+				break;
+			case 8:
+				AddActor(new YaguraSBlock(this, pos, Vector2d(tileSize, tileSize)));
+				break;
+			case 9:
+				pos = Vector2d (x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 0.5f);
+				AddActor(new YaguraMBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 2.0f)));
+				break;
+			case 10:
+				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 1.0f);
+				AddActor(new YaguraLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.0f)));
+				break;
+			case 11:
+				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 1.2f);
+				AddActor(new YaguraLLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.25f)));
+				break;
 			}
 		}
 	}
@@ -130,7 +157,7 @@ bool PlayScene::Init() {
 		}
 	}
 	
-	m_player = new PlayerEntity(this, Vector2d({200, 10000}), Vector2d({192, 64}));
+	m_player = new PlayerEntity(this, Vector2d({2000, 10000}), Vector2d({152, 64}));
 	AddActor(m_player);
 	
 	// ---- HP UI ì¬ ----
@@ -208,26 +235,10 @@ void PlayScene::Draw() {
 	drawActors(m_UIactors);
 
 	// ‘OŒi
-	renderer->DrawSpriteEx(Vector2d(-1290 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(1910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(3510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(5110 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(6710 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(8310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(9910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(11510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(13110 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(14710 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(16310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(17910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(19510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(21110 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(22710 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(24310 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(25910 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-	renderer->DrawSpriteEx(Vector2d(27510 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
-
+	for (int i = 0; i < 19; i++) {
+		renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	}
+	
 	// UŒ‚”ÍˆÍ•`‰æ --------------------------
 	/*Vector2d Pos = m_player->GetPos();
 	AttackHitbox Weak1{ Vector2d(50,100), 100, 100, 30 };

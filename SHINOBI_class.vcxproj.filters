@@ -174,6 +174,27 @@
     <ClCompile Include="KunaiActor.cpp">
       <Filter>ソース ファイル\Actor</Filter>
     </ClCompile>
+    <ClCompile Include="EnemyHPBar.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraSBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="ClearBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraMBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="HouseBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraLBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraLLBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -306,6 +327,27 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KunaiActor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyHPBar.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="YaguraSBlock.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ClearBlock.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="YaguraMBlock.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="HouseBlock.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="YaguraLBlock.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="YaguraLLBlock.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

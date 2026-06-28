@@ -89,14 +89,9 @@ void SpriteComponent::Draw() {
     GetGraphSize(m_handle, &texW, &texH);
 
     // Collision の位置とサイズに合わせて描画
-    Vector2d pos = transform->GetPosition();
+    Vector2d pos = transform->GetPosition() + m_drawOffset;
     // ★ Transform の scale をそのまま使う
     Vector2d scale = transform->GetScale();
-
-    if (auto player = dynamic_cast<PlayerEntity*>(m_owner))
-    {
-        pos.y += player->GetDrawOffset().y;
-    }
 
     renderer->DrawSpriteEx(
         pos, scale.x, scale.y, transform->GetAngle(), m_handle,

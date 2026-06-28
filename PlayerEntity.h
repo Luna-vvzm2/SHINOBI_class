@@ -71,7 +71,6 @@ public:
         HAYABUSA,
     };
 
-    Vector2d GetDrawOffset() const { return m_drawOffset; }
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -85,6 +84,7 @@ private:
     bool m_kunaiPending;
 
     bool m_dir;
+    bool m_prevDir;
     float m_jumpSpeed;    // ジャンプ速度
     float m_moveSpeed;    // 移動速度
     float m_dashSpeed;
@@ -94,7 +94,7 @@ private:
     float m_maxJumpTime;
 
     bool m_attack;
-    bool m_hit;
+    bool m_hit;           // 自身の攻撃が当たったかどうか
     bool m_HayabusaHit;
     AttackType m_attackType;
     CollisionComponent* m_attackCol;
@@ -108,7 +108,8 @@ private:
     bool m_canAttack;
     float m_attackLockTimer;
 
-    float m_hitTimer;
+    bool m_getHit;
+    float m_getHitTimer;
     float m_invincibleTime;
 
     bool m_canMove;       // 移動可否
@@ -116,7 +117,6 @@ private:
     bool m_canStand;      // しゃがみ可否
     bool m_canCharge;
 
-    Vector2d m_drawOffset;
 
     std::string GetTexturePath() const override;
 
