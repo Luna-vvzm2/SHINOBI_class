@@ -80,6 +80,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
             block = static_cast<BlockActor*>(actor);
             actorCol = block->GetCollision();
             actorPos = block->GetPos();
+            if (std::abs(actorPos.x - pos.x) > 500)
+                continue;
+
+            if (std::abs(actorPos.y - pos.y) > 300)
+                continue;
             break;
         default:
             continue;
@@ -157,6 +162,8 @@ void EntityActor::MoveAndCollide(float deltaTime) {
                     playerPos.x = actorPos.x - aHalfW - halfW;
                 }
             }
+            vel.x = 0;
+            m_transform->SetPosition(playerPos);
         }
     }
     m_velocity->Set(vel);
