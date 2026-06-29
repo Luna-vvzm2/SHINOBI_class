@@ -2,6 +2,7 @@
 #include "EntityActor.h"
 #include "BlockActor.h"
 #include "Vector2d.h"
+#include "SpriteComponent.h"
 #include <functional>
 
 struct AttackHitbox
@@ -85,7 +86,7 @@ public:
         HAYABUSA,
     };
 
-    Vector2d GetDrawOffset() const { return m_drawOffset; }
+    Vector2d GetDrawOffset() const { return m_sprite->GetDrawOffset(); }
     // š’Ç‰Á: è— Œ•‚Ì”‚ğ•Ô‚·ŠÖ”
     int GetShurikenCount() const { return m_shurikenCount; }
 

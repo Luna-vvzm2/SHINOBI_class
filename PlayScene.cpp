@@ -484,7 +484,10 @@ PlayScene::PlayScene(Game* game)
 	m_comboCount(0),
 	m_currentStage(1),
 	m_skillCursorX(0),
-	m_skillCursorY(0)
+	m_skillCursorY(0),
+	m_bgHandle(0),
+	m_fgHandle(0)
+
 {
 
 }
@@ -842,8 +845,7 @@ bool PlayScene::Init() {
 				} // switch
 			} // for x
 		} // for y
-	m_player = new PlayerEntity(this, Vector2d({200, 800}), Vector2d({192, 64
-		}));
+		m_player = new PlayerEntity(this, Vector2d({ 2000, 10000 }), Vector2d({ 152, 64 }));
 	AddActor(m_player);
 
 	// ---- HP UI 作成 ----
@@ -853,17 +855,7 @@ bool PlayScene::Init() {
 	);
 	AddUIActor(hpBar);
 
-	// プレイヤーの HP が減ったらコンボをリセットする
-	if (m_player && m_player->GetHP()) {
-		m_player->GetHP()->OnHPChanged = [this](int newHP, int oldHP) {
-			if (newHP < oldHP) {
-				m_comboCount = 0;
-				// 必要ならログやサウンドを追加
-				std::cout << "Combo reset due to player damage\n";
-			}
-			};
-	}
-
+	
 	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
 	AddUIActor(shuriken);
 
@@ -885,7 +877,7 @@ bool PlayScene::Init() {
 			};
 	}
 
-	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
+	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg1.png");
 	AddBackActor(back);
 
 	EffectActor::LoadEffects();
@@ -1006,7 +998,7 @@ void PlayScene::Update(float deltaTime) {
 void PlayScene::Draw() {
 	Renderer* renderer = m_game->GetRenderer();
 	if (!renderer) return;
-
+	Vector2d cam = m_camera.GetCenter();
 
 	// 仮背景
 	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
@@ -1019,6 +1011,11 @@ void PlayScene::Draw() {
 	drawActors(m_backactors);
 	drawActors(m_actors);
 	drawActors(m_UIactors);
+
+	// 前景
+	for (int i = 0; i < 19; i++) {
+		renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	}
 
 	if (m_menuState == MenuState::Skill)
 	{
