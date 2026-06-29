@@ -11,9 +11,36 @@ public:
 
 	bool Init() override;
 	void Update(float deltaTime) override;
-	void TakeDamage(int damage, const Vector2d& knockback);
+	void TakeDamage(int damage, const Vector2d& knockback) override;
 
 	std::string GetTexturePath() const override;
+
+private:
+	bool TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player, bool& playerOnGround) const;
+	void PlayMotion(
+		const std::string& motionName,
+		const std::string& texturePath,
+		int frameCount,
+		float frameSpeed,
+		bool loop
+	);
+	void PlaySheetMotion(
+		const std::string& motionName,
+		const std::vector<int>& frames,
+		bool loop
+	);
+	void StartShurikenAttack();
+	void StartSwordAttack();
+	void StartWeakHit();
+	void StartBlowHit(const Vector2d& knockback);
+	void StartLargeBlowHit(const Vector2d& knockback);
+	void StartDeadHit();
+	void UpdateDamageMotion(float deltaTime);
+	void CancelAttackForDamage();
+	// void UpdateDebugDamageInput();
+
+	float GetDirSign() const;
+	void PrepareMoveTracking(float wantedMoveX);
 
 private:
 	bool TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player, bool& playerOnGround) const;

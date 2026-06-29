@@ -60,7 +60,7 @@ void EnemyEntity::Update(float deltaTime) {
 }
 
 void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
-{
+{   
     if (m_hp == nullptr)
     {
         return;
@@ -74,6 +74,10 @@ void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
         return;
     }
 
+    Vector2d vel = m_velocity->Get();
+    vel = knockback;
+    m_velocity->Set(vel);
+
     OnDamaged(damage, knockback);
 }
 
@@ -81,6 +85,7 @@ void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
 {
     SetState(Actor::State::Dead);
 }
+
 std::string EnemyEntity::GetTexturePath() const {
     return "";
 }

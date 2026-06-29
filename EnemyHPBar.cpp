@@ -8,7 +8,7 @@
 #include <algorithm>
 
 EnemyHPBar::EnemyHPBar(Scene* scene, HPComponent* hp, const std::string& framePath)
-    : UIActor(scene)
+    : BackGroundUI(scene, framePath)
     , m_hp(hp)
     , m_frameImagePath(framePath)
 {
@@ -19,7 +19,7 @@ EnemyHPBar::EnemyHPBar(Scene* scene, HPComponent* hp, const std::string& framePa
 
 bool EnemyHPBar::Init()
 {
-    if (!UIActor::Init()) return false;
+    if (!BackGroundUI::Init()) return false;
 
     // 枠だけスプライトとして持つ
     m_frameSprite = AddComponent<SpriteComponent>(m_frameImagePath);
@@ -50,7 +50,7 @@ bool EnemyHPBar::Init()
 // Update の該当部分
 void EnemyHPBar::Update(float deltaTime)
 {
-    
+
 }
 
 void EnemyHPBar::Draw()

@@ -1,5 +1,6 @@
 #pragma once
 #include "EntityActor.h"
+#include "BlockActor.h"
 #include "Vector2d.h"
 #include <functional>
 
@@ -9,6 +10,15 @@ struct AttackHitbox
     float width = 0;
     float height = 0;
     int damage = 0;
+};
+
+struct SensorData
+{
+    BlockActor* front = nullptr;
+    BlockActor* frontUpper = nullptr;
+    BlockActor* frontBottom = nullptr;
+    BlockActor* frontGround = nullptr;
+    BlockActor* frontNearGround = nullptr;
 };
 
 class TransformComponent;
@@ -28,6 +38,7 @@ public:
     void Update(float deltaTime) override;
 
     void UpdateInvincible(float deltaTime);
+    void UpdateSensor();
 
     void UpdateMove(float deltaTime);
     void UpdateJump(float deltaTime);
@@ -46,12 +57,15 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
     bool GetDir() const { return m_dir; }
+    int GetCombo() const { return m_combo; }
 
     void CheckAttackHit(const AttackHitbox& hitbox);
     void TakeDamage(int damage, const Vector2d& knockback);
     void HitTrap();
 
     void CheckCanStand();
+    BlockActor* CheckSensor(const Vector2d& offset);
+
     void EnterSquat();
     void ExitSquat();
 
@@ -93,16 +107,20 @@ private:
     bool m_kunaiPending;
 
     bool m_dir;
+    bool m_prevDir;
     float m_jumpSpeed;    // ジャンプ速度
     float m_moveSpeed;    // 移動速度
     float m_dashSpeed;
+    float m_dashAirSpeed;
+    float m_dashTimer;
+    bool m_HienCount;
     // EntityActor.bool m_isGround;          // 接地フラグ
     int m_jumpCount;
     float m_jumpTime;
     float m_maxJumpTime;
 
     bool m_attack;
-    bool m_hit;
+    bool m_hit;           // 自身の攻撃が当たったかどうか
     bool m_HayabusaHit;
     AttackType m_attackType;
     CollisionComponent* m_attackCol;
@@ -116,7 +134,8 @@ private:
     bool m_canAttack;
     float m_attackLockTimer;
 
-    float m_hitTimer;
+    bool m_getHit;
+    float m_getHitTimer;
     float m_invincibleTime;
 
     bool m_canMove;       // 移動可否
@@ -124,7 +143,7 @@ private:
     bool m_canStand;      // しゃがみ可否
     bool m_canCharge;
 
-    Vector2d m_drawOffset;
+    SensorData m_sensor;
 
     bool m_isDeadTriggered = false; // 死亡時の初回処理用フラグ
 

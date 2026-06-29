@@ -46,8 +46,8 @@ protected:
     AnimationComponent* m_anim;
 
     bool m_dir;
-    float m_jumpSpeed;    // ジャンプ速度
-    float m_moveSpeed;    // 移動速度
+    float m_jumpSpeed;    // �W�����v���x
+    float m_moveSpeed;    // �ړ����x
 
     int  m_guard;
     int  m_guardMax;
@@ -69,7 +69,7 @@ protected:
     float m_cooldownTimer;
     bool m_actionLock;
 
-    bool m_canMove;       // 移動可否
+    bool m_canMove;       // �ړ���
 
     virtual std::string GetTexturePath() const override;
 

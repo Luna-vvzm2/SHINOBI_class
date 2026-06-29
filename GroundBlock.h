@@ -3,7 +3,7 @@
 
 class GroundBlock : public BlockActor {
 public:
-	explicit GroundBlock(Scene* scene, const Vector2d& pos = Vector2d::Zero(), const Vector2d& size = { 32,32 });
+	explicit GroundBlock(Scene* scene, const Vector2d& pos = Vector2d::Zero(), const Vector2d& size = { 104,104 });
 	~GroundBlock() override = default;
 
 protected:

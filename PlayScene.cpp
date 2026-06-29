@@ -13,8 +13,13 @@
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
 #include "EffectActor.h"
-#include "HitEffect.h"
 #include "GroundBlock.h"
+#include "ClearBlock.h"
+#include "HouseBlock.h"
+#include "YaguraSBlock.h"
+#include "YaguraMBlock.h"
+#include "YaguraLBlock.h"
+#include "YaguraLLBlock.h"
 #include "HPBarUI.h"
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
@@ -583,7 +588,28 @@ bool PlayScene::Init() {
 			case 1:
 				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
 				break;
-
+			case 2:
+				AddActor(new ClearBlock(this, pos, Vector2d(tileSize, tileSize)));
+				break;
+			case 5:
+				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
+				AddActor(new HouseBlock(this, pos, Vector2d(tileSize * 4.0f, tileSize)));
+				break;
+			case 8:
+				AddActor(new YaguraSBlock(this, pos, Vector2d(tileSize, tileSize)));
+				break;
+			case 9:
+				pos = Vector2d (x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 0.5f);
+				AddActor(new YaguraMBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 2.0f)));
+				break;
+			case 10:
+				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 1.0f);
+				AddActor(new YaguraLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.0f)));
+				break;
+			case 11:
+				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 1.2f);
+				AddActor(new YaguraLLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.25f)));
+				break;
 			}
 		}
 	}
@@ -875,6 +901,8 @@ bool PlayScene::Init() {
 	// Renderer に Camera をセット
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
+	m_bgHandle = LoadGraph("assets/images/uies/bg1.png");
+	m_fgHandle = LoadGraph("assets/images/uies/fg1.png");
 	return true;
 }
 
@@ -983,6 +1011,10 @@ void PlayScene::Draw() {
 	// 仮背景
 	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
+	// 背景
+	renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), 9270), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+
+	
 	// --- アクター描画 ---
 	drawActors(m_backactors);
 	drawActors(m_actors);
@@ -1007,7 +1039,7 @@ void PlayScene::Draw() {
 
 
 	// 攻撃範囲描画 --------------------------
-	Vector2d Pos = m_player->GetPos();
+	/*Vector2d Pos = m_player->GetPos();
 	AttackHitbox Weak1{ Vector2d(50,100), 100, 100, 30 };
 	if (m_player->GetDir()) {
 		Pos.x += Weak1.offset.x;
@@ -1017,19 +1049,32 @@ void PlayScene::Draw() {
 		Pos.x -= Weak1.offset.x;
 		Pos.y += Weak1.offset.y;
 	}
-	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);
+	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);*/
 	//------------------------------------------
 
+	// sensor描画
+	Vector2d Pos = m_player->GetPos();
+	Vector2d offset = { 60.0f, 80.0f };
+	if (m_player->GetDir()) {
+		Pos.x += offset.x;
+		Pos.y += offset.y;
+	}
+	else {
+		Pos.x -= offset.x;
+		Pos.y += offset.y;
+	}
+	renderer->DrawRectCenter(Pos, 4.0f, 4.0f, GetColor(0, 255, 0), false, true);
+
 	std::vector<NumberInfo> comboInfo = {
-		{ (float)m_comboCount, 0 }
+		{ (float)m_player->GetCombo(), 0 }
 	};
 
 	// コンボ表示（m_comboCount が 1 以上なら表示）
-	if (m_comboCount > 0) {
+	if (m_player->GetCombo() > 0) {
 		const std::string& debugFont = m_game->GatDebugFont();
 		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
-		std::string comboText = std::to_string(m_comboCount) + " Combo";
-		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(255, 200, 32), debugFont, 32, false);
+		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
+		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
 	}
 
 	if (m_resultShown) {
@@ -1039,7 +1084,7 @@ void PlayScene::Draw() {
 			Color(0, 0, 0),
 			debugFont,
 			32,
-			"{0} Combo",
+			"{0} Hits",
 			comboInfo,
 			false
 		);

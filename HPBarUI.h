@@ -20,7 +20,6 @@ public:
     void SetPosition(float x, float y);
 
     float GetBarHeight() const { return m_height; }
-
 private:
     HPComponent* m_hp = nullptr;
 

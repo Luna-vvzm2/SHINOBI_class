@@ -13,6 +13,7 @@ enum class ActorType {
 	Block,
 	Ball,
 	Kunai,
+	Ball,
 	Enemy,
 	Effect,
 	UI

@@ -1,12 +1,12 @@
 #pragma once
-#include "UIActor.h"
+#include "BackGroundUI.h"
 #include <string>
 
 class HPComponent;
 class TransformComponent;
 class SpriteComponent;
 
-class EnemyHPBar : public UIActor
+class EnemyHPBar : public BackGroundUI
 {
 public:
     EnemyHPBar(Scene* scene, HPComponent* hp, const std::string& framePath = "assets/images/uies/HP_enemy_black.png");

@@ -14,6 +14,7 @@ class HPBarUI;
 class EnemyHPBar;
 class MoneyUI;
 
+
 class PlayScene : public Scene
 {
 public:
@@ -41,6 +42,8 @@ public:
 	Camera& GetCamera() { return m_camera; }
 	const Camera& GetCamera() const { return m_camera; }
 
+	int m_bgHandle;
+	int m_fgHandle;
 private:
 
 	PlayerEntity* m_player;

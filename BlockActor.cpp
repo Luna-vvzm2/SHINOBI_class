@@ -3,13 +3,14 @@
 #include "SpriteComponent.h"
 #include "CollisionComponent.h"
 
-BlockActor::BlockActor(Scene* scene, const Vector2d& pos, const Vector2d& size)
+BlockActor::BlockActor(Scene* scene, const Vector2d& pos, const Vector2d& colSize, const Vector2d& texSize)
 	: Actor(scene),
 	m_transform(nullptr),
 	m_sprite(nullptr),
 	m_collision(nullptr),
 	m_initialPos(pos),
-	m_initialSize(size)
+	m_initialSize(colSize),
+	m_texSize(texSize)
 {
 }
 
@@ -26,7 +27,7 @@ bool BlockActor::Init() {
 
 	m_transform->SetPosition(m_initialPos);
 	m_transform->SetScale({ 1.0f, 1.0f });
-	m_sprite->SetSize(m_initialSize.x, m_initialSize.y);
+	m_sprite->SetSize(m_texSize.x, m_texSize.y);
 	m_collision->SetRect(m_initialSize.x, m_initialSize.y);
 	return true;
 
