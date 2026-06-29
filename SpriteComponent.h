@@ -43,7 +43,8 @@ public:
     void SetFlipX(bool flip) { m_flipX = flip; }
     bool GetFlipX() const { return m_flipX; }
 
-    void SetDrawOffset(float x, float y) { m_drawOffset = Vector2d{ x, y }; };
+    Vector2d GetDrawOffset() { return m_drawOffset; }
+    void SetDrawOffset(float x, float y) { m_drawOffset = Vector2d{ x, y }; }
 
 private:
     int m_handle;

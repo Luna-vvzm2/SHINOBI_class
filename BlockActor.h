@@ -6,6 +6,11 @@ class TransformComponent;
 class SpriteComponent;
 class CollisionComponent;
 
+enum class BlockType {
+	Solid,      // ’ÊíƒuƒƒbƒN
+	Platform    // ‚·‚è”²‚¯‘«ê
+};
+
 class BlockActor : public Actor
 {
 public:
@@ -23,6 +28,7 @@ public:
 	ActorType GetType() const override { return ActorType::Block; }
 	CollisionComponent* GetCollision() const { return m_collision; }
 
+	virtual BlockType GetBlockType() const { return BlockType::Solid; }
 protected:
 
 	Vector2d m_initialPos;

@@ -45,7 +45,11 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_prevDir(true)
     , m_jumpSpeed(0.0f)
     , m_moveSpeed(290.0f)
-    , m_dashSpeed(350.0f)
+    , m_dashSpeed(600.0f)
+    , m_dashAirSpeed(800.0f)
+    , m_dashTimer(0.0f)
+    , m_HienCount(0)
+
     , m_jumpCount(0)
     , m_jumpTime(0.0f)
     , m_maxJumpTime(1.5f)
@@ -194,7 +198,7 @@ bool PlayerEntity::Init() {
 
     AnimationClip roll;
     roll.frames = { 62, 63, 64, 65, 66 };
-    roll.speed = 0.1f;
+    roll.speed = 0.2f;
     roll.loop = false;
     m_anim->AddClip("roll", roll);
 
@@ -394,6 +398,7 @@ void PlayerEntity::Update(float deltaTime) {
     UpdateInvincible(deltaTime);
 
     UpdateMove(deltaTime);
+    UpdateSensor();
     UpdateJump(deltaTime);
     UpdateGravity(deltaTime);
 
@@ -425,8 +430,19 @@ void PlayerEntity::UpdateInvincible(float deltaTime)
     }
 }
 
+void PlayerEntity::UpdateSensor() {
+    float dir = m_dir ? 1.0f : -1.0f;
+
+    m_sensor.front = CheckSensor({ dir * 60.0f, 0.0f });
+    m_sensor.frontUpper = CheckSensor({ dir * 60.0f, -40.0f });
+    m_sensor.frontBottom = CheckSensor({ dir * 60.0f, 40.0f });
+    m_sensor.frontGround = CheckSensor({ dir * 170.0f, 80.0f });
+    m_sensor.frontNearGround = CheckSensor({ dir * 60.0f, 80.0f });
+}
+
 void PlayerEntity::UpdateMove(float deltaTime) {
     const Input& input = m_scene->GetGame()->GetInput();
+    float dir = m_dir ? 1.0f : -1.0f;
     m_prevDir = m_dir;
 
     Vector2d move(0.0f, 0.0f);
@@ -451,11 +467,47 @@ void PlayerEntity::UpdateMove(float deltaTime) {
                 m_dir = true;
             }
         }
+
+        if (input.IsTrigger(Action::DASH)) {
+            if (!m_HienCount) {
+                m_canMove = false;
+                m_dashTimer = 0.35f;
+                if (!m_isGround || (m_sensor.frontGround == nullptr)) {
+                    move.y = -300.0f;
+                    move.x = dir * m_dashAirSpeed;
+                    m_HienCount = 1;
+                    m_transform->SetAngle(0.0f);
+                }
+                else {
+                    move.x = dir * m_dashSpeed;
+                    m_anim->Play("roll", true);
+                }
+            }
+        }
     }
-    move.normalize();
+    
+    if (m_dashTimer > 0.0f) {
+        if (m_isGround && (m_sensor.frontGround == nullptr)) {
+            move.x = 0.0f;
+        }
+        else {
+            move.x = dir * m_dashSpeed;
+        }
+        m_dashTimer -= deltaTime;
+        if (m_dashTimer <= 0.0f) {
+            m_dashTimer = 0.0f;
+            move.x = 0.0f;
+            m_canMove = true;
+        }
+    }else {
+        move.x *= m_moveSpeed;
+    }
 
-    move.x *= m_moveSpeed;
+    if (m_attack) {
+        move.x = 0.0f;
+    }
 
+    // move.normalize();
 
     Vector2d vel = m_velocity->Get();
     
@@ -469,6 +521,7 @@ void PlayerEntity::UpdateMove(float deltaTime) {
             vel.x = 0.0f;
         }
     }
+    vel.y += move.y;
     
     m_velocity->Set(vel);
 
@@ -544,6 +597,13 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
         {
             m_collision->SetRect(85, 152);
         }
+        m_HienCount = 0;
+    }
+
+    if (m_dashTimer > 0.0f && !m_isGround) {
+        Vector2d vel = m_velocity->GetVelocity();
+        vel.y = -50.0f;
+        m_velocity->SetVelocity(vel);
     }
 }
 
@@ -590,6 +650,33 @@ void PlayerEntity::CheckCanStand()
             return;
         }
     }
+}
+
+BlockActor* PlayerEntity::CheckSensor(const Vector2d& offset)
+{
+    Vector2d sensor = m_transform->GetPosition() + offset;
+
+    for (Actor* actor : m_scene->GetActors())
+    {
+        if (actor->GetType() != ActorType::Block)
+            continue;
+
+        auto block = static_cast<BlockActor*>(actor);
+
+        Vector2d pos = block->GetPos();
+        CollisionComponent* col = block->GetCollision();
+
+        float halfW = col->GetWidth() * 0.5f;
+        float halfH = col->GetHeight() * 0.5f;
+
+        if (std::abs(sensor.x - pos.x) <= halfW &&
+            std::abs(sensor.y - pos.y) <= halfH)
+        {
+            return block;
+        }
+    }
+
+    return nullptr;
 }
 
 void PlayerEntity::EnterSquat()
@@ -694,6 +781,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             }
             else if (!m_isGround) {
                 m_attackType = AttackType::AIR_ATTACK;
+                m_transform->SetAngle(0.0f);
                 switch (m_airAttackIdx) {
                 case 0: {
                     m_attackTimer = 0.2f;
@@ -775,8 +863,9 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 m_weakAttackIdx++;
 
                 Vector2d vel = m_velocity->Get();
-                vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
-
+                if (m_sensor.frontNearGround != nullptr) {
+                    vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+                }
                 m_velocity->Set(vel);
             }
         }
@@ -796,6 +885,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
             m_canAttack = false;
             m_canMove = false;
             if (!m_isGround) {
+                m_transform->SetAngle(0.0f);
                 m_HayabusaHit = false;
                 m_attackType = AttackType::HAYABUSA;
                 m_attackTimer = 0.9f;
@@ -832,8 +922,9 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 m_strongAttackIdx++;
 
                 Vector2d vel = m_velocity->Get();
-                vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
-
+                if (m_sensor.frontNearGround != nullptr) {
+                    vel.x = m_dir ? m_moveSpeed : -m_moveSpeed;
+                }
                 m_velocity->Set(vel);
             }
         }
@@ -1113,6 +1204,29 @@ void PlayerEntity::UpdateState() {
             ChangeState(ActionState::JUMP_LANDING);
         }
         return;
+    }
+
+    if (m_state == ActionState::ROLL) {
+        if (!(m_anim->IsFinished())) {
+            return;
+        }
+    }
+
+    if (m_state == ActionState::HIEN) {
+        if (!(m_anim->IsFinished())) {
+            return;
+        }
+    }
+
+    if (m_dashTimer > 0.0f) {
+        if (m_isGround && m_sensor.frontGround != nullptr) {
+            ChangeState(ActionState::ROLL);
+            return;
+        }
+        else {
+            ChangeState(ActionState::HIEN);
+            return;
+        }
     }
 
     Vector2d vel = m_velocity->Get();
@@ -1475,6 +1589,7 @@ void PlayerEntity::ChangeState(ActionState newState)
 
 void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     if (m_invincibleTime > 0) return;
+    if (m_dashTimer > 0.0f) return;
 
     m_hp->Damage(damage);
     

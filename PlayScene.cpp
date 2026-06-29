@@ -13,7 +13,6 @@
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
 #include "EffectActor.h"
-//#include "HitEffect.h"
 #include "GroundBlock.h"
 #include "ClearBlock.h"
 #include "HouseBlock.h"
@@ -252,6 +251,19 @@ void PlayScene::Draw() {
 	}
 	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);*/
 	//------------------------------------------
+
+	// sensor•`‰æ
+	Vector2d Pos = m_player->GetPos();
+	Vector2d offset = { 60.0f, 80.0f };
+	if (m_player->GetDir()) {
+		Pos.x += offset.x;
+		Pos.y += offset.y;
+	}
+	else {
+		Pos.x -= offset.x;
+		Pos.y += offset.y;
+	}
+	renderer->DrawRectCenter(Pos, 4.0f, 4.0f, GetColor(0, 255, 0), false, true);
 
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_player->GetCombo(), 0 }

@@ -12,6 +12,7 @@ public:
 		A,
 		S,
 		D,
+		U,
 		I,
 		O,
 		P,

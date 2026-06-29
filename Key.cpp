@@ -10,6 +10,7 @@ void Key::Init() {
 	m_keyMap[A] = KEY_INPUT_A;
 	m_keyMap[S] = KEY_INPUT_S;
 	m_keyMap[D] = KEY_INPUT_D;
+	m_keyMap[U] = KEY_INPUT_U;
 	m_keyMap[I] = KEY_INPUT_I;
 	m_keyMap[O] = KEY_INPUT_O;
 	m_keyMap[P] = KEY_INPUT_P;

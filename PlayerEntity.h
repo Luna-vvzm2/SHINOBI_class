@@ -1,5 +1,6 @@
 #pragma once
 #include "EntityActor.h"
+#include "BlockActor.h"
 #include "Vector2d.h"
 
 struct AttackHitbox
@@ -8,6 +9,15 @@ struct AttackHitbox
     float width = 0;
     float height = 0;
     int damage = 0;
+};
+
+struct SensorData
+{
+    BlockActor* front = nullptr;
+    BlockActor* frontUpper = nullptr;
+    BlockActor* frontBottom = nullptr;
+    BlockActor* frontGround = nullptr;
+    BlockActor* frontNearGround = nullptr;
 };
 
 class TransformComponent;
@@ -27,6 +37,7 @@ public:
     void Update(float deltaTime) override;
 
     void UpdateInvincible(float deltaTime);
+    void UpdateSensor();
 
     void UpdateMove(float deltaTime);
     void UpdateJump(float deltaTime);
@@ -52,6 +63,8 @@ public:
     void HitTrap();
 
     void CheckCanStand();
+    BlockActor* CheckSensor(const Vector2d& offset);
+
     void EnterSquat();
     void ExitSquat();
 
@@ -88,6 +101,9 @@ private:
     float m_jumpSpeed;    // ジャンプ速度
     float m_moveSpeed;    // 移動速度
     float m_dashSpeed;
+    float m_dashAirSpeed;
+    float m_dashTimer;
+    bool m_HienCount;
     // EntityActor.bool m_isGround;          // 接地フラグ
     int m_jumpCount;
     float m_jumpTime;
@@ -117,6 +133,7 @@ private:
     bool m_canStand;      // しゃがみ可否
     bool m_canCharge;
 
+    SensorData m_sensor;
 
     std::string GetTexturePath() const override;
 

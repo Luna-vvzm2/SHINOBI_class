@@ -156,6 +156,7 @@
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="HouseBlock.cpp" />
     <ClCompile Include="KunaiActor.cpp" />
+    <ClCompile Include="PlatformBlock.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -214,6 +215,7 @@
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="HouseBlock.h" />
     <ClInclude Include="KunaiActor.h" />
+    <ClInclude Include="PlatformBlock.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
