@@ -44,5 +44,5 @@ private:
     std::string m_currentName;
 
     float m_timer;
-    float m_frameIndex;
+    int m_frameIndex;
 };

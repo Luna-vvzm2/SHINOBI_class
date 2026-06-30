@@ -2,19 +2,159 @@
 #include "Scene.h"
 #include "Actor.h"
 #include "PlayerEntity.h"
-#include "EnemyBullet.h"
+#include "EntityActor.h"
+#include "CollisionComponent.h"
 #include "GravityComponent.h"
 #include "VelocityComponent.h"
 #include "TransformComponent.h"
 #include "HPComponent.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
+#include "Game.h"
+#include "Renderer.h"
 #include "Vector2d.h"
 #include <DxLib.h>
 #include <cmath>
 
+class WhiteShurikenBullet : public EntityActor
+{
+public:
+	WhiteShurikenBullet(
+		Scene* scene,
+		const Vector2d& pos,
+		const Vector2d& velocity,
+		float deleteRange,
+		const std::string& texturePath,
+		int damage,
+		const Vector2d& drawSize,
+		float rotateInterval,
+		float rotateStep
+	)
+		: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
+		, m_startPos(pos)
+		, m_bulletVelocity(velocity)
+		, m_deleteRange(deleteRange)
+		, m_texturePath(texturePath)
+		, m_damage(damage)
+		, m_drawSize(drawSize)
+		, m_rotateInterval(rotateInterval)
+		, m_rotateStep(rotateStep)
+		, m_rotationAngle(0.0f)
+		, m_rotationTimer(0.0f)
+	{
+	}
+
+	bool Init() override
+	{
+		if (!EntityActor::Init()) return false;
+		m_velocity->SetVelocity(m_bulletVelocity);
+		m_collision->SetCircle(6.0f);
+		return true;
+	}
+
+	void Update(float deltaTime) override
+	{
+		Actor::Update(deltaTime);
+
+		m_rotationTimer += deltaTime;
+		while (m_rotateInterval > 0.0f && m_rotationTimer >= m_rotateInterval)
+		{
+			m_rotationTimer -= m_rotateInterval;
+			m_rotationAngle += m_rotateStep;
+		}
+
+		Vector2d pos = m_transform->GetPosition();
+		pos += m_velocity->GetVelocity() * deltaTime;
+		m_transform->SetPosition(pos);
+
+		if ((pos - m_startPos).length() > m_deleteRange || TryDamagePlayer())
+		{
+			SetState(Actor::State::Dead);
+		}
+	}
+
+	void Draw() override
+	{
+		if (IsDead() || m_scene == nullptr || m_sprite == nullptr || m_transform == nullptr)
+		{
+			return;
+		}
+
+		Game* game = m_scene->GetGame();
+		Renderer* renderer = game != nullptr ? game->GetRenderer() : nullptr;
+		int handle = m_sprite->GetHandle();
+		if (renderer == nullptr || handle < 0)
+		{
+			return;
+		}
+
+		int textureWidth = 0;
+		int textureHeight = 0;
+		GetGraphSize(handle, &textureWidth, &textureHeight);
+		float scaleX = textureWidth > 0 ? m_drawSize.x / static_cast<float>(textureWidth) : 1.0f;
+		float scaleY = textureHeight > 0 ? m_drawSize.y / static_cast<float>(textureHeight) : 1.0f;
+
+		renderer->DrawSpriteEx(
+			m_transform->GetPosition(),
+			scaleX,
+			scaleY,
+			m_rotationAngle,
+			handle,
+			true,
+			Vector2d(static_cast<float>(textureWidth), static_cast<float>(textureHeight)) * 0.5f
+		);
+
+#ifdef _DEBUG
+		if (m_collision != nullptr)
+		{
+			m_collision->DrawDebug();
+		}
+#endif
+	}
+
+	ActorType GetType() const override { return ActorType::Ball; }
+
+private:
+	bool TryDamagePlayer()
+	{
+		for (Actor* actor : m_scene->GetActors())
+		{
+			if (actor == nullptr || actor->GetType() != ActorType::Player || actor->IsDead())
+			{
+				continue;
+			}
+
+			CollisionComponent* playerCollision = actor->GetComponent<CollisionComponent>();
+			if (playerCollision == nullptr || !m_collision->CheckCollision(playerCollision))
+			{
+				continue;
+			}
+
+			PlayerEntity* player = static_cast<PlayerEntity*>(actor);
+			float knockbackX = player->GetPos().x < m_transform->GetPosition().x ? -300.0f : 300.0f;
+			player->TakeDamage(m_damage, Vector2d(knockbackX, -200.0f));
+			return true;
+		}
+
+		return false;
+	}
+
+	std::string GetTexturePath() const override { return m_texturePath; }
+
+	Vector2d m_startPos;
+	Vector2d m_bulletVelocity;
+	float m_deleteRange;
+	std::string m_texturePath;
+	int m_damage;
+	Vector2d m_drawSize;
+	float m_rotateInterval;
+	float m_rotateStep;
+	float m_rotationAngle;
+	float m_rotationTimer;
+};
+
 WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
-	: EnemyEntity(scene, pos, Vector2d(96, 190))
+	: EnemyEntity(scene, pos, Vector2d(96, 150))
 	, m_bulletCount(0)
 	, m_attackOnce(false)
 	, m_whiteState(0)
@@ -32,16 +172,27 @@ WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
 {
 }
 
+bool WhiteEnemyEntity::Init()
+{
+	if (!EnemyEntity::Init()) return false;
+
+	m_transform->SetScale(m_transform->GetScale());
+
+	m_anim = AddComponent<AnimationComponent>();
+	m_anim->SetSprite(m_sprite);
+
+	return true;
+}
 
 
-// Detection and spacing
+// 索敵範囲と距離判定
 static const float WHITE_TILE_SIZE = 104.0f;
 static const float WHITE_ENEMY_HALF_WIDTH = 48.0f;
 static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
 static const float WHITE_SWORD_GAP_RANGE = WHITE_TILE_SIZE * 0.7f;
 static const float WHITE_FIND_RANGE = 800.0f;
 static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;
-static const float WHITE_BACK_RANGE = 450.0f;
+static const float WHITE_BACK_RANGE = 200.0f;
 static const float WHITE_STOP_SHURIKEN_RANGE = 612.0f;
 static const float WHITE_SHURIKEN_RANGE = 650.0f;
 static const float WHITE_BULLET_DELETE_RANGE = 1500.0f;
@@ -49,28 +200,28 @@ static const float WHITE_SAME_FLOOR_Y_RANGE = WHITE_TILE_SIZE * 0.5f;
 static const float WHITE_STUCK_MOVE_EPS = 1.0f;
 static const float WHITE_STUCK_IDLE_TIME = 0.25f;
 
-// Movement
+// 移動関係
 static const float WHITE_APPROACH_SPEED = 120.0f;
 static const float WHITE_BACK_SPEED = 150.0f;
 static const float WHITE_FAR_APPROACH_SPEED = 250.0f;
 static const float WHITE_BULLET_SPEED = 250.0f;
 
-// Shared timing
+// 時間関係
 static const float WHITE_ACTION_TIME_SCALE = 1.5f;
 static const float WHITE_RECHECK_TIME = 0.2f * WHITE_ACTION_TIME_SCALE;
 static const float WHITE_ANIM_FPS = 24.0f;
 static const float WHITE_FRAME_TIME = 1.0f / WHITE_ANIM_FPS;
 
-// Shuriken attack
+// 手裏剣攻撃
 static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;
 static const int WHITE_SHURIKEN_DAMAGE = 5;
 static const float WHITE_SHURIKEN_SHOT_TIME = 16.0f / WHITE_ANIM_FPS;
 static const float WHITE_SHURIKEN_END_TIME = 24.0f / WHITE_ANIM_FPS;
-static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(96.0f, 96.0f);
+static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(48.0f, 48.0f);
 static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
-// Sword attack
+// 剣攻撃
 static const float WHITE_SWORD_COOLDOWN = 0.15f * WHITE_ACTION_TIME_SCALE;
 static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE;
 static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;
@@ -81,7 +232,7 @@ static const float WHITE_SWORD_HIT_TIME = 20.0f / WHITE_ANIM_FPS;
 static const float WHITE_SWORD_ACTIVE_END_TIME = 29.0f / WHITE_ANIM_FPS;
 static const float WHITE_SWORD_END_TIME = 35.0f / WHITE_ANIM_FPS;
 
-// Textures and sprite sheets
+// 画像参照
 static const char* WHITE_TEXTURE_IDLE = "assets/images/enemy/white/idle.png";
 static const char* WHITE_TEXTURE_WALK = "assets/images/enemy/white/walk.png";
 static const char* WHITE_TEXTURE_SHURIKEN = "assets/images/enemy/white/shuriken.png";
@@ -96,7 +247,7 @@ static const int WHITE_SHEET_Y_NUM = 10;
 static const int WHITE_HIT_WEAK_X_NUM = 4;
 static const int WHITE_HIT_WEAK_Y_NUM = 1;
 
-// Damage reactions
+// ダメージ関係
 static const float WHITE_BLOW_MIN_KNOCKBACK = 180.0f;
 static const float WHITE_BLOW_LARGE_MIN_KNOCKBACK = 520.0f;
 static const int WHITE_DAMAGE_NONE = 0;
@@ -108,219 +259,124 @@ static const int WHITE_LARGE_BLOW_GROUND_FRAME_INDEX = 9;
 static const int WHITE_DEAD_FRAME = 37;
 static const float WHITE_DEAD_SHOW_TIME = 6.0f * WHITE_FRAME_TIME;
 
-
-
-// Attack motions
-static const std::vector<int> WHITE_SHURIKEN_FRAMES = 
-{
-	12,12,12,12,
-
-	13,13,13,13,13,13,
-
-	14,14,14,14,14,
-
-	12,
-
-	15,
-
-	16,16,16,
-
-	17,
-
-	18,18,18
+// 攻撃アニメーション
+static const std::vector<int> WHITE_SHURIKEN_FRAMES = { 12, 13, 14, 12, 15, 16, 17, 18 };
+static const std::vector<float> WHITE_SHURIKEN_DURATIONS = {
+	4.0f / WHITE_ANIM_FPS,
+	6.0f / WHITE_ANIM_FPS,
+	5.0f / WHITE_ANIM_FPS,
+	1.0f / WHITE_ANIM_FPS,
+	1.0f / WHITE_ANIM_FPS,
+	3.0f / WHITE_ANIM_FPS,
+	1.0f / WHITE_ANIM_FPS,
+	3.0f / WHITE_ANIM_FPS
+};
+static const std::vector<int> WHITE_SWORD_FRAMES = { 12, 13, 14, 19, 20, 21, 22, 23, 24 };
+static const std::vector<float> WHITE_SWORD_DURATIONS = {
+	4.0f / WHITE_ANIM_FPS,
+	6.0f / WHITE_ANIM_FPS,
+	5.0f / WHITE_ANIM_FPS,
+	3.0f / WHITE_ANIM_FPS,
+	2.0f / WHITE_ANIM_FPS,
+	1.0f / WHITE_ANIM_FPS,
+	3.0f / WHITE_ANIM_FPS,
+	5.0f / WHITE_ANIM_FPS,
+	3.0f / WHITE_ANIM_FPS
 };
 
-static const std::vector<int> WHITE_SWORD_FRAMES =
-{
-	12,12,12,12,
-	13,13,13,13,13,13,
-	14,14,14,14,14,
-	19,19,19,
-	20,20,
-	21,
-	22,22,22,
-	23,23,23,23,23,
-	24,24,24
+// 移動アニメーション
+static const std::vector<int> WHITE_IDLE_FRAMES = { 0, 1, 2, 3 };
+static const std::vector<float> WHITE_IDLE_DURATIONS = {
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE
 };
 
-// Movement motions
-static const std::vector<int> WHITE_IDLE_FRAMES =
-{
-	0,0,
-	1,1,
-	2,2,
-	3,3
+static const std::vector<int> WHITE_WALK_FRAMES = { 4, 5, 6, 7, 8, 9, 10, 11 };
+static const std::vector<float> WHITE_WALK_DURATIONS = {
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(3.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(3.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(1.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(3.0f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE
+};
+static const std::vector<float> WHITE_BACK_WALK_DURATIONS = {
+	(2.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(3.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(2.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(3.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(1.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE,
+	(3.5f / WHITE_ANIM_FPS) * WHITE_ACTION_TIME_SCALE
 };
 
-
-static const std::vector<int> WHITE_WALK_FRAMES = 
-{
-	4,4,
-	5,5,
-	6,6,
-	7,7,7,
-	8,8,
-	9,9,9,
-	10,
-	11,11,11
+// ダメージアニメーション
+static const std::vector<int> WHITE_WEAK_HIT_FRAMES = { 0, 1, 2, 3 };
+static const std::vector<float> WHITE_WEAK_HIT_DURATIONS = {
+	5.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	1.0f * WHITE_FRAME_TIME
 };
 
-static const std::vector<int> WHITE_BACK_WALK_FRAMES =
-{
-	4,4,
-	5,5,
-	6,6,
-	7,7,7,
-	8,8,
-	9,9,9,
-	10,
-	11,11,11
+static const std::vector<int> WHITE_BLOW_FRAMES = { 25, 26, 30, 31, 32, 35, 36, 37, 38, 39 };
+static const std::vector<float> WHITE_BLOW_DURATIONS = {
+	1.0f * WHITE_FRAME_TIME,
+	3.0f * WHITE_FRAME_TIME,
+	4.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	1.0f * WHITE_FRAME_TIME,
+	3.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME
 };
 
-// Damage reaction motions
-static const std::vector<int> WHITE_WEAK_HIT_FRAMES = 
-{
-	4,4,4,
-	5,5,5,
-	6,6,6,
-	7,7,7,7,
-	8,8,8,
-	9,9,9,9,
-	10,10,
-	11,11,11,11
+static const std::vector<int> WHITE_BLOW_LARGE_FRAMES = {
+	25, 26, 27, 28, 29,
+	30, 31, 32, 33, 34,
+	35, 36, 37, 38, 39
 };
-
-
-static const std::vector<int> WHITE_BLOW_FRAMES = 
-{
-	25,
-
-	26,26,26,
-
-	30,30,30,30,
-
-	31,31,
-
-	32,32,
-
-	35,35,
-
-	36,36,
-
-	37,
-
-	38,38,38,
-
-	39,39
+static const std::vector<float> WHITE_BLOW_LARGE_DURATIONS = {
+	1.0f * WHITE_FRAME_TIME,
+	6.0f * WHITE_FRAME_TIME,
+	1.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	3.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	3.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME,
+	1.0f * WHITE_FRAME_TIME,
+	3.0f * WHITE_FRAME_TIME,
+	2.0f * WHITE_FRAME_TIME
 };
-
-static const std::vector<int> WHITE_BLOW_LARGE_FRAMES = 
-{
-	25,
-
-	26,26,26,26,26,26,
-
-	27,
-
-	28,28,
-
-	29,29,
-
-	30,30,
-
-	31,31,31,
-
-	32,32,
-
-	33,33,
-
-	34,34,34,
-
-	35,35,
-
-	36,36,
-
-	37,
-
-	38,38,38,
-
-	39,39
-};
-
-
-bool WhiteEnemyEntity::Init()
-{
-	if (!EnemyEntity::Init()) return false;
-
-	m_sprite->SetDrawSize(96.0f, 190.0f);
-
-	m_anim = AddComponent<AnimationComponent>();
-	m_anim->SetSprite(m_sprite);
-
-	AnimationClip idle;
-	idle.frames = WHITE_IDLE_FRAMES;
-	idle.speed = WHITE_FRAME_TIME;
-	idle.loop = true;
-	m_anim->AddClip("idle", idle);
-
-	AnimationClip walk;
-	walk.frames = WHITE_WALK_FRAMES;
-	walk.speed = WHITE_FRAME_TIME;
-	walk.loop = true;
-	m_anim->AddClip("walk", walk);
-
-	AnimationClip backWalk;
-	backWalk.frames = WHITE_BACK_WALK_FRAMES;
-	backWalk.speed = WHITE_FRAME_TIME;
-	backWalk.loop = true;
-	m_anim->AddClip("back_walk", backWalk);
-
-	AnimationClip shuriken;
-	shuriken.frames = WHITE_SHURIKEN_FRAMES;
-	shuriken.speed = WHITE_FRAME_TIME;
-	shuriken.loop = false;
-	m_anim->AddClip("shuriken", shuriken);
-
-	AnimationClip sword;
-	sword.frames = WHITE_SWORD_FRAMES;
-	sword.speed = WHITE_FRAME_TIME;
-	sword.loop = false;
-	m_anim->AddClip("sword", sword);
-
-	AnimationClip weakHit;
-	weakHit.frames = WHITE_WEAK_HIT_FRAMES;
-	weakHit.speed = WHITE_FRAME_TIME;
-	weakHit.loop = false;
-	m_anim->AddClip("weakHit", weakHit);
-
-	AnimationClip blowHit;
-	blowHit.frames = WHITE_BLOW_FRAMES;
-	blowHit.speed = WHITE_FRAME_TIME;
-	blowHit.loop = false;
-	m_anim->AddClip("blowHit", blowHit);
-
-	AnimationClip blowLargeHit;
-	blowLargeHit.frames = WHITE_BLOW_LARGE_FRAMES;
-	blowLargeHit.speed = WHITE_FRAME_TIME;
-	blowLargeHit.loop = false;
-	m_anim->AddClip("blowLargeHit", blowLargeHit);
-
-	AnimationClip deadHit;
-	m_anim->AddClip("deadHit", deadHit);
-
-	m_sprite->LoadTextureDiv(
-		WHITE_TEXTURE_SHEET,
-		WHITE_SHEET_X_NUM,
-		WHITE_SHEET_Y_NUM
-	);
-
-	m_anim->Play("idle", true);
-	return true;
-}
 
 float WhiteEnemyEntity::GetDirSign() const
 {
 	return m_dir ? 1.0f : -1.0f;
+}
+
+void WhiteEnemyEntity::SetFacing(bool flipH)
+{
+	if (m_transform == nullptr)
+	{
+		return;
+	}
+
+	Vector2d scale = m_transform->GetScale();
+	float scaleX = std::fabs(scale.x);
+	scale.x = flipH ? -scaleX : scaleX;
+	m_transform->SetScale(scale);
 }
 
 void WhiteEnemyEntity::PrepareMoveTracking(float wantedMoveX)
@@ -402,6 +458,7 @@ void WhiteEnemyEntity::PlayMotion(
 void WhiteEnemyEntity::PlaySheetMotion(
 	const std::string& motionName,
 	const std::vector<int>& frames,
+	const std::vector<float>& frameDurations,
 	bool loop
 )
 {
@@ -409,6 +466,28 @@ void WhiteEnemyEntity::PlaySheetMotion(
 	{
 		return;
 	}
+
+	if (m_sprite == nullptr || m_anim == nullptr || frames.empty())
+	{
+		return;
+	}
+
+	if (m_currentTexturePath != WHITE_TEXTURE_SHEET)
+	{
+		if (!m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM))
+		{
+			return;
+		}
+
+		m_currentTexturePath = WHITE_TEXTURE_SHEET;
+	}
+
+	AnimationClip clip;
+	clip.frames = frames;
+	clip.frameDurations = frameDurations;
+	clip.loop = loop;
+
+	m_anim->AddClip(motionName, clip);
 	m_anim->Play(motionName, true);
 	m_currentMotionName = motionName;
 }
@@ -423,7 +502,7 @@ void WhiteEnemyEntity::StartShurikenAttack()
 
 	m_attackActive = false;
 
-	PlaySheetMotion("shuriken", WHITE_SHURIKEN_FRAMES, false);
+	PlaySheetMotion("shuriken", WHITE_SHURIKEN_FRAMES, WHITE_SHURIKEN_DURATIONS, false);
 
 	m_attackOnce = false;
 	m_actionLock = true;
@@ -440,7 +519,7 @@ void WhiteEnemyEntity::StartSwordAttack()
 	m_attackActive = false;
 
 	m_currentMotionName = "";
-	PlaySheetMotion("sword", WHITE_SWORD_FRAMES, false);
+	PlaySheetMotion("sword", WHITE_SWORD_FRAMES, WHITE_SWORD_DURATIONS, false);
 
 	m_attackOnce = false;
 	m_actionLock = true;
@@ -464,8 +543,8 @@ void WhiteEnemyEntity::StartWeakHit()
 	if (m_sprite != nullptr)
 	{
 		m_sprite->LoadTextureDiv(WHITE_TEXTURE_HIT_WEAK, WHITE_HIT_WEAK_X_NUM, WHITE_HIT_WEAK_Y_NUM);
-		m_anim->Play("weakHit", true);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
+		m_sprite->SetFrame(WHITE_WEAK_HIT_FRAMES[0]);
+		m_sprite->SetDrawSize(96.0f, 150.0f);
 	}
 
 	m_currentTexturePath = WHITE_TEXTURE_HIT_WEAK;
@@ -484,8 +563,8 @@ void WhiteEnemyEntity::StartBlowHit(const Vector2d& knockback)
 	if (m_sprite != nullptr)
 	{
 		m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM);
-		m_anim->Play("blowHit", true);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
+		m_sprite->SetFrame(WHITE_BLOW_FRAMES[0]);
+		m_sprite->SetDrawSize(96.0f, 150.0f);
 	}
 
 	m_currentTexturePath = WHITE_TEXTURE_SHEET;
@@ -504,8 +583,8 @@ void WhiteEnemyEntity::StartLargeBlowHit(const Vector2d& knockback)
 	if (m_sprite != nullptr)
 	{
 		m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM);
-		m_anim->Play("blowLargeHit", true);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
+		m_sprite->SetFrame(WHITE_BLOW_LARGE_FRAMES[0]);
+		m_sprite->SetDrawSize(96.0f, 150.0f);
 	}
 
 	m_currentTexturePath = WHITE_TEXTURE_SHEET;
@@ -524,8 +603,8 @@ void WhiteEnemyEntity::StartDeadHit()
 	if (m_sprite != nullptr)
 	{
 		m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM);
-		m_anim->Play("deadHit", true);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
+		m_sprite->SetFrame(WHITE_DEAD_FRAME);
+		m_sprite->SetDrawSize(96.0f, 150.0f);
 	}
 
 	m_currentTexturePath = WHITE_TEXTURE_SHEET;
@@ -579,35 +658,84 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 
 void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 {
-	switch (m_damageState)
+	if (m_damageState == WHITE_DAMAGE_NONE)
 	{
-	case WHITE_DAMAGE_WEAK:
-	case WHITE_DAMAGE_BLOW:
-	case WHITE_DAMAGE_BLOW_LARGE:
+		return;
+	}
 
-		if (m_anim->IsFinished())
+	const std::vector<int>* frames = nullptr;
+	const std::vector<float>* durations = nullptr;
+
+	if (m_damageState == WHITE_DAMAGE_WEAK)
+	{
+		frames = &WHITE_WEAK_HIT_FRAMES;
+		durations = &WHITE_WEAK_HIT_DURATIONS;
+	}
+	else if (m_damageState == WHITE_DAMAGE_BLOW)
+	{
+		frames = &WHITE_BLOW_FRAMES;
+		durations = &WHITE_BLOW_DURATIONS;
+	}
+	else if (m_damageState == WHITE_DAMAGE_BLOW_LARGE)
+	{
+		frames = &WHITE_BLOW_LARGE_FRAMES;
+		durations = &WHITE_BLOW_LARGE_DURATIONS;
+	}
+	else if (m_damageState == WHITE_DAMAGE_DEAD)
+	{
+		m_damageFrameTimer += deltaTime;
+		if (m_damageFrameTimer >= WHITE_DEAD_SHOW_TIME)
+		{
+			SetState(Actor::State::Dead);
+		}
+		return;
+	}
+
+	if (frames == nullptr || durations == nullptr || frames->empty())
+	{
+		m_damageState = WHITE_DAMAGE_NONE;
+		return;
+	}
+
+	if (m_damageState == WHITE_DAMAGE_BLOW_LARGE &&
+		m_damageFrameIndex == WHITE_LARGE_BLOW_GROUND_FRAME_INDEX &&
+		m_isGround == false)
+	{
+		return;
+	}
+
+	m_damageFrameTimer += deltaTime;
+	while (m_damageFrameIndex < static_cast<int>(durations->size()) &&
+		m_damageFrameTimer >= (*durations)[m_damageFrameIndex])
+	{
+		m_damageFrameTimer -= (*durations)[m_damageFrameIndex];
+		m_damageFrameIndex++;
+
+		if (m_damageFrameIndex >= static_cast<int>(frames->size()))
 		{
 			m_damageState = WHITE_DAMAGE_NONE;
-
-			m_sprite->LoadTextureDiv(
-				WHITE_TEXTURE_SHEET,
-				WHITE_SHEET_X_NUM,
-				WHITE_SHEET_Y_NUM
-			);
-
+			m_actionLock = false;
 			m_currentMotionName = "";
-			m_anim->Play("idle", true);
+			return;
 		}
-		break;
 
-	case WHITE_DAMAGE_DEAD:
-		break;
+		if (m_sprite != nullptr)
+		{
+			m_sprite->SetFrame((*frames)[m_damageFrameIndex]);
+		}
+
+		if (m_damageState == WHITE_DAMAGE_BLOW_LARGE &&
+			m_damageFrameIndex == WHITE_LARGE_BLOW_GROUND_FRAME_INDEX &&
+			m_isGround == false)
+		{
+			m_damageFrameTimer = 0.0f;
+			return;
+		}
 	}
 }
 
 void WhiteEnemyEntity::Update(float deltaTime)
 {
-
 	if (m_damageState != WHITE_DAMAGE_NONE)
 	{
 		UpdateDamageMotion(deltaTime);
@@ -643,10 +771,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 	float distanceY = playerPos.y - myPos.y;
 	float distance = distanceX;
 
-	if (m_sprite != nullptr)
-	{
-		m_sprite->SetFlipX(m_attackType == 0 ? distanceX >= 0.0f : m_dir);
-	}
+	SetFacing(m_attackType == 0 ? distanceX >= 0.0f : m_dir);
 
 
 	if (distance < 0.0f)
@@ -672,7 +797,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		}
 		else
 		{
-			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			//continue;
@@ -682,6 +807,23 @@ void WhiteEnemyEntity::Update(float deltaTime)
 	}
 
 	/*----------------
+
+		状態一覧
+		||whiteState||
+		0 待機・索敵
+		1 接近しながら手裏剣攻撃
+		2 後退しながら剣攻撃の再使用を待つ
+		3 停止して手裏剣攻撃
+		4 停止して剣攻撃
+		5 遠距離から接近
+		6 死亡
+
+		攻撃タイプ
+		||attackType||
+		0 攻撃なし
+		1 手裏剣攻撃
+		2 剣攻撃
+
    ---------------*/
 
 	if (m_attackType == 0)
@@ -697,7 +839,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 				m_dir = false;
 			}
 
-			// Close range: sword when ready, back away while cooling down.
+			// 近距離では剣を使い、再使用待ちの間は後退する。
 			if (distance < WHITE_BACK_RANGE)
 			{
 				if (m_cooldownTimer <= 0.0f)
@@ -734,7 +876,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		if (m_cooldownTimer <= 0.0f && distance < WHITE_BACK_RANGE)
 		{
-			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			StartSwordAttack();
 			EnemyEntity::Update(deltaTime);
@@ -745,13 +887,14 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		switch (m_whiteState)
 		{
 		case 0:
-			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			m_actionLock = false;
 			break;
 
 		case 1:
-			PlaySheetMotion("walk", WHITE_WALK_FRAMES, true);
+			// 手裏剣の射程まで接近する。
+			PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
 			PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
 			m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
 
@@ -759,7 +902,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			{
 				m_actionLock = false;
 			}
-
+			// 剣の再使用待ち中は間合いを取る。
 			if (m_cooldownTimer <= 0.0f)
 			{
 				if (distance < WHITE_BACK_RANGE)
@@ -778,16 +921,16 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 2:
-			// close range: swing sword in place when ready, retreat while cooling down
+
 			if (m_cooldownTimer <= 0.0f)
 			{
-				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+				PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 				m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 				StartSwordAttack();
 			}
 			else
 			{
-				PlaySheetMotion("back_walk", WHITE_WALK_FRAMES, true);
+				PlaySheetMotion("back_walk", WHITE_WALK_FRAMES, WHITE_BACK_WALK_DURATIONS, true);
 				PrepareMoveTracking(-WHITE_BACK_SPEED * dir);
 				m_velocity->SetVelocity(Vector2d(-WHITE_BACK_SPEED * dir, 0.0f));
 			}
@@ -799,7 +942,8 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 3:
-			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+			// 手裏剣の射程内で停止する。
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (distance < WHITE_BACK_RANGE || distance >= WHITE_SHURIKEN_RANGE)
@@ -825,7 +969,8 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+			// 近距離で停止して剣を使う。
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (m_cooldownTimer <= 0.0f)
@@ -839,7 +984,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 5:
-			PlaySheetMotion("walk", WHITE_WALK_FRAMES, true);
+			PlaySheetMotion("walk", WHITE_WALK_FRAMES, WHITE_WALK_DURATIONS, true);
 			PrepareMoveTracking(WHITE_FAR_APPROACH_SPEED * dir);
 			m_velocity->SetVelocity(Vector2d(WHITE_FAR_APPROACH_SPEED * dir, 0.0f));
 
@@ -855,8 +1000,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 6:
-			//sinumotion
-
+			// 死亡状態へ移行する。
 			SetState(Actor::State::Dead);
 			break;
 		}
@@ -875,11 +1019,11 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
 		{
 			float dir = GetDirSign();
-			Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 16.0f);
+			Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 30.0f);
 			Vector2d bulletVel(WHITE_BULLET_SPEED * dir, 0.0f);
 
 			m_scene->SpawnActor(
-				new EnemyBullet(
+				new WhiteShurikenBullet(
 					m_scene,
 					bulletPos,
 					bulletVel,
@@ -887,7 +1031,6 @@ void WhiteEnemyEntity::Update(float deltaTime)
 					WHITE_TEXTURE_SHURIKEN_BULLET,
 					WHITE_SHURIKEN_DAMAGE,
 					WHITE_SHURIKEN_BULLET_DRAW_SIZE,
-					true,
 					WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL,
 					WHITE_SHURIKEN_BULLET_ROTATE_STEP
 				)
@@ -896,7 +1039,6 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			m_attackOnce = true;
 			m_attackActive = true;
 		}
-
 
 		if (attackTime >= WHITE_SHURIKEN_END_TIME)
 		{
@@ -914,10 +1056,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 	{
 		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
-		if (m_sprite != nullptr)
-		{
-			m_sprite->SetFlipX(m_dir);
-		}
+		SetFacing(m_dir);
 
 		m_attackTimer += deltaTime;
 		float attackTime = m_attackTimer;
@@ -994,7 +1133,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 		if (wantedMove && blockedMove)
 		{
-			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, true);
+			PlaySheetMotion("idle", WHITE_IDLE_FRAMES, WHITE_IDLE_DURATIONS, true);
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			m_actionLock = false;
 		}
@@ -1011,21 +1150,3 @@ std::string WhiteEnemyEntity::GetTexturePath() const
 
 
 
-
-/* DEBUG DAMAGE TEST START
-static const int WHITE_DEBUG_DAMAGE = 10;
-static const Vector2d WHITE_DEBUG_KNOCKBACK = Vector2d(260.0f, -320.0f);
-
-void WhiteEnemyEntity::UpdateDebugDamageInput()
-{
-	static bool wasDebugDamageKeyDown = false;
-	bool isDebugDamageKeyDown = CheckHitKey(KEY_INPUT_H) != 0;
-
-	if (isDebugDamageKeyDown && !wasDebugDamageKeyDown)
-	{
-		TakeDamage(WHITE_DEBUG_DAMAGE, WHITE_DEBUG_KNOCKBACK);
-	}
-
-	wasDebugDamageKeyDown = isDebugDamageKeyDown;
-}
-// DEBUG DAMAGE TEST END*/

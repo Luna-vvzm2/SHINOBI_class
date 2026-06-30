@@ -88,7 +88,7 @@ public:
 
     Vector2d GetDrawOffset() const { return m_sprite->GetDrawOffset(); }
     // ★追加: 手裏剣の数を返す関数
-    int GetShurikenCount() const { return m_shurikenCount; }
+    int GetShurikenCount() const { return m_kunai; }
 
     std::function<void(int newMoney, int oldMoney)> OnMoneyChanged; // コールバック
     int GetMoney() const { return m_money; }
@@ -149,7 +149,6 @@ private:
     bool m_isDeadTriggered = false; // 死亡時の初回処理用フラグ
 
     // ---- 手裏剣所持数 ----
-    int m_shurikenCount = 5;   // 初期所持数
 
     int m_money = 0;
 

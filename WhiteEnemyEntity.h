@@ -26,6 +26,7 @@ public:
 	void PlaySheetMotion(
 		const std::string& motionName,
 		const std::vector<int>& frames,
+		const std::vector<float>& frameDurations,
 		bool loop
 	);
 	void StartShurikenAttack();
@@ -39,6 +40,7 @@ public:
 	// void UpdateDebugDamageInput();
 
 	float GetDirSign() const;
+	void SetFacing(bool flipH);
 	void PrepareMoveTracking(float wantedMoveX);
 
 private:

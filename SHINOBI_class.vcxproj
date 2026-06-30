@@ -189,6 +189,7 @@
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIActor.cpp" />
     <ClCompile Include="VelocityComponent.cpp" />
+    <ClCompile Include="WhiteShurikenBullet.cpp" />
     <ClCompile Include="YaguraLBlock.cpp" />
     <ClCompile Include="YaguraLLBlock.cpp" />
     <ClCompile Include="YaguraMBlock.cpp" />
@@ -250,6 +251,7 @@
     <ClInclude Include="UIActor.h" />
     <ClInclude Include="Vector2d.h" />
     <ClInclude Include="VelocityComponent.h" />
+    <ClInclude Include="WhiteShurikenBullet.h" />
     <ClInclude Include="YaguraLBlock.h" />
     <ClInclude Include="YaguraLLBlock.h" />
     <ClInclude Include="YaguraMBlock.h" />
