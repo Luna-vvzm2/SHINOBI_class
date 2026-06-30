@@ -1,5 +1,6 @@
 #include <fstream>
 #include "EventManager.h"
+#include "EventTexture.h"
 #include "Scene.h"
 #include "Input.h"
 #include "PlayScene.h"
@@ -7,8 +8,10 @@
 #include "Game.h"
 
 
-EventManager::EventManager(Scene* scene)
+
+EventManager::EventManager(Scene* scene, EventTexture* eventTexture)
 	: m_scene(scene)
+	, m_eventTexture(eventTexture)
 {
 }
 
@@ -62,11 +65,27 @@ void EventManager::Draw()
 	m_currentEvent->Draw();
 }
 
+EventTexture* EventManager::GetEventTexture() const
+{
+	return m_eventTexture;
+}
+
 EventBase::EventBase() = default;
 EventBase::~EventBase() = default;
 
-TalkEvent::TalkEvent(Scene* scene, const std::string& filePath)
+std::string EventBase::LoadConfig(const std::string& text, const std::string& configName) const
+{
+	size_t pos = text.find(configName + "=\"");
+	if (pos == std::string::npos) return "";
+	size_t start = pos + configName.length() + 2;
+	size_t end = text.find("\"", start);
+	if (end == std::string::npos) return "";
+	return text.substr(start, end - start);
+}
+
+TalkEvent::TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
 	: m_scene(scene)
+	, m_eventManager(eventManager)
 {
 	LoadTexts(filePath);
 }
@@ -84,9 +103,34 @@ void TalkEvent::Init()
 		}
 		actor->SetState(Actor::State::Paused);
 	}
-	m_currentLine = 0;
-	m_isEnd = false;
-	ShowText();
+
+	if (m_eventManager)
+	{
+		EventTexture* texManager = m_eventManager->GetEventTexture();
+
+		if (texManager)
+		{
+			for (const std::string& text : m_texts)
+			{
+				size_t configEndPos = text.find(']');
+				if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+				{
+					std::string configPart = text.substr(1, configEndPos - 1);
+
+					std::string imgPath = LoadConfig(configPart, "path");
+
+					if (!imgPath.empty() && imgPath != "None")
+					{
+						texManager->LoadTexture(imgPath);
+					}
+				}
+			}
+		}
+
+		m_currentLine = 0;
+		m_isEnd = false;
+		ShowText();
+	}
 }
 
 void TalkEvent::Update(float deltaTime)
@@ -116,6 +160,15 @@ void TalkEvent::End()
 			p->SetCanMove(true);
 		}
 	}
+	 
+	if (m_eventManager)
+	{
+		EventTexture* texManager = m_eventManager->GetEventTexture();
+		if (texManager)
+		{
+			texManager->Clear();
+		}
+	}
 	DeleteTexts();
 }
 
@@ -130,32 +183,74 @@ void TalkEvent::ShowText()
 
 	const std::string& text = m_texts[m_currentLine];
 
-	size_t separatorPos = text.find(':'); //コロンで名前とセリフを分割
+	size_t configEndPos = text.find(']'); 
 
-	if (separatorPos == std::string::npos) return;
-
-	std::string header = text.substr(0, separatorPos);
-	m_talkText = text.substr(separatorPos + 1);
-
-	size_t slashPos = header.find('/'); //スラッシュでL,Rを識別
-	if (slashPos != std::string::npos)
+	if (text.front() == '[' && configEndPos != std::string::npos)
 	{
-		m_talkerName = header.substr(0, slashPos);
-		std::string positionStr = header.substr(slashPos + 1);
-		if (positionStr == "R")
+		std::string configPart = text.substr(1, configEndPos - 1);
+		m_talkText = text.substr(configEndPos + 1);
+
+		std::string nameStr = LoadConfig(configPart, "name");
+		if (!nameStr.empty() && nameStr != "None")
 		{
-			m_talkerPosition = ActorPosition::Right;
+			m_talkerName = nameStr;
 		}
-		else if(positionStr == "L")
+
+		std::string imgPath = LoadConfig(configPart, "path");
+		if (!imgPath.empty() && imgPath != "None")
 		{
-			m_talkerPosition = ActorPosition::Left;
+			if (m_eventManager && m_eventManager->GetEventTexture())
+			{
+				m_actorTextureId = m_eventManager->GetEventTexture()->LoadTexture(imgPath);
+			}
+
+			std::string wStr = LoadConfig(configPart, "w");
+			std::string hStr = LoadConfig(configPart, "h");
+
+			if (!wStr.empty() && wStr != "None" && std::isdigit(wStr[0]))
+			{
+				m_actorW = std::stoi(wStr);
+			}
+			else
+			{
+				m_actorW = 480;
+			}
+
+			if (!hStr.empty() && hStr != "None" && std::isdigit(hStr[0]))
+			{
+				m_actorH = std::stoi(hStr);
+			}
+			else
+			{
+				m_actorH = 510;
+			}
+		}
+
+		std::string timeStr = LoadConfig(configPart, "time");
+		if (!timeStr.empty() && timeStr != "None")
+		{
+			float displayTime = stof(timeStr);
+		}
+
+		std::string posStr = LoadConfig(configPart, "pos");
+		if (!posStr.empty() && posStr != "None")
+		{
+			if (posStr == "R")
+			{
+				m_talkerPosition = ActorPosition::Right;
+			}
+			else if (posStr == "L")
+			{
+				m_talkerPosition = ActorPosition::Left;
+			}
 		}
 	}
 	else
 	{
-		m_talkerName = header;
-		m_talkerPosition = ActorPosition::Left;
+		//設定がない場合設定を保持して次のセリフを表示
+		m_talkText = text;
 	}
+
 
 	//改行処理
 	std::string target = "<br>";
@@ -192,19 +287,19 @@ void TalkEvent::Draw()
 	DrawBox(m_boxX, m_boxY, m_boxW + m_boxX, m_boxH + m_boxY, m_nameColor.ToDxColor(), FALSE);
 
 	//立ち絵の描画
-	if (m_actorTextureId > 0)
+	if (m_actorTextureId != -1)
 	{
 		if (m_talkerPosition == ActorPosition::Left)
 		{
-			int actorX = m_boxX + 20;
-			int actorY = (m_boxY + m_boxH) - m_actorH + 30;
-			DrawGraph(actorX, actorY, m_actorTextureId, TRUE);
+			int actorX = m_boxX - 220;
+			int actorY = (m_boxY + m_boxH) - m_actorH + 50;
+			DrawExtendGraph(actorX, actorY, actorX + m_actorW, actorY + m_actorH, m_actorTextureId, TRUE);
 		}
-		else if (m_talkerPosition == ActorPosition::Right)
+		else if (m_talkerPosition == ActorPosition::Right) 
 		{
-			int actorX = (m_boxX + m_boxW) - m_actorW - 20;
-			int actorY = (m_boxY + m_boxH) - m_actorH + 30;
-			DrawGraph(actorX, actorY, m_actorTextureId, TRUE);
+			int actorX = (m_boxX + m_boxW) - m_actorW + 250;
+			int actorY = (m_boxY + m_boxH) - m_actorH + 50;
+			DrawExtendGraph(actorX, actorY, actorX + m_actorW, actorY + m_actorH, m_actorTextureId, TRUE);
 		}
 
 	}
@@ -214,7 +309,7 @@ void TalkEvent::Draw()
 
 	if (m_actorTextureId > 0 && m_talkerPosition == ActorPosition::Left)
 	{
-		textX += (m_actorW + 20);
+		textX += (m_actorW - 150);
 	}
 
 	DrawString(textX, textY, m_talkText.c_str(), m_textColor.ToDxColor());
@@ -313,7 +408,7 @@ void EventTrigger::Update(float deltaTime)
 			m_eventManager->RegisterEvent(m_eventId); //重複を避ける
 
 			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".txt";
-			auto talkEvent = std::make_unique<TalkEvent>(m_scene, filePath);
+			auto talkEvent = std::make_unique<TalkEvent>(m_scene, filePath, m_eventManager);
 
 			m_eventManager->Init(std::move(talkEvent));
 		}

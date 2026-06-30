@@ -150,6 +150,7 @@
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyEntity.cpp" />
     <ClCompile Include="EventManager.cpp" />
+    <ClCompile Include="EventTexture.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyEntity.h" />
     <ClInclude Include="EventManager.h" />
+    <ClInclude Include="EventTexture.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="SekienkiBossEntity.h" />

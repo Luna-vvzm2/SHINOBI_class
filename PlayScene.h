@@ -4,13 +4,12 @@
 #include "Camera.h"
 #include "MapData.h"
 
-//イベントのため変更
-#include "EventManager.h"
-
-
 class PlayerEntity;
 class HitEffect;
 
+//イベントのため追加
+class EventTexture;
+class EventManager;
 
 
 class PlayScene : public Scene
@@ -54,6 +53,6 @@ private:
 	bool m_resultShown = false;
 
 	//イベントのため変更
+	std::unique_ptr<EventTexture> m_eventTexture;
 	std::unique_ptr<EventManager> m_eventManager;
-
 };

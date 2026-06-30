@@ -1,8 +1,8 @@
 //
-トモエ/L:そこのお前！ 何者だ！？
-忍者/R:……まだ朧の忍者がいたか。<br>覚悟するんだな。
-トモエ/R:答えろ！<br>何者だと聞いている！！ 
-忍者/R:我はルーズ様の配下の忍。<br>朧一族は、すべて殲滅する。
-トモエ/R:せ……殲滅！？
-忍者/R:お前たちが消えればもはや障害は何もない。<br>ルーズ様率いるNEO-CORPが……<br>世界を支配するのだ。
-忍者/R:さあ、いくぞ……<br>その首、頂戴する！！
+[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]そこのお前！ 何者だ！？
+[name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]……まだ朧の忍者がいたか。<br>覚悟するんだな。
+[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]:答えろ！<br>何者だと聞いている！！ 
+[name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]我はルーズ様の配下の忍。<br>朧一族は、すべて殲滅する。
+[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]せ……殲滅！？
+[name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]お前たちが消えればもはや障害は何もない。<br>ルーズ様率いるNEO-CORPが……<br>世界を支配するのだ。
+[name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]さあ、いくぞ……<br>その首、頂戴する！！

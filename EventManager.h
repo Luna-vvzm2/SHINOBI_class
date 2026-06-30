@@ -10,11 +10,12 @@
 class Scene;
 class Input;
 class EventBase;
-
+class EventTexture;
 class EventManager
+
 {
 public:
-	EventManager(Scene* scene); //コンストラクタ
+	EventManager(Scene* scene, EventTexture* eventTexture); //コンストラクタ
 	~EventManager(); //デストラクタ
 
 	void Init(std::unique_ptr<EventBase> event); //イベント開始
@@ -27,8 +28,11 @@ public:
 
 	void Draw();
 
+	EventTexture* GetEventTexture() const;
+
 private:
 	Scene* m_scene; //イベントを管理するシーン
+	EventTexture* m_eventTexture{ nullptr }; //イベントの画像を管理
 	std::unique_ptr<EventBase> m_currentEvent{ nullptr }; //実行中のイベント
 	std::set<int> m_triggeredEvents;
 };
@@ -47,12 +51,15 @@ public:
 	virtual bool IsEnd() const = 0;
 
 	virtual void Draw() = 0;
+
+protected:
+	std::string LoadConfig(const std::string& text, const std::string& configName) const; //テキストから設定を読み取る
 };
 
 class TalkEvent : public EventBase
 {
 public:
-	TalkEvent(Scene* scene, const std::string& filePath); //コンストラクタ
+	TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager); //コンストラクタ
 	~TalkEvent() override; //デストラクタ
 
 	void Init() override;
@@ -70,6 +77,7 @@ public:
 
 private:
 	Scene* m_scene{ nullptr };
+	EventManager* m_eventManager{ nullptr };
 	std::vector<std::string> m_texts; //表示テキスト
 	int m_currentLine{ 0 }; //表示中のテキストインデックス
 	int m_skipTimer{ 90 }; //スキップの長押しタイマー
@@ -79,8 +87,8 @@ private:
 	std::string m_talkText{ "" };
 	ActorPosition m_talkerPosition{ ActorPosition::None };
 	int m_actorTextureId{ -1 }; //立ち絵のid
-	int m_actorW{ 300 };
-	int m_actorH{ 450 };
+	int m_actorW{ 480 };
+	int m_actorH{ 510 };
 
 	int m_boxX{ 280 };
 	int m_boxY{ 510 };
