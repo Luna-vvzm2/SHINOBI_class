@@ -15,6 +15,7 @@ enum class ActorType {
 	Kunai,
 	Enemy,
 	Effect,
+	StageBack,
 	StageExit,
 	UI
 };

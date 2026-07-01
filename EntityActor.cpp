@@ -1,6 +1,7 @@
 #include "EntityActor.h"
 #include "PlayScene.h"
 #include "BlockActor.h"
+#include "StageBackActor.h"
 #include "StageExitActor.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
@@ -101,24 +102,39 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
             Vector2d playerPos = m_transform->GetPosition();
 
-            printf("Player : %.1f %.1f\n", playerPos.x, playerPos.y);
-            printf("Exit   : %.1f %.1f\n", exitPos.x, exitPos.y);
-            printf("Diff   : %.1f %.1f\n",
-                fabs(playerPos.x - exitPos.x),
-                fabs(playerPos.y - exitPos.y));
-
-            printf("Need   : %.1f %.1f\n",
-                halfW + exitHalfW,
-                halfH + exitHalfH);
-
             if (std::abs(playerPos.x - exitPos.x) < halfW + exitHalfW &&
                 std::abs(playerPos.y - exitPos.y) < halfH + exitHalfH)
             {
-                printf("Hit StageExit!\n");
-                static_cast<PlayScene*>(m_scene)->RequestStageChange(exit->GetNextStage());
+                static_cast<PlayScene*>(m_scene)->RequestStageChange(exit->GetNextStage(), 0);
             }
             continue;
         } break;
+        case ActorType::StageBack:
+        {
+            auto back = static_cast<StageBackActor*>(actor);
+
+            CollisionComponent* backCol = back->GetCollision();
+
+            Vector2d backPos = back->GetPos();
+
+            float halfW = m_collision->GetWidth() * 0.5f;
+            float halfH = m_collision->GetHeight() * 0.5f;
+            float backHalfW = backCol->GetWidth() * 0.5f;
+            float backHalfH = backCol->GetHeight() * 0.5f;
+
+            Vector2d playerPos = m_transform->GetPosition();
+
+            if (std::abs(playerPos.x - backPos.x) < halfW + backHalfW &&
+                std::abs(playerPos.y - backPos.y) < halfH + backHalfH)
+            {
+                static_cast<PlayScene*>(m_scene)->RequestStageChange(
+                    back->GetPrevStage(),
+                    back->GetSpawnIndex());
+            }
+
+            continue;
+        }
+        break;
         default:
             continue;
         }

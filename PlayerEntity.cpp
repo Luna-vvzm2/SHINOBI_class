@@ -1674,7 +1674,8 @@ void PlayerEntity::UpdateDead(float deltaTime) {
 
         m_jumpCount = 0;
         m_isGround = false;
-
+        m_canMove = true;
+        m_canAttack = true;
         m_attack = false;
         m_dashTimer = 0.0f;
 

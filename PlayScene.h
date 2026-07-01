@@ -26,9 +26,9 @@ public:
 	bool Init() override;
 	bool StageInit(int stageNo);
 
-	void ChangeStage(int index);
+	void ChangeStage(int index, int spawnIndex);
 	void ClearStageActors();
-	void RequestStageChange(int stage);
+	void RequestStageChange(int stage, int spawnIndex);
 
 	//	çXêV
 	void Update(float deltaTime) override;
@@ -58,6 +58,7 @@ private:
 	std::vector<Vector2d> m_playerSpawnPoints;
 	bool m_requestStageChange = false;
 	int m_nextStage = 0;
+	int m_nextSpawnIndex = 0;
 
 	Camera m_camera;
 

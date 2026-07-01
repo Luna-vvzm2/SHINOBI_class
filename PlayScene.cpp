@@ -13,6 +13,7 @@
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
 #include "EffectActor.h"
+#include "StageBackActor.h"
 #include "StageExitActor.h"
 #include "GroundBlock.h"
 #include "ClearBlock.h"
@@ -689,6 +690,12 @@ bool PlayScene::StageInit(int stageNo) {
 				AddActor(new StageExitActor(this, pos, m_stageIndex + 1));
 			} break;
 
+			case 14:
+			{
+				AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+			}
+			break;
+
 			case 202:
 			{
 				WhiteEnemyEntity* enemy = new WhiteEnemyEntity(this, pos);
@@ -919,13 +926,17 @@ bool PlayScene::StageInit(int stageNo) {
 	return true;
 }
 
-void PlayScene::ChangeStage(int index) {
+void PlayScene::ChangeStage(int index, int spawnIndex) {
 	m_stageIndex = index;
 
 	ClearStageActors();
 	StageInit(index);
 
-	m_player->SetPosition(m_playerSpawnPoints[0]);
+	if (spawnIndex >= 0 &&
+		spawnIndex < static_cast<int>(m_playerSpawnPoints.size()))
+	{
+		m_player->SetPosition(m_playerSpawnPoints[spawnIndex]);
+	}
 }
 
 void PlayScene::ClearStageActors()
@@ -955,17 +966,18 @@ void PlayScene::ClearStageActors()
 	m_enemyToHPBarMap.clear();
 }
 
-void PlayScene::RequestStageChange(int stage)
+void PlayScene::RequestStageChange(int stage, int spawnIndex)
 {
 	m_requestStageChange = true;
 	m_nextStage = stage;
+	m_nextSpawnIndex = spawnIndex;
 }
 
 void PlayScene::Update(float deltaTime) {
 	if (m_requestStageChange)
 	{
 		m_requestStageChange = false;
-		ChangeStage(m_nextStage);
+		ChangeStage(m_nextStage, m_nextSpawnIndex);
 	}
 
 	const Input& input = m_game->GetInput();
