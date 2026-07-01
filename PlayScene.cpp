@@ -491,8 +491,9 @@ PlayScene::PlayScene(Game* game)
 	m_skillCursorX(0),
 	m_skillCursorY(0),
 	m_bgHandle(0),
-	m_fgHandle(0)
-
+	m_fgHandle(0),
+	m_eventTexture(std::make_unique<EventTexture>()),
+	m_eventManager(std::make_unique<EventManager>(this, m_eventTexture.get())) //イベントのため変更
 {
 
 }
@@ -847,6 +848,10 @@ bool PlayScene::Init() {
 				} break;
 
 				default:
+					if (objID >= 100)
+					{
+						AddActor(new EventTrigger(this, pos, Vector2d(tileSize, tileSize), objID, m_eventManager.get()));
+					}
 					break;
 				} // switch
 			} // for x
@@ -905,6 +910,13 @@ bool PlayScene::Init() {
 }
 
 void PlayScene::Update(float deltaTime) {
+	//イベントのため変更
+	if (m_eventManager->IsRunning())
+	{
+		m_eventManager->Update(deltaTime);
+		return;
+	}
+	updateActors(m_backactors, deltaTime);
 
 	const Input& input = m_game->GetInput();
 
@@ -1022,6 +1034,12 @@ void PlayScene::Draw() {
 	// 前景
 	for (int i = 0; i < 19; i++) {
 		renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	}
+
+	//イベントのために変更
+	if (m_eventManager->IsRunning())
+	{
+		m_eventManager->Draw();
 	}
 
 	if (m_menuState == MenuState::Skill)

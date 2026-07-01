@@ -132,4 +132,8 @@ private:
 	const float m_cursorRepeatDelay = 0.3f; // 最初の待ち時間
 	const float m_cursorRepeatInterval = 0.08f; // 連続移動間隔
 	
+	//イベントのため変更
+	std::unique_ptr<EventTexture> m_eventTexture;
+	std::unique_ptr<EventManager> m_eventManager;
+
 };
