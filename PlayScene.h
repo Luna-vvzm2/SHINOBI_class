@@ -75,9 +75,17 @@ private:
 		Equipment,
 		Skill
 	};
+
+
 	MenuTab m_menuTab = MenuTab::Skill;
 	void DrawMenuTabs();
+
 	void DrawEquipmentMenu();
+	void DrawNinjutsuSlots();
+	void DrawGofuSlots();
+	void DrawKatanaSlot();
+	void DrawEquipmentInventory();
+	void DrawEquipmentDescription();
 
 	int m_tabCursor = 0;   // 0=ƒXƒLƒ‹ 1=‘•”õ
 
