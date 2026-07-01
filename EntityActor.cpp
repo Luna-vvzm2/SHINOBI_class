@@ -1,6 +1,7 @@
 #include "EntityActor.h"
-#include "Scene.h"
+#include "PlayScene.h"
 #include "BlockActor.h"
+#include "StageExitActor.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "SpriteComponent.h"
@@ -86,12 +87,43 @@ void EntityActor::MoveAndCollide(float deltaTime) {
             if (std::abs(actorPos.y - pos.y) > 300)
                 continue;
             break;
+        case ActorType::StageExit:
+        {
+            auto exit = static_cast<StageExitActor*>(actor);
+            CollisionComponent* exitCol = exit->GetCollision();
+
+            Vector2d exitPos = exit->GetPos();
+
+            float halfW = m_collision->GetWidth() * 0.5f;
+            float halfH = m_collision->GetHeight() * 0.5f;
+            float exitHalfW = exitCol->GetWidth() * 0.5f;
+            float exitHalfH = exitCol->GetHeight() * 0.5f;
+
+            Vector2d playerPos = m_transform->GetPosition();
+
+            printf("Player : %.1f %.1f\n", playerPos.x, playerPos.y);
+            printf("Exit   : %.1f %.1f\n", exitPos.x, exitPos.y);
+            printf("Diff   : %.1f %.1f\n",
+                fabs(playerPos.x - exitPos.x),
+                fabs(playerPos.y - exitPos.y));
+
+            printf("Need   : %.1f %.1f\n",
+                halfW + exitHalfW,
+                halfH + exitHalfH);
+
+            if (std::abs(playerPos.x - exitPos.x) < halfW + exitHalfW &&
+                std::abs(playerPos.y - exitPos.y) < halfH + exitHalfH)
+            {
+                printf("Hit StageExit!\n");
+                static_cast<PlayScene*>(m_scene)->RequestStageChange(exit->GetNextStage());
+            }
+            continue;
+        } break;
         default:
             continue;
         }
 
         Vector2d playerPos = m_transform->GetPosition();
-
         float halfW = m_collision->GetWidth() * 0.5f;
         float halfH = m_collision->GetHeight() * 0.5f;
         float aHalfW = actorCol->GetWidth() * 0.5f;

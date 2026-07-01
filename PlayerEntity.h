@@ -3,6 +3,7 @@
 #include "BlockActor.h"
 #include "Vector2d.h"
 #include "SpriteComponent.h"
+#include "TransformComponent.h"
 #include <functional>
 
 struct AttackHitbox
@@ -55,6 +56,7 @@ public:
 
     bool OnGround() const { return m_isGround; }
     void SetCanMove(bool canMove) { m_canMove = canMove; }
+    void SetPosition(Vector2d pos) { m_transform->SetPosition(pos); }
 
     HPComponent* GetHP() const { return m_hp; }
     bool GetDir() const { return m_dir; }
@@ -94,7 +96,8 @@ public:
     int GetMoney() const { return m_money; }
     void SetMoney(int amount);
     void AddMoney(int delta);
-    
+
+    void ResetStageState();
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;

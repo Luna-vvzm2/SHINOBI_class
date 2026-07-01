@@ -1667,3 +1667,16 @@ void PlayerEntity::UpdateDead(float deltaTime) {
     }
 }
     std::string PlayerEntity::GetTexturePath() const { return ""; }
+
+    void PlayerEntity::ResetStageState()
+    {
+        m_velocity->Set({ 0,0 });
+
+        m_jumpCount = 0;
+        m_isGround = false;
+
+        m_attack = false;
+        m_dashTimer = 0.0f;
+
+        ChangeState(ActionState::IDLE);
+    }
