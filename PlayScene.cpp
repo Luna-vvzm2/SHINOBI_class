@@ -29,6 +29,11 @@
 #include "MoneyUI.h"
 #include "EnemyHPBar.h"
 
+//イベントのため変更
+#include "EventManager.h"
+#include "EventTexture.h"
+
+
 #include <algorithm>
 
 PlayScene::SkillData* PlayScene::GetSelectedSkill()
@@ -626,6 +631,7 @@ bool PlayScene::Init() {
 			int objID =
 				objLayer.tiles[static_cast<std::vector<int, std::allocator<int>>::size_type>(y) * stage.width + x];
 
+
 			Vector2d pos(x * tileSize, y * tileSize);
 
 				switch (objID)
@@ -993,6 +999,7 @@ void PlayScene::Update(float deltaTime) {
 	{
 		m_shurikenUI->SetCount(m_player->GetShurikenCount());
 	}
+
 }
 
 void PlayScene::Draw() {

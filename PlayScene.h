@@ -14,6 +14,9 @@ class HPBarUI;
 class EnemyHPBar;
 class MoneyUI;
 
+//ƒCƒxƒ“ƒg‚Ì‚½‚ß’Ç‰Á
+class EventTexture;
+class EventManager;
 
 class PlayScene : public Scene
 {

@@ -151,7 +151,8 @@
     <ClCompile Include="EffectActor.cpp" />
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyEntity.cpp" />
-    <ClCompile Include="EnemyHPBar.cpp" />
+    <ClCompile Include="EventManager.cpp" />
+    <ClCompile Include="EventTexture.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="HouseBlock.cpp" />
@@ -213,7 +214,8 @@
     <ClInclude Include="EffectActor.h" />
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyEntity.h" />
-    <ClInclude Include="EnemyHPBar.h" />
+    <ClInclude Include="EventManager.h" />
+    <ClInclude Include="EventTexture.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="HouseBlock.h" />
