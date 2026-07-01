@@ -34,6 +34,8 @@ public:
     HPComponent* GetHP() const { return m_hp; }
     virtual int GetMaxHP() const { return 100;  }
 
+    virtual void Draw() override; // ’Ç‰Á: “G‚Ì‹¤’Ê•`‰æi–{‘Ì•`‰æ‚Í Actor::Draw() ‚ÉˆÏ÷j‚Æ“ªãƒQ[ƒW‚ğ•`‚­
+
 protected:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
