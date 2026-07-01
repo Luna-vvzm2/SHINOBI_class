@@ -36,6 +36,14 @@ private:
 	void StartBlowHit(const Vector2d& knockback);
 	void StartLargeBlowHit(const Vector2d& knockback);
 	void StartDeadHit();
+	void PlayDamageMotion(
+		const std::string& motionName,
+		const std::string& texturePath,
+		int xNum,
+		int yNum,
+		const std::vector<int>& frames,
+		const std::vector<float>& frameDurations
+	);
 	void UpdateDamageMotion(float deltaTime);
 	void CancelAttackForDamage();
 	void UpdateDebugDamageInput();

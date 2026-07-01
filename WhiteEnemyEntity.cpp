@@ -16,6 +16,47 @@
 #include <DxLib.h>
 #include <cmath>
 
+static const float WHITE_ENEMY_DRAW_SCALE = 0.5f;
+static const Vector2d WHITE_SHURIKEN_BASE_DRAW_SIZE = Vector2d(96.0f, 96.0f);
+
+namespace {
+	std::vector<int> BuildTimedFrames(
+		const std::vector<int>& frames,
+		const std::vector<float>& frameDurations,
+		float baseFrameTime
+	)
+	{
+		std::vector<int> timedFrames;
+
+		for (size_t i = 0; i < frames.size(); i++)
+		{
+			float duration = i < frameDurations.size() ? frameDurations[i] : baseFrameTime;
+			int repeatCount = static_cast<int>((duration / baseFrameTime) + 0.5f);
+			if (repeatCount < 1)
+			{
+				repeatCount = 1;
+			}
+
+			for (int count = 0; count < repeatCount; count++)
+			{
+				timedFrames.push_back(frames[i]);
+			}
+		}
+
+		return timedFrames;
+	}
+
+	float GetTotalDuration(const std::vector<float>& frameDurations)
+	{
+		float totalDuration = 0.0f;
+		for (float duration : frameDurations)
+		{
+			totalDuration += duration;
+		}
+		return totalDuration;
+	}
+}
+
 class WhiteShurikenBullet : public EntityActor
 {
 public:
@@ -176,7 +217,7 @@ bool WhiteEnemyEntity::Init()
 {
 	if (!EnemyEntity::Init()) return false;
 
-	m_transform->SetScale(Vector2d(0.5f, 0.5f));
+	m_transform->SetScale(Vector2d(WHITE_ENEMY_DRAW_SCALE, WHITE_ENEMY_DRAW_SCALE));
 
 	m_anim = AddComponent<AnimationComponent>();
 	m_anim->SetSprite(m_sprite);
@@ -217,7 +258,7 @@ static const float WHITE_SHURIKEN_COOLDOWN = 0.45f * WHITE_ACTION_TIME_SCALE;
 static const int WHITE_SHURIKEN_DAMAGE = 5;
 static const float WHITE_SHURIKEN_SHOT_TIME = 16.0f / WHITE_ANIM_FPS;
 static const float WHITE_SHURIKEN_END_TIME = 24.0f / WHITE_ANIM_FPS;
-static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(48.0f, 48.0f);
+static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = WHITE_SHURIKEN_BASE_DRAW_SIZE * WHITE_ENEMY_DRAW_SCALE;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
@@ -248,8 +289,12 @@ static const int WHITE_HIT_WEAK_X_NUM = 4;
 static const int WHITE_HIT_WEAK_Y_NUM = 1;
 
 // ダメージ関係
-static const float WHITE_BLOW_MIN_KNOCKBACK = 180.0f;
-static const float WHITE_BLOW_LARGE_MIN_KNOCKBACK = 520.0f;
+static const int WHITE_BLOW_MIN_DAMAGE = 10;
+static const int WHITE_BLOW_LARGE_MIN_DAMAGE = 25;
+static const int WHITE_DEBUG_WEAK_DAMAGE = 1;
+static const int WHITE_DEBUG_BLOW_DAMAGE = WHITE_BLOW_MIN_DAMAGE;
+static const int WHITE_DEBUG_LARGE_BLOW_DAMAGE = WHITE_BLOW_LARGE_MIN_DAMAGE;
+static const Vector2d WHITE_DEBUG_DAMAGE_KNOCKBACK = Vector2d(300.0f, -160.0f);
 static const int WHITE_DAMAGE_NONE = 0;
 static const int WHITE_DAMAGE_WEAK = 1;
 static const int WHITE_DAMAGE_BLOW = 2;
@@ -543,19 +588,51 @@ void WhiteEnemyEntity::CancelAttackForDamage()
 	m_hasLastMove = false;
 }
 
+void WhiteEnemyEntity::PlayDamageMotion(
+	const std::string& motionName,
+	const std::string& texturePath,
+	int xNum,
+	int yNum,
+	const std::vector<int>& frames,
+	const std::vector<float>& frameDurations
+)
+{
+	if (m_sprite == nullptr || m_anim == nullptr || frames.empty())
+	{
+		return;
+	}
+
+	if (m_currentTexturePath != texturePath)
+	{
+		if (!m_sprite->LoadTextureDiv(texturePath, xNum, yNum))
+		{
+			return;
+		}
+		m_currentTexturePath = texturePath;
+	}
+
+	AnimationClip clip;
+	clip.frames = BuildTimedFrames(frames, frameDurations, WHITE_FRAME_TIME);
+	clip.speed = WHITE_FRAME_TIME;
+	clip.loop = false;
+
+	m_anim->AddClip(motionName, clip);
+	m_anim->Play(motionName, true);
+	m_currentMotionName = motionName;
+}
+
 void WhiteEnemyEntity::StartWeakHit()
 {
 	CancelAttackForDamage();
 
-	if (m_sprite != nullptr)
-	{
-		m_sprite->LoadTextureDiv(WHITE_TEXTURE_HIT_WEAK, WHITE_HIT_WEAK_X_NUM, WHITE_HIT_WEAK_Y_NUM);
-		m_sprite->SetFrame(WHITE_WEAK_HIT_FRAMES[0]);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
-	}
-
-	m_currentTexturePath = WHITE_TEXTURE_HIT_WEAK;
-	m_currentMotionName = "hit_weak";
+	PlayDamageMotion(
+		"hit_weak",
+		WHITE_TEXTURE_HIT_WEAK,
+		WHITE_HIT_WEAK_X_NUM,
+		WHITE_HIT_WEAK_Y_NUM,
+		WHITE_WEAK_HIT_FRAMES,
+		WHITE_WEAK_HIT_DURATIONS
+	);
 	m_damageState = WHITE_DAMAGE_WEAK;
 	m_damageFrameIndex = 0;
 	m_damageFrameTimer = 0.0f;
@@ -567,15 +644,14 @@ void WhiteEnemyEntity::StartBlowHit(const Vector2d& knockback)
 	CancelAttackForDamage();
 	m_velocity->SetVelocity(knockback);
 
-	if (m_sprite != nullptr)
-	{
-		m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM);
-		m_sprite->SetFrame(WHITE_BLOW_FRAMES[0]);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
-	}
-
-	m_currentTexturePath = WHITE_TEXTURE_SHEET;
-	m_currentMotionName = "hit_blow";
+	PlayDamageMotion(
+		"hit_blow",
+		WHITE_TEXTURE_SHEET,
+		WHITE_SHEET_X_NUM,
+		WHITE_SHEET_Y_NUM,
+		WHITE_BLOW_FRAMES,
+		WHITE_BLOW_DURATIONS
+	);
 	m_damageState = WHITE_DAMAGE_BLOW;
 	m_damageFrameIndex = 0;
 	m_damageFrameTimer = 0.0f;
@@ -587,15 +663,14 @@ void WhiteEnemyEntity::StartLargeBlowHit(const Vector2d& knockback)
 	CancelAttackForDamage();
 	m_velocity->SetVelocity(knockback);
 
-	if (m_sprite != nullptr)
-	{
-		m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM);
-		m_sprite->SetFrame(WHITE_BLOW_LARGE_FRAMES[0]);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
-	}
-
-	m_currentTexturePath = WHITE_TEXTURE_SHEET;
-	m_currentMotionName = "hit_blow_large";
+	PlayDamageMotion(
+		"hit_blow_large",
+		WHITE_TEXTURE_SHEET,
+		WHITE_SHEET_X_NUM,
+		WHITE_SHEET_Y_NUM,
+		WHITE_BLOW_LARGE_FRAMES,
+		WHITE_BLOW_LARGE_DURATIONS
+	);
 	m_damageState = WHITE_DAMAGE_BLOW_LARGE;
 	m_damageFrameIndex = 0;
 	m_damageFrameTimer = 0.0f;
@@ -607,15 +682,14 @@ void WhiteEnemyEntity::StartDeadHit()
 	CancelAttackForDamage();
 	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
-	if (m_sprite != nullptr)
-	{
-		m_sprite->LoadTextureDiv(WHITE_TEXTURE_SHEET, WHITE_SHEET_X_NUM, WHITE_SHEET_Y_NUM);
-		m_sprite->SetFrame(WHITE_DEAD_FRAME);
-		m_sprite->SetDrawSize(96.0f, 190.0f);
-	}
-
-	m_currentTexturePath = WHITE_TEXTURE_SHEET;
-	m_currentMotionName = "hit_dead";
+	PlayDamageMotion(
+		"hit_dead",
+		WHITE_TEXTURE_SHEET,
+		WHITE_SHEET_X_NUM,
+		WHITE_SHEET_Y_NUM,
+		std::vector<int>{ WHITE_DEAD_FRAME },
+		std::vector<float>{ WHITE_DEAD_SHOW_TIME }
+	);
 	m_damageState = WHITE_DAMAGE_DEAD;
 	m_damageFrameIndex = 0;
 	m_damageFrameTimer = 0.0f;
@@ -648,12 +722,11 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
 	}
 
-	float knockbackPower = damageKnockback.length();
-	if (knockbackPower >= WHITE_BLOW_LARGE_MIN_KNOCKBACK)
+	if (damage >= WHITE_BLOW_LARGE_MIN_DAMAGE)
 	{
 		StartLargeBlowHit(damageKnockback);
 	}
-	else if (knockbackPower >= WHITE_BLOW_MIN_KNOCKBACK)
+	else if (damage >= WHITE_BLOW_MIN_DAMAGE)
 	{
 		StartBlowHit(damageKnockback);
 	}
@@ -670,22 +743,18 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 		return;
 	}
 
-	const std::vector<int>* frames = nullptr;
 	const std::vector<float>* durations = nullptr;
 
 	if (m_damageState == WHITE_DAMAGE_WEAK)
 	{
-		frames = &WHITE_WEAK_HIT_FRAMES;
 		durations = &WHITE_WEAK_HIT_DURATIONS;
 	}
 	else if (m_damageState == WHITE_DAMAGE_BLOW)
 	{
-		frames = &WHITE_BLOW_FRAMES;
 		durations = &WHITE_BLOW_DURATIONS;
 	}
 	else if (m_damageState == WHITE_DAMAGE_BLOW_LARGE)
 	{
-		frames = &WHITE_BLOW_LARGE_FRAMES;
 		durations = &WHITE_BLOW_LARGE_DURATIONS;
 	}
 	else if (m_damageState == WHITE_DAMAGE_DEAD)
@@ -698,54 +767,134 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 		return;
 	}
 
-	if (frames == nullptr || durations == nullptr || frames->empty())
+	if (durations == nullptr || durations->empty())
 	{
 		m_damageState = WHITE_DAMAGE_NONE;
 		return;
 	}
 
+	float holdStartTime = 0.0f;
+	if (m_damageState == WHITE_DAMAGE_BLOW_LARGE)
+	{
+		for (int i = 0; i < WHITE_LARGE_BLOW_GROUND_FRAME_INDEX && i < static_cast<int>(durations->size()); i++)
+		{
+			holdStartTime += (*durations)[i];
+		}
+	}
+
+	if (m_damageHoldGroundFrame)
+	{
+		if (m_isGround == false)
+		{
+			return;
+		}
+
+		m_damageHoldGroundFrame = false;
+	}
+
+	m_damageFrameTimer += deltaTime;
+
 	if (m_damageState == WHITE_DAMAGE_BLOW_LARGE &&
-		m_damageFrameIndex == WHITE_LARGE_BLOW_GROUND_FRAME_INDEX &&
+		m_damageFrameTimer >= holdStartTime &&
 		m_isGround == false)
+	{
+		if (m_sprite != nullptr && WHITE_LARGE_BLOW_GROUND_FRAME_INDEX < static_cast<int>(WHITE_BLOW_LARGE_FRAMES.size()))
+		{
+			m_sprite->SetFrame(WHITE_BLOW_LARGE_FRAMES[WHITE_LARGE_BLOW_GROUND_FRAME_INDEX]);
+		}
+		m_damageFrameTimer = holdStartTime;
+		m_damageHoldGroundFrame = true;
+		return;
+	}
+
+	if (m_damageFrameTimer >= GetTotalDuration(*durations))
+	{
+		m_damageState = WHITE_DAMAGE_NONE;
+		m_actionLock = false;
+		m_currentMotionName = "";
+		m_damageHoldGroundFrame = false;
+	}
+}
+
+void WhiteEnemyEntity::UpdateDebugDamageInput()
+{
+#ifdef _DEBUG
+	if (m_scene == nullptr || m_hp == nullptr || IsDead() || m_hp->GetHP() <= 0)
 	{
 		return;
 	}
 
-	m_damageFrameTimer += deltaTime;
-	while (m_damageFrameIndex < static_cast<int>(durations->size()) &&
-		m_damageFrameTimer >= (*durations)[m_damageFrameIndex])
+	Vector2d playerPos = Vector2d::Zero();
+	PlayerEntity* player = nullptr;
+	bool playerOnGround = false;
+	if (!TryGetPlayerInfo(playerPos, player, playerOnGround))
 	{
-		m_damageFrameTimer -= (*durations)[m_damageFrameIndex];
-		m_damageFrameIndex++;
+		return;
+	}
 
-		if (m_damageFrameIndex >= static_cast<int>(frames->size()))
+	WhiteEnemyEntity* closestWhite = nullptr;
+	float closestDistanceSq = 0.0f;
+
+	for (Actor* actor : m_scene->GetActors())
+	{
+		WhiteEnemyEntity* white = dynamic_cast<WhiteEnemyEntity*>(actor);
+		if (white == nullptr || white->IsDead() || white->m_hp == nullptr || white->m_hp->GetHP() <= 0)
 		{
-			m_damageState = WHITE_DAMAGE_NONE;
-			m_actionLock = false;
-			m_currentMotionName = "";
-			return;
+			continue;
 		}
 
-		if (m_sprite != nullptr)
+		Vector2d diff = white->GetPos() - playerPos;
+		float distanceSq = diff.lengthSq();
+		if (closestWhite == nullptr || distanceSq < closestDistanceSq)
 		{
-			m_sprite->SetFrame((*frames)[m_damageFrameIndex]);
-		}
-
-		if (m_damageState == WHITE_DAMAGE_BLOW_LARGE &&
-			m_damageFrameIndex == WHITE_LARGE_BLOW_GROUND_FRAME_INDEX &&
-			m_isGround == false)
-		{
-			m_damageFrameTimer = 0.0f;
-			return;
+			closestWhite = white;
+			closestDistanceSq = distanceSq;
 		}
 	}
+
+	if (closestWhite != this)
+	{
+		return;
+	}
+
+	static bool oldG = false;
+	static bool oldH = false;
+	static bool oldJ = false;
+
+	bool nowG = CheckHitKey(KEY_INPUT_G) != 0;
+	bool nowH = CheckHitKey(KEY_INPUT_H) != 0;
+	bool nowJ = CheckHitKey(KEY_INPUT_J) != 0;
+
+	if (nowG && !oldG)
+	{
+		TakeDamage(WHITE_DEBUG_WEAK_DAMAGE, WHITE_DEBUG_DAMAGE_KNOCKBACK);
+	}
+	else if (nowH && !oldH)
+	{
+		TakeDamage(WHITE_DEBUG_BLOW_DAMAGE, WHITE_DEBUG_DAMAGE_KNOCKBACK);
+	}
+	else if (nowJ && !oldJ)
+	{
+		TakeDamage(WHITE_DEBUG_LARGE_BLOW_DAMAGE, WHITE_DEBUG_DAMAGE_KNOCKBACK);
+	}
+
+	oldG = nowG;
+	oldH = nowH;
+	oldJ = nowJ;
+#endif
 }
 
 void WhiteEnemyEntity::Update(float deltaTime)
 {
+	UpdateDebugDamageInput();
+
 	if (m_damageState != WHITE_DAMAGE_NONE)
 	{
 		UpdateDamageMotion(deltaTime);
+		if (m_anim != nullptr && m_damageState != WHITE_DAMAGE_NONE && m_damageHoldGroundFrame == false)
+		{
+			m_anim->Update(deltaTime);
+		}
 		if (m_damageState == WHITE_DAMAGE_NONE)
 		{
 			EnemyEntity::Update(deltaTime);
