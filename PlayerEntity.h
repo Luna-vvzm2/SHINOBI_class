@@ -65,7 +65,7 @@ public:
     void HitTrap();
 
     void CheckCanStand();
-    BlockActor* CheckSensor(const Vector2d& offset);
+    BlockActor* CheckSensor(const Vector2d& offset, const Vector2d& size = {4.0f, 4.0f});
 
     void EnterSquat();
     void ExitSquat();
@@ -115,6 +115,7 @@ private:
     float m_dashAirSpeed;
     float m_dashTimer;
     bool m_HienCount;
+    bool m_isSenten;
     // EntityActor.bool m_isGround;          // ê⁄ínÉtÉâÉO
     int m_jumpCount;
     float m_jumpTime;

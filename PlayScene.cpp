@@ -1051,7 +1051,7 @@ void PlayScene::Draw() {
 
 	// sensor•`‰æ
 	Vector2d Pos = m_player->GetPos();
-	Vector2d offset = { 60.0f, 80.0f };
+	Vector2d offset = { 130.0f, -60.0f };
 	if (m_player->GetDir()) {
 		Pos.x += offset.x;
 		Pos.y += offset.y;
