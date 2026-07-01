@@ -50,6 +50,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_dashAirSpeed(800.0f)
     , m_dashTimer(0.0f)
     , m_HienCount(0)
+    , m_isSenten(false)
 
     , m_jumpCount(0)
     , m_jumpTime(0.0f)
@@ -427,10 +428,10 @@ void PlayerEntity::UpdateInvincible(float deltaTime)
 void PlayerEntity::UpdateSensor() {
     float dir = m_dir ? 1.0f : -1.0f;
 
-    m_sensor.front = CheckSensor({ dir * 60.0f, 0.0f });
-    m_sensor.frontUpper = CheckSensor({ dir * 60.0f, -40.0f });
-    m_sensor.frontBottom = CheckSensor({ dir * 60.0f, 40.0f });
-    m_sensor.frontGround = CheckSensor({ dir * 170.0f, 80.0f });
+    m_sensor.front = CheckSensor({ dir * 130.0f, -60.0f });
+    m_sensor.frontUpper = CheckSensor({ dir * 130.0f, -60.0f });
+    m_sensor.frontBottom = CheckSensor({ dir * 130.0f, 40.0f });
+    m_sensor.frontGround = CheckSensor({ dir * 130.0f, 80.0f });
     m_sensor.frontNearGround = CheckSensor({ dir * 60.0f, 80.0f });
 }
 
@@ -463,18 +464,27 @@ void PlayerEntity::UpdateMove(float deltaTime) {
         }
 
         if (input.IsTrigger(Action::DASH)) {
-            if (!m_HienCount) {
+            if (m_isGround && m_sensor.frontBottom != nullptr && m_sensor.front == nullptr) {
                 m_canMove = false;
                 m_dashTimer = 0.35f;
-                if (!m_isGround || (m_sensor.frontGround == nullptr)) {
-                    move.y = -300.0f;
-                    move.x = dir * m_dashAirSpeed;
-                    m_HienCount = 1;
-                    m_transform->SetAngle(0.0f);
-                }
-                else {
-                    move.x = dir * m_dashSpeed;
-                    m_anim->Play("roll", true);
+                move.y = -6400.0f;
+                move.x = dir * m_dashSpeed;
+                m_isSenten = true;
+            }
+            else {
+                if (!m_HienCount) {
+                    m_canMove = false;
+                    m_dashTimer = 0.35f;
+                    if (!m_isGround || (m_sensor.frontGround == nullptr)) {
+                        move.y = -300.0f;
+                        move.x = dir * m_dashAirSpeed;
+                        m_HienCount = 1;
+                        m_transform->SetAngle(0.0f);
+                    }
+                    else {
+                        move.x = dir * m_dashSpeed;
+                        m_anim->Play("roll", true);
+                    }
                 }
             }
         }
@@ -492,6 +502,7 @@ void PlayerEntity::UpdateMove(float deltaTime) {
             m_dashTimer = 0.0f;
             move.x = 0.0f;
             m_canMove = true;
+            m_isSenten = false;
         }
     }else {
         move.x *= m_moveSpeed;
@@ -643,9 +654,12 @@ void PlayerEntity::CheckCanStand()
     }
 }
 
-BlockActor* PlayerEntity::CheckSensor(const Vector2d& offset)
+BlockActor* PlayerEntity::CheckSensor(const Vector2d& offset, const Vector2d& size)
 {
-    Vector2d sensor = m_transform->GetPosition() + offset;
+    Vector2d sensorPos = m_transform->GetPosition() + offset;
+
+    float sensorHalfW = size.x * 0.5f;
+    float sensorHalfH = size.y * 0.5f;
 
     for (Actor* actor : m_scene->GetActors())
     {
@@ -654,14 +668,23 @@ BlockActor* PlayerEntity::CheckSensor(const Vector2d& offset)
 
         auto block = static_cast<BlockActor*>(actor);
 
-        Vector2d pos = block->GetPos();
+        Vector2d blockPos = block->GetPos();
         CollisionComponent* col = block->GetCollision();
 
-        float halfW = col->GetWidth() * 0.5f;
-        float halfH = col->GetHeight() * 0.5f;
+        if (std::abs(blockPos.x - sensorPos.x) > 500)
+            continue;
 
-        if (std::abs(sensor.x - pos.x) <= halfW &&
-            std::abs(sensor.y - pos.y) <= halfH)
+        if (std::abs(blockPos.y - sensorPos.y) > 300)
+            continue;
+
+        float blockHalfW = col->GetWidth() * 0.5f;
+        float blockHalfH = col->GetHeight() * 0.5f;
+
+        float diffX = std::abs(sensorPos.x - blockPos.x);
+        float diffY = std::abs(sensorPos.y - blockPos.y);
+
+        if (diffX <= sensorHalfW + blockHalfW &&
+            diffY <= sensorHalfH + blockHalfH)
         {
             return block;
         }
@@ -1210,6 +1233,10 @@ void PlayerEntity::UpdateState() {
     }
 
     if (m_dashTimer > 0.0f) {
+        if (m_isSenten) {
+            ChangeState(ActionState::SENTEN);
+            return;
+        }
         if (m_isGround && m_sensor.frontGround != nullptr) {
             ChangeState(ActionState::ROLL);
             return;
@@ -1640,3 +1667,17 @@ void PlayerEntity::UpdateDead(float deltaTime) {
     }
 }
     std::string PlayerEntity::GetTexturePath() const { return ""; }
+
+    void PlayerEntity::ResetStageState()
+    {
+        m_velocity->Set({ 0,0 });
+
+        m_jumpCount = 0;
+        m_isGround = false;
+        m_canMove = true;
+        m_canAttack = true;
+        m_attack = false;
+        m_dashTimer = 0.0f;
+
+        ChangeState(ActionState::IDLE);
+    }

@@ -27,6 +27,12 @@ public:
 	~PlayScene() override = default;
 
 	bool Init() override;
+	bool StageInit(int stageNo);
+
+	void ChangeStage(int index, int spawnIndex);
+	void ClearStageActors();
+	void RequestStageChange(int stage, int spawnIndex);
+
 	//	çXêV
 	void Update(float deltaTime) override;
 	void Draw() override;
@@ -52,6 +58,10 @@ private:
 	PlayerEntity* m_player;
 	HitEffect* m_effect;
 	MapData m_mapData;
+	std::vector<Vector2d> m_playerSpawnPoints;
+	bool m_requestStageChange = false;
+	int m_nextStage = 0;
+	int m_nextSpawnIndex = 0;
 
 	Camera m_camera;
 
