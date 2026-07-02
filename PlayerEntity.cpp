@@ -45,7 +45,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_dir(true)
     , m_prevDir(true)
     , m_jumpSpeed(0.0f)
-    , m_moveSpeed(290.0f)
+    , m_moveSpeed(2900.0f)
     , m_dashSpeed(600.0f)
     , m_dashAirSpeed(800.0f)
     , m_dashTimer(0.0f)

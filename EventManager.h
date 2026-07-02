@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 #include "Color.h"
-#include "Actor.h"
+#include "BlockActor.h"
 #include "Vector2d.h"
 
 class Scene;
@@ -116,7 +116,7 @@ private:
 }; 
 
 
-class EventTrigger : public Actor
+class EventTrigger : public BlockActor
 {
 public:
 	EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager);
@@ -131,5 +131,9 @@ private:
 	Vector2d m_size;
 	bool m_isTriggered;
 	EventManager* m_eventManager;
+
+protected:
+	std::string GetTexturePath() const override { return ""; }
+
 };
 

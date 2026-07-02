@@ -689,6 +689,7 @@ bool PlayScene::StageInit(int stageNo) {
 			switch (objID)
 			{
 			case 1:
+			case 3:
 				m_playerSpawnPoints.push_back(pos);
 				break;
 
@@ -757,7 +758,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 3:
+			case 204:
 			{
 				ArrowEnemyEntity* enemy = new ArrowEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -783,7 +784,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 4:
+			case 208:
 			{
 				HealerEnemyEntity* enemy = new HealerEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -809,7 +810,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 5:
+			case 206:
 			{
 				ArmorEnemyEntity* enemy = new ArmorEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -835,7 +836,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 6:
+			case 207:
 			{
 				GunnerEnemyEntity* enemy = new GunnerEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -861,7 +862,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 7:
+			case 205:
 			{
 				YoroiBossEntity* enemy = new YoroiBossEntity(this, pos, Vector2d(192, 192));
 				AddActor(enemy);
@@ -887,7 +888,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 8:
+			case 210:
 			{
 				SekienkiBossEntity* enemy = new SekienkiBossEntity(this, pos, Vector2d(192, 192));
 				AddActor(enemy);
@@ -938,9 +939,11 @@ bool PlayScene::StageInit(int stageNo) {
 }
 
 void PlayScene::ChangeStage(int index, int spawnIndex) {
+	printf("%d\n", (int)m_actors.size());
 	m_stageIndex = index;
 
 	ClearStageActors();
+	printf("%d\n", (int)m_actors.size());
 	StageInit(index);
 
 	if (spawnIndex >= 0 &&
@@ -959,6 +962,8 @@ void PlayScene::ClearStageActors()
 		case ActorType::Block:
 		case ActorType::Enemy:
 		case ActorType::Effect:
+		case ActorType::StageExit:
+		case ActorType::StageBack:
 			actor->SetState(Actor::State::Dead);
 			break;
 
@@ -975,6 +980,14 @@ void PlayScene::ClearStageActors()
 	}
 
 	m_enemyToHPBarMap.clear();
+
+	for (Actor* actor : m_actors)
+	{
+		if (actor->GetType() == ActorType::Block)
+			continue;
+
+		printf("%s\n", typeid(*actor).name());
+	}
 }
 
 void PlayScene::RequestStageChange(int stage, int spawnIndex)
