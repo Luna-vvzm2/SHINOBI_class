@@ -396,25 +396,6 @@ bool PlayScene::Init() {
 }
 
 void PlayScene::Update(float deltaTime) {
-	if (m_game && m_game->GetInput().GetKey().IsTrigger(Key::I)) {
-		const int DEBUG_DAMAGE = 10;
-		const Vector2d DEBUG_KNOCKBACK(0.0f, -200.0f);
-		for (Actor* actor : m_actors) {
-			if (!actor) continue;
-			EnemyEntity* enemy = dynamic_cast<EnemyEntity*>(actor);
-			if (!enemy) continue;
-			if (enemy->IsDead()) continue;
-
-			// ダメージを与える
-			enemy->TakeDamage(DEBUG_DAMAGE, DEBUG_KNOCKBACK);
-
-			// その敵の HPBar があれば短時間表示（有れば見やすい）
-			auto it = m_enemyToHPBarMap.find(enemy);
-			if (it != m_enemyToHPBarMap.end() && it->second) {
-				it->second->ShowFor(2.0f);
-			}
-		}
-	}
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
