@@ -15,6 +15,8 @@ EnemyHPBar::EnemyHPBar(Scene* scene, HPComponent* hp, const std::string& framePa
     // Transform は UIActor でもコンポーネントとして持たせておく
     m_transform = AddComponent<TransformComponent>();
     SetName("EnemyHPBar");
+
+    m_metsuFullImagePath = "assets/images/uies/metu_gage.png";
 }
 
 bool EnemyHPBar::Init()
@@ -47,11 +49,11 @@ bool EnemyHPBar::Init()
     return true;
 }
 
-// Update の該当部分
 void EnemyHPBar::Update(float deltaTime)
 {
     
 }
+
 
 void EnemyHPBar::Draw()
 {
@@ -124,6 +126,51 @@ void EnemyHPBar::Draw()
     float drawW = innerW * ratio;
 
     renderer->DrawRect(Vector2d(innerX, innerY), drawW, innerH, Color(220, 32, 32), true, false);
+
+    // --- ここから滅ゲージ描画（HPバーの下） ---
+// content width をパディング込みで計算
+    float contentW = m_maxWidth - (m_padLeft + m_padRight);
+
+    // m_metsuWidthScale を使って滅ゲージ幅を計算（中央寄せ）
+    float scale = std::clamp(m_metsuWidthScale, 0.0f, 1.0f);
+    float metsuW = std::clamp(contentW * scale, 0.0f, contentW);
+    float metsuH = m_metsuHeight;
+
+    // 水平中央寄せ位置
+    float metsuX = posLeftTop.x + (m_maxWidth - metsuW) * 0.5f;
+    // 垂直位置は既存のオフセットを使う
+    float metsuY = posLeftTop.y + m_height + m_metsuOffsetY;
+
+    // 背景の黒枠
+    renderer->DrawRect(Vector2d(metsuX, metsuY), metsuW, metsuH, Color(0, 0, 0), true, false);
+    renderer->DrawRect(Vector2d(metsuX, metsuY), metsuW, metsuH, Color(255, 255, 255), false, false);
+
+    // 中身（白）
+    float metsuRatio = m_metsuMax > 0 ? static_cast<float>(m_metsu) / static_cast<float>(m_metsuMax) : 0.0f;
+    metsuRatio = std::clamp(metsuRatio, 0.0f, 1.0f);
+    float metsuDrawW = metsuW * metsuRatio;
+
+    // 白で塗りつぶす
+    renderer->DrawRect(Vector2d(metsuX, metsuY), metsuDrawW, metsuH, Color(255, 255, 255), true, false);
+
+    // 満タンなら画像を上に表示（既存ロジックを維持）
+    if (m_metsuMax > 0 && m_metsu >= m_metsuMax && !m_metsuFullImagePath.empty())
+    {
+        int handle = LoadGraph(m_metsuFullImagePath.c_str());
+        if (handle >= 0) {
+            int imgW = 0, imgH = 0;
+            GetGraphSize(handle, &imgW, &imgH);
+            float scale = 1.0f;
+            if (imgW > 0) scale = (m_maxWidth * 0.5f) / static_cast<float>(imgW);
+            // 画像を中央寄せ、さらに m_metsuImageOffsetY 分だけ上に移動する
+            Vector2d centerPos(
+                posLeftTop.x + m_maxWidth * 0.5f,
+                metsuY - (imgH * scale) * 0.5f - m_metsuImageOffsetY
+            );
+            renderer->DrawSprite(centerPos, scale, 0.0f, handle, true, false);
+            DeleteGraph(handle);
+        }
+    }
 }
 
 void EnemyHPBar::SetPosition(float x, float y)
@@ -172,4 +219,32 @@ void EnemyHPBar::SetPadding(float left, float top, float right, float bottom) {
 void EnemyHPBar::SetGaugeOffset(float offsetX, float offsetY) {
     m_gaugeOffsetX = offsetX;
     m_gaugeOffsetY = offsetY;
+}
+
+// --- 新規: 滅ゲージ API 実装 ---
+void EnemyHPBar::SetMetsuValue(int value, int maxValue)
+{
+    m_metsu = value;
+    m_metsuMax = (maxValue < 1) ? 1 : maxValue;
+}
+
+void EnemyHPBar::SetMetsuFullImagePath(const std::string& path)
+{
+    m_metsuFullImagePath = path;
+}
+
+void EnemyHPBar::SetMetsuOffset(float offsetY, float height)
+{
+    m_metsuOffsetY = offsetY;
+    m_metsuHeight = height;
+}
+
+void EnemyHPBar::SetMetsuWidthScale(float widthScale)
+{
+    m_metsuWidthScale = std::clamp(widthScale, 0.0f, 1.0f);
+}
+
+void EnemyHPBar::SetMetsuImageOffset(float offsetY)
+{
+    m_metsuImageOffsetY = offsetY;
 }

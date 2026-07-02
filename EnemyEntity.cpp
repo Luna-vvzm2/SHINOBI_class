@@ -11,6 +11,7 @@
 #include "PlayScene.h"
 #include "Renderer.h"
 #include "BossEntity.h"
+#include "EnemyHPBar.h"
 
 // metu gauge shared handle (one-time load)
 static int s_metuHandle = -1;
@@ -125,6 +126,65 @@ void EnemyEntity::UpdateState()
     // デフォルトは何もしない
 }
 
+void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
+{
+    if (m_hp == nullptr)
+    {
+        return;
+    }
+
+    // HP にダメージ
+    m_hp->Damage(damage);
+
+    // --- 滅ゲージ増加ロジック (m_metsuPerDamage を使う) ---
+    // 1ダメージあたり m_metsuPerDamage を加算
+    if (m_metsuPerDamage > 0) {
+        m_metsuGauge += damage * m_metsuPerDamage;
+    }
+    else {
+        // 安全策: もし 0 や負が設定されていたらデフォルト増分を使う
+        m_metsuGauge += damage;
+    }
+
+    // 上限 clamp
+    if (m_metsuGauge >= m_metsuMax) {
+        m_metsuGauge = m_metsuMax;
+        m_metsu = true;
+    }
+
+    // HPBar に反映（m_hpBar がセットされていれば）
+    if (m_hpBar) {
+        m_hpBar->SetMetsuValue(m_metsuGauge, m_metsuMax);
+        if (m_metsu) {
+            m_hpBar->SetMetsuFullImagePath("assets/images/uies/metu_gage.png"); // 任意
+            m_hpBar->ShowFor(9999.0f); // 満タンなら長時間表示（必要なら変更）
+            m_hpBar->SetVisible(true);
+        }
+        else {
+            m_hpBar->ShowFor(2.0f);
+        }
+    }
+
+    // 死亡処理
+    if (m_hp->GetHP() <= 0)
+    {
+        OnDeadFromDamage(damage, knockback);
+        return;
+    }
+
+    // ノックバック等既存処理
+    Vector2d vel = m_velocity->Get();
+    vel = knockback;
+    m_velocity->Set(vel);
+
+    OnDamaged(damage, knockback);
+}
+
+void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
+{
+    SetState(Actor::State::Dead);
+}
+
 void EnemyEntity::Draw()
 {
     // 1) まず既存のコンポーネント描画や派生クラスが期待する描画を行わせる
@@ -162,14 +222,35 @@ void EnemyEntity::Draw()
     float scaleX = (s_metuW > 0) ? (gaugeWidth / static_cast<float>(s_metuW)) : 1.0f;
     float scaleY = (s_metuH > 0) ? (gaugeHeight / static_cast<float>(s_metuH)) : 1.0f;
 
-    // DrawSpriteEx を使ってワールド座標 (useCamera=true) で描画、中心合わせ
-    renderer->DrawSpriteEx(
-        gaugePos,
-        scaleX,
-        scaleY,
-        0.0f,
-        s_metuHandle,
-        true,
-        Vector2d(static_cast<float>(s_metuW), static_cast<float>(s_metuH)) * 0.5f
-    );
+    // 3) metu gauge 表示：満タンのときのみ画像を表示する
+    // --- metu gauge 表示：HPBar が無い場合のみ Entity 側で描画 ---
+    if (m_hpBar == nullptr && s_metuHandle >= 0 && m_metsuMax > 0 && (m_metsu || m_metsuGauge >= m_metsuMax))
+    {
+        if (m_transform == nullptr) return;
+        Renderer* renderer = nullptr;
+        if (m_scene && m_scene->GetGame()) renderer = m_scene->GetGame()->GetRenderer();
+        if (!renderer) return;
+
+        Vector2d center = m_transform->GetPosition();
+        Vector2d enemySize = GetSize();
+        float gaugeWidth = (enemySize.x > 0.0f) ? enemySize.x * 0.8f : 64.0f;
+        float gaugeHeight = (s_metuW > 0) ? gaugeWidth * static_cast<float>(s_metuH) / static_cast<float>(s_metuW) : gaugeWidth * 0.25f;
+
+        float margin = 8.0f;
+        float headY = center.y - (enemySize.y * 0.5f) - (gaugeHeight * 0.5f) - margin;
+        Vector2d gaugePos(center.x, headY);
+
+        float scaleX = (s_metuW > 0) ? (gaugeWidth / static_cast<float>(s_metuW)) : 1.0f;
+        float scaleY = (s_metuH > 0) ? (gaugeHeight / static_cast<float>(s_metuH)) : 1.0f;
+
+        renderer->DrawSpriteEx(
+            gaugePos,
+            scaleX,
+            scaleY,
+            0.0f,
+            s_metuHandle,
+            true,
+            Vector2d(static_cast<float>(s_metuW), static_cast<float>(s_metuH)) * 0.5f
+        );
+    }
 }

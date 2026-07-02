@@ -38,6 +38,14 @@ public:
 
     void SetGaugeOffset(float offsetX, float offsetY);
 
+    // 現在値/最大値を設定
+    void SetMetsuValue(int value, int maxValue);
+    // 満タンのとき表示する画像パス
+    void SetMetsuFullImagePath(const std::string& path);
+    void SetMetsuImageOffset(float offsetY); // 正の値で画像を上に移動
+    // 滅ゲージの表示サイズ/オフセット調整
+    void SetMetsuOffset(float offsetY, float height = 6.0f);
+    void SetMetsuWidthScale(float widthScale); // 0..1 の比率（例 0.6 = 枠幅の60%）
 private:
     HPComponent* m_hp = nullptr;
 
@@ -66,4 +74,13 @@ private:
     float m_padBottom = 2.0f;
     float m_gaugeOffsetX = 0.0f;
     float m_gaugeOffsetY = 0.0f;
+
+    // --- 滅ゲージ用メンバ ---
+    int m_metsu = 0;
+    int m_metsuMax = 100;
+    float m_metsuOffsetY = 6.0f; // HPバーの下からのオフセット
+    float m_metsuImageOffsetY = 8.0f; // デフォルトで 8px 上に移動（お好みで調整）
+    float m_metsuHeight = 6.0f;
+    float m_metsuWidthScale = 0.7f;// 滅ゲージ幅のスケール（0..1）。1.0 = 内側幅いっぱい、0.5 = 半分など
+    std::string m_metsuFullImagePath; // 満タン時に表示する画像
 };

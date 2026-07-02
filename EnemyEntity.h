@@ -9,6 +9,7 @@ class SpriteComponent;
 class CollisionComponent;
 class AnimationComponent;
 class HPComponent;
+class EnemyHPBar;
 
 class EnemyEntity : public EntityActor {
 public:
@@ -36,11 +37,17 @@ public:
 
     virtual void Draw() override; // ’Ç‰Á: “G‚Ì‹¤’Ê•`‰æi–{‘Ì•`‰æ‚Í Actor::Draw() ‚ÉˆÏ÷j‚Æ“ªãƒQ[ƒW‚ğ•`‚­
 
+    void SetHPBar(EnemyHPBar* hpBar) { m_hpBar = hpBar; }
+    virtual void TakeDamage(int damage, const Vector2d& knockback);
+    void SetMetsuPerDamage(int perDamage) { m_metsuPerDamage = std::max(0, perDamage); }
+    int GetMetsuPerDamage() const { return m_metsuPerDamage; }
+
 protected:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
     //SpriteComponent* m_sprite;
     AnimationComponent* m_anim;
+    EnemyHPBar* m_hpBar = nullptr;
 
     bool m_dir;
     float m_jumpSpeed;    // ƒWƒƒƒ“ƒv‘¬“x
@@ -52,6 +59,8 @@ protected:
     int  m_metsuGauge;
     int  m_metsuMax;
     bool m_metsu;
+    int m_metsuPerDamage = 1;
+
 
     bool m_damageCancel;
     bool m_attackActive;
@@ -67,6 +76,9 @@ protected:
     bool m_actionLock;
 
     bool m_canMove;       // ˆÚ“®‰Â”Û
+
+    virtual void OnDamaged(int damage, const Vector2d& knockback) {}
+    virtual void OnDeadFromDamage(int damage, const Vector2d& knockback);
 
     virtual std::string GetTexturePath() const override;
 

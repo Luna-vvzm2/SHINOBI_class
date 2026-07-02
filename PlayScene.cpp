@@ -22,6 +22,7 @@
 #include "Camera.h"
 #include "MoneyUI.h"
 #include "EnemyHPBar.h"
+#include "EnemyEntity.h"
 
 #include <algorithm>
 
@@ -108,8 +109,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったとき表示する
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -134,8 +138,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -160,8 +167,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -186,8 +196,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -212,8 +225,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -238,8 +254,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -264,8 +283,11 @@ bool PlayScene::Init() {
 					hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
 					hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
+					hpBar->SetMetsuOffset(-38.0f, 6.0f);
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -292,6 +314,8 @@ bool PlayScene::Init() {
 					hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
 					AddUIActor(hpBar);
 					m_enemyToHPBarMap[enemy] = hpBar;
+					enemy->SetHPBar(hpBar);
+					enemy->SetMetsuPerDamage(5);
 
 					// ダメージで表示：HP が減ったときだけ表示する（2秒）
 					enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
@@ -372,6 +396,25 @@ bool PlayScene::Init() {
 }
 
 void PlayScene::Update(float deltaTime) {
+	if (m_game && m_game->GetInput().GetKey().IsTrigger(Key::I)) {
+		const int DEBUG_DAMAGE = 10;
+		const Vector2d DEBUG_KNOCKBACK(0.0f, -200.0f);
+		for (Actor* actor : m_actors) {
+			if (!actor) continue;
+			EnemyEntity* enemy = dynamic_cast<EnemyEntity*>(actor);
+			if (!enemy) continue;
+			if (enemy->IsDead()) continue;
+
+			// ダメージを与える
+			enemy->TakeDamage(DEBUG_DAMAGE, DEBUG_KNOCKBACK);
+
+			// その敵の HPBar があれば短時間表示（有れば見やすい）
+			auto it = m_enemyToHPBarMap.find(enemy);
+			if (it != m_enemyToHPBarMap.end() && it->second) {
+				it->second->ShowFor(2.0f);
+			}
+		}
+	}
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
@@ -386,7 +429,7 @@ void PlayScene::Update(float deltaTime) {
 	}
 
 	// 敵ごとのHPバー追従：World -> Screen using m_camera (PlayScene の m_camera)
-	const Vector2d baroffset(-90.0f, -250.0f); // 敵の頭上に表示したければ負の Y オフセット。要調整。
+	const Vector2d baroffset(-90.0f, -200.0f); // 敵の頭上に表示したければ負の Y オフセット。要調整。
 	for (auto it = m_enemyToHPBarMap.begin(); it != m_enemyToHPBarMap.end(); ) {
 		EnemyEntity* enemy = it->first;
 		EnemyHPBar* hpBar = it->second;
