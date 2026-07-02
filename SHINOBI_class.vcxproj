@@ -154,6 +154,7 @@
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="ScarecrowEnemyEntity.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
+    <ClCompile Include="ToreasureBox.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
