@@ -8,6 +8,7 @@ HPComponent::HPComponent(Actor* owner, int maxHP)
     , m_maxHP(maxHP)
     , m_hp(maxHP)
     , m_invincibleTimer(0.0f)
+   
 {
 }
 
@@ -47,3 +48,4 @@ void HPComponent::Heal(int amount)
 
     if (OnHPChanged) OnHPChanged(m_hp, old);
 }
+

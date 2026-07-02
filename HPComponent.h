@@ -12,7 +12,7 @@ public:
     // --- HP‘€ì ---
     void Damage(int amount);
     void Heal(int amount);
-
+    
     int GetHP() const { return m_hp; }
     int GetMaxHP() const { return m_maxHP; }
     bool IsDead() const { return m_hp <= 0; }
@@ -29,6 +29,7 @@ private:
     Actor* m_owner = nullptr;
     int m_maxHP;
     int m_hp;
+    
 
     float m_invincibleTimer;   // –³“GŠÔi•bj
 };

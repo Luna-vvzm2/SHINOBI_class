@@ -19,11 +19,14 @@ private:
         Idle,
         Warning,
         Attack,
-        Cooldown
+        Cooldown,
+        Hit,
+        Dead
     };
 
     AttackState m_attackState;
-
+    float m_hpTestTimer;
+    float m_deathTimer;
     float m_attackTimer;
     float m_attackInterval;
     float GetGroundY(float x);

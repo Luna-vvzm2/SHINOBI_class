@@ -15,7 +15,8 @@ enum class ActorType {
 	Ball,
 	Enemy,
 	Effect,
-	UI
+	UI,
+	DropItem
 };
 
 class Actor

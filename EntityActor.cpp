@@ -5,6 +5,7 @@
 #include "VelocityComponent.h"
 #include "SpriteComponent.h"
 #include "CollisionComponent.h"
+#include <DxLib.h>
 
 EntityActor::EntityActor(Scene* scene, const Vector2d& pos, const Vector2d& size)
 	: Actor(scene),
@@ -30,7 +31,8 @@ bool EntityActor::Init() {
 	m_velocity->SetVelocity(m_initialVel);
 	m_sprite->SetSize(m_initialSize.x, m_initialSize.y);
 	m_collision->SetRect(m_initialSize.x, m_initialSize.y);
-
+    
+   
 	return true;
 
 }
@@ -60,7 +62,7 @@ Vector2d EntityActor::GetSize() const {
 }
 
 void EntityActor::MoveAndCollide(float deltaTime) {
-    m_isGround = false;
+
 
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
@@ -71,6 +73,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
     // === Y•ûŒüÕ“Ëˆ— ===
     for (auto actor : m_scene->GetActors()) {
+       
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
         BlockActor* block = nullptr;
@@ -163,3 +166,11 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     }
     m_velocity->Set(vel);
 }
+
+//’Ç‰Á
+void EntityActor::Update(float deltaTime)
+{
+    MoveAndCollide(deltaTime);
+}
+
+

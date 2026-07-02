@@ -171,6 +171,12 @@
     <ClCompile Include="YoroiBossEntity.cpp">
       <Filter>ソース ファイル\Actor\Entity\EnemyEntity\BossEntity</Filter>
     </ClCompile>
+    <ClCompile Include="ScarecrowEnemyEntity.cpp">
+      <Filter>ソース ファイル\Actor\Entity\EnemyEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="DropItemEntity.cpp">
+      <Filter>ソース ファイル\Actor\Entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -300,6 +306,15 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="YoroiBossEntity.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ScarecrowEnemyEntity.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="DropData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="DropItemEntity.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

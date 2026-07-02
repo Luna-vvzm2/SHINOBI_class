@@ -9,6 +9,9 @@
 #include "AnimationComponent.h"
 #include "Game.h"
 #include "PlayScene.h"
+#include "DropData.h"
+#include "DropItemEntity.h"
+#include <cstdlib>
 
 EnemyEntity::EnemyEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
     : EntityActor(scene, pos, size)
@@ -48,15 +51,92 @@ bool EnemyEntity::Init() {
     if (!EntityActor::Init())
         return false;
 
-    m_hp = AddComponent<HPComponent>(GetMaxHP());
-    m_gravity = AddComponent<GravityComponent>(2800.0f);
+    // テスト用：必ずコインを1つ落とす
+    m_dropTable.clear();
+    m_dropTable.push_back({ ItemType::Coin, 1.0f });
 
     return true;
 }
 
 void EnemyEntity::Update(float deltaTime) {
+   
     EntityActor::Update(deltaTime);
+
+   
+    if (GetState() == Actor::State::Dead)
+        return;
+
+  
+
+    UpdateAI();
+
+    UpdateGravity(deltaTime);
+
+
+
+}
+void EnemyEntity::UpdateGravity(float deltaTime)
+{
+    if (!m_velocity)
+        return;
+
+    Vector2d vel = m_velocity->Get();
+
+    // 空中にいるときだけ重力を加える
+    if (!m_isGround)
+    {
+        const float gravity = 1800.0f;
+        vel.y += gravity * deltaTime;
+
+        const float maxFallSpeed = 1200.0f;
+        if (vel.y > maxFallSpeed)
+        {
+            vel.y = maxFallSpeed;
+        }
+    }
+
+    // ★重力を反映した速度を戻す
+    m_velocity->Set(vel);
+
+    // 移動＆地形衝突
     MoveAndCollide(deltaTime);
+
+    // 着地したら縦速度を止める
+    if (m_isGround)
+    {
+        Vector2d stopVel = m_velocity->Get();
+        stopVel.y = 0.0f;
+        m_velocity->Set(stopVel);
+    }
+}
+void EnemyEntity::OnDead()
+{
+    if (GetState() == Actor::State::Dead)
+        return;
+
+
+    for (const auto& drop : m_dropTable)
+    {
+        float r = static_cast<float>(rand()) / RAND_MAX;
+
+        if (r <= drop.probability)
+        {
+            SpawnItem(drop.type);
+        }
+    }
+
+    SetState(Actor::State::Dead);
+}
+
+void EnemyEntity::SpawnItem(ItemType type)
+{
+    if (!m_scene || !m_transform)
+        return;
+
+    Vector2d pos = m_transform->GetPosition();
+    pos.y -= 80.0f;
+
+    m_scene->AddActor(new DropItemEntity(m_scene, pos, type));
 }
 
 std::string EnemyEntity::GetTexturePath() const {

@@ -33,6 +33,18 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
 
+    // ===== ドロップアイテム用 =====
+    void AddCoin(int value);
+    void AddKunai(int value);
+    void AddHaku(int value);
+    void HealHP(int value);
+
+    int GetCoin() const { return m_coin; }
+    int GetKunai() const { return m_kunai; }
+    int GetHaku() const { return m_haku; }
+    int GetMaxHaku() const {return m_maxHaku;}
+
+
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -57,7 +69,14 @@ private:
 
     bool m_canMove;       // 移動可否
     bool m_canCharge;
-    ActionState m_state;
+    
+
+    // ===== ドロップアイテム用の所持値 =====
+    int m_coin;
+    int m_kunai;
+    int m_haku;
+    int m_maxHaku;
+
 
     std::string GetTexturePath() const override;
 

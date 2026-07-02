@@ -15,19 +15,30 @@ ArrowEnemyEntity::ArrowEnemyEntity(Scene* scene, const Vector2d& pos)
     , m_attackTimer(0.0f)
     , m_attackInterval(3.0f)
     , m_attackExecuted(false)
+    , m_deathTimer(0.0f)
+    , m_hpTestTimer(0.0f)
+
 {
 }
 bool ArrowEnemyEntity::Init() {
 	if (!EnemyEntity::Init()) return false;
 
-	m_hp = AddComponent<HPComponent>(100);
+	m_hp = AddComponent<HPComponent>(50);
 
 	return true;
 }
 
 void ArrowEnemyEntity::Update(float deltaTime)
 {
-    
+   
+
+    if (m_hp && m_hp->GetHP() <= 0)
+    {
+        std::cout << "ArrowEnemy Dead" << std::endl;
+        SetState(State::Dead);
+        return;
+    }
+
     auto player =
         static_cast<PlayScene*>(m_scene)->GetPlayer();
 
@@ -121,6 +132,18 @@ void ArrowEnemyEntity::Update(float deltaTime)
             m_attackState = AttackState::Idle;
         }
 
+        break;
+
+    case AttackState::Dead:
+
+        SetVel(Vector2d::Zero());
+
+        m_deathTimer -= deltaTime;
+
+        if (m_deathTimer <= 0)
+        {
+            SetState(State::Dead);
+        }
         break;
     }
 

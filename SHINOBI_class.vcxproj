@@ -146,11 +146,13 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="DropItemEntity.cpp" />
     <ClCompile Include="EffectActor.cpp" />
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyEntity.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="ScarecrowEnemyEntity.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -193,11 +195,14 @@
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="DropData.h" />
+    <ClInclude Include="DropItemEntity.h" />
     <ClInclude Include="EffectActor.h" />
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyEntity.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="ScarecrowEnemyEntity.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

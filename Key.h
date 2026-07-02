@@ -14,6 +14,11 @@ public:
 		D,
 		I,
 		O,
+
+		J,
+		K,
+
+
 		ESCAPE,
 		SPACE,
 		ENTER,

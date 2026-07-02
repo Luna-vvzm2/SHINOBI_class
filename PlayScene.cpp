@@ -12,13 +12,14 @@
 #include "GunnerEnemyEntity.h"
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
+#include "ScarecrowEnemyEntity.h"
 #include "HitEffect.h"
 #include "GroundBlock.h"
 #include "HPBarUI.h"
 #include "BackGroundUI.h"
 
 #include "Camera.h"
-
+#include <DxLib.h>
 #include <algorithm>
 
 PlayScene::PlayScene(Game* game)
@@ -122,6 +123,11 @@ bool PlayScene::Init() {
 				case 8:
 					AddActor(new SekienkiBossEntity(this,pos,Vector2d(192, 192)));
 					break;
+
+				//’Ç‰Á
+				case 9:
+					AddActor(new ScarecrowEnemyEntity(this, pos));
+					break;
 				}
 			}
 		}
@@ -160,7 +166,7 @@ void PlayScene::Update(float deltaTime) {
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
-	RemoveDeadActors(); 
+
 	if (m_player) {
 		Vector2d playerPos = m_player->GetComponent<TransformComponent>()->GetPosition();
 
@@ -183,6 +189,24 @@ void PlayScene::Update(float deltaTime) {
 		float newZoom = currentZoom + (targetZoom - currentZoom) * std::min(zoomSpeed * deltaTime, 1.0f);
 		*/
 		m_camera.SetZoom(1.0f);
+
+		RemoveDeadActors();
+		
+		for (auto it = m_actors.begin(); it != m_actors.end(); )
+		{
+			
+			if ((*it)->IsDead())
+			{
+				
+				delete* it;
+				it = m_actors.erase(it);
+			}
+
+			else
+			{
+				++it;
+			}
+		}
 	}
 }
 
@@ -230,4 +254,21 @@ void PlayScene::SpawnHitEffect(const Vector2d& pos) {
 void PlayScene::AddCombo() {
 	m_comboCount++;
 	std::cout << "Combo: " << m_comboCount << std::endl;
+}
+void PlayScene::RemoveDeadActors()
+{
+	for (auto it = m_actors.begin(); it != m_actors.end(); )
+	{
+		
+		if ((*it)->IsDead())
+		{
+		
+			delete* it;
+			it = m_actors.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
 }

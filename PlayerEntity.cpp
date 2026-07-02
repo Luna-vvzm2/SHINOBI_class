@@ -11,6 +11,7 @@
 #include "Input.h"
 #include "Game.h"
 #include "PlayScene.h"
+#include "Scene.h"
 
 
 PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
@@ -34,7 +35,10 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
 
     , m_canMove(true)
     , m_canCharge(true)
-    , m_state()
+    , m_coin(0)
+    , m_kunai(0)
+    , m_haku(0)
+    , m_maxHaku(100)
 {
 }
 
@@ -92,11 +96,20 @@ void PlayerEntity::Update(float deltaTime) {
     UpdateAttack(deltaTime);
     UpdateState();
 
+    EntityActor::Update(deltaTime);
+
+    if (m_isGround)
+    {
+        m_jumpCount = 0;
+    }
+
+    UpdateState();
+
     if (m_anim) {
         m_anim->Update(deltaTime);
     }
 
-    EntityActor::Update(deltaTime);
+    
 }
 
 void PlayerEntity::UpdateMove(float deltaTime) {
@@ -153,18 +166,47 @@ void PlayerEntity::UpdateJump(float deltaTime) {
 }
 
 void PlayerEntity::UpdateGravity(float deltaTime) {
-    MoveAndCollide(deltaTime);
     
+    //追加
+    // 重力加算
+    Vector2d vel = m_velocity->Get();
+
+    if (!m_isGround) {
+        const float gravity = 1800.0f;
+        vel.y += gravity * deltaTime;
+
+        // 落下速度上限（必要なら）
+        const float maxFallSpeed = 1200.0f;
+        if (vel.y > maxFallSpeed)
+        {
+            vel.y = maxFallSpeed;
+        }
+    }
+
+    m_velocity->Set(vel);
+
+    MoveAndCollide(deltaTime);
+
     if (m_isGround) {
         m_jumpCount = 0;
     }
+   
+
+        // 着地したら当たり判定を元に戻す
+        if (m_collision)
+        {
+            m_collision->SetRect(85, 192);
+        }
+    
+
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
 
 }
 
-void PlayerEntity::UpdateState() {
+void PlayerEntity::UpdateState()
+{
     if (m_hp->GetHP() <= 0)
     {
         m_state = ActionState::DEAD;
@@ -214,3 +256,38 @@ void PlayerEntity::UpdateState() {
 std::string PlayerEntity::GetTexturePath() const {
     return "";
 }
+//======================================
+// ドロップアイテムから呼ばれる関数
+//======================================
+
+//追加
+void PlayerEntity::AddCoin(int value)
+{
+    m_coin += value;
+    if (m_coin < 0) m_coin = 0;
+}
+
+void PlayerEntity::AddKunai(int value)
+{
+    m_kunai += value;
+    if (m_kunai < 0) m_kunai = 0;
+}
+
+void PlayerEntity::AddHaku(int value)
+{
+    m_haku += value;
+
+    if (m_haku < 0)
+        m_haku = 0;
+
+    if (m_haku > m_maxHaku)
+        m_haku = m_maxHaku;
+}
+
+void PlayerEntity::HealHP(int value)
+{
+    if (!m_hp) return;
+
+  
+}
+

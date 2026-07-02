@@ -1,6 +1,7 @@
 #pragma once
 #include "Actor.h"
 #include "Vector2d.h"
+#include <DxLib.h>
 
 class TransformComponent;
 class VelocityComponent;
@@ -39,8 +40,11 @@ public:
     void SetSize(const Vector2d& size);
     Vector2d GetSize() const;
 
+    //’Ç‰Á
     CollisionComponent* GetCollision() const { return m_collision; }
-
+    TransformComponent* GetTransform() const { return m_transform; }
+    Scene* GetScene() const { return m_scene; }
+   
 
 protected:
 
@@ -55,7 +59,18 @@ protected:
 
     ActionState m_state;
     bool m_isGround;
+    //’Ç‰Á
+    void Destroy()
+    {
+        SetState(State::Dead);
+    }
 
+    bool IsDead() const
+    {
+        return GetState() == State::Dead;
+    }
     void MoveAndCollide(float deltaTime);
+    //’Ç‰Á
+    virtual void Update(float deltaTime) override;
     virtual std::string GetTexturePath() const = 0;
 };

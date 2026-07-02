@@ -3,7 +3,7 @@
 EnemyBullet::EnemyBullet(
     Scene* scene,
     const Vector2d& pos,
-    const Vector2d& dir)
+    const Vector2d& dir) 
     : EntityActor(scene, pos, Vector2d(32, 16))
     , m_dir(dir)
     , m_speed(500.0f)
