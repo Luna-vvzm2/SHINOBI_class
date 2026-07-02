@@ -1,0 +1,2 @@
+
+[rName="KOZARU" jName="Ô‰‹S" time="180.0f" bossPath="assets\images\events\cutIn\cutInKozaru.png" musashiPath="assets\images\events\cutIn\cutInMusashi.png" bandPath="assets\images\events\cutIn\cutInBandBlack.png"]

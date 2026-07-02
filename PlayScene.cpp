@@ -166,13 +166,13 @@ bool PlayScene::Init() {
 	// Renderer に Camera をセット
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
-	/*
+	
 	//イベントテスト(シーン開始時にテキストが描画,先頭の行がTitleからの遷移の際のENTER入力でスキップされています)
-	std::unique_ptr<TalkEvent> testTalk = std::make_unique<TalkEvent>(this, "assets/events/event_101.txt", m_eventManager.get());
-	m_eventManager->Init(std::move(testTalk));
+	//std::unique_ptr<CutInEvent> testEvent = std::make_unique<CutInEvent>(this, "assets/events/event_sekienki.txt", m_eventManager.get());
+	//m_eventManager->Init(std::move(testEvent));
 	//テスト2:プレイヤーのすぐ近くにイベントを配置
-	AddActor(new EventTrigger(this, Vector2d(400, 800 + 560), Vector2d(104, 104), 101, m_eventManager.get()));
-	*/
+	//AddActor(new EventTrigger(this, Vector2d(400, 800 + 560), Vector2d(104, 104), 101, m_eventManager.get()));
+	
 
 	return true;
 }

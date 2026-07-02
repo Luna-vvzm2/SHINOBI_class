@@ -90,6 +90,34 @@ TalkEvent::TalkEvent(Scene* scene, const std::string& filePath, EventManager* ev
 	LoadTexts(filePath);
 }
 
+void EventBase::LoadTexts(const std::string& filePath)
+{
+	DeleteTexts();
+
+	std::ifstream ifs(filePath);
+
+	if (!ifs.is_open())
+	{
+		std::cerr << "テキストファイルを読み込めませんでした\n";
+		return;
+	}
+
+	std::string line;
+
+	while (std::getline(ifs, line))
+	{
+		if (line.empty() || line.rfind("//", 0) == 0) continue; //空の行とコメント行を無視
+		m_texts.push_back(line);
+	}
+	ifs.close();
+}
+
+void EventBase::DeleteTexts()
+{
+	m_texts.clear();
+	m_texts.shrink_to_fit();
+}
+
 TalkEvent::~TalkEvent() = default;
 
 void TalkEvent::Init()
@@ -309,9 +337,11 @@ void TalkEvent::Draw()
 
 	if (m_actorTextureId > 0 && m_talkerPosition == ActorPosition::Left)
 	{
-		textX += (m_actorW - 150);
+		textX += (m_actorW - 250);
 	}
 
+	//ChangeFont("HGP 明朝 E");
+	SetFontSize(m_fontSize);
 	DrawString(textX, textY, m_talkText.c_str(), m_textColor.ToDxColor());
 
 	if (m_talkerName.empty()) return;
@@ -328,33 +358,172 @@ void TalkEvent::Draw()
 	DrawString(m_nameX, m_nameY, m_talkerName.c_str(), m_nameColor.ToDxColor());
 }
 
-void TalkEvent::LoadTexts(const std::string& filePath)
+
+CutInEvent::CutInEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
 {
-	DeleteTexts();
+	LoadTexts(filePath);
+}
 
-	std::ifstream ifs(filePath);
+CutInEvent::~CutInEvent() = default;
 
-	if (!ifs.is_open())
+void CutInEvent::Init()
+{
+	for (auto actor : m_scene->GetActors())
 	{
-		std::cerr << "テキストファイルを読み込めませんでした\n";
+		if (actor->GetType() == ActorType::Player)
+		{
+			auto p = static_cast<PlayerEntity*>(actor);
+			p->SetCanMove(false);
+		}
+		actor->SetState(Actor::State::Paused);
+	}
+
+	if (m_eventManager)
+	{
+		EventTexture* texManager = m_eventManager->GetEventTexture();
+
+		if (texManager)
+		{
+			for (const std::string& text : m_texts)
+			{
+				size_t configEndPos = text.find(']');
+				if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+				{
+					std::string configPart = text.substr(1, configEndPos - 1);
+
+					std::string uImgPath = LoadConfig(configPart, "bandPath");
+					if (!uImgPath.empty() && uImgPath != "None")
+					{
+						if (m_eventManager && m_eventManager->GetEventTexture())
+						{
+							m_bandTextureId = m_eventManager->GetEventTexture()->LoadTexture(uImgPath);
+						}
+					}
+
+					std::string bImgPath = LoadConfig(configPart, "bossPath");
+					if (!bImgPath.empty() && bImgPath != "None")
+					{
+						if (m_eventManager && m_eventManager->GetEventTexture())
+						{
+							m_bossTextureId = m_eventManager->GetEventTexture()->LoadTexture(bImgPath);
+						}
+					}
+
+					std::string mImgPath = LoadConfig(configPart, "musashiPath");
+					if (!mImgPath.empty() && mImgPath != "None")
+					{
+						if (m_eventManager && m_eventManager->GetEventTexture())
+						{
+							m_musashiTextureId = m_eventManager->GetEventTexture()->LoadTexture(mImgPath);
+						}
+					}
+
+
+					m_jBossName = LoadConfig(configPart, "jName");
+					m_rBossName = LoadConfig(configPart, "rName");
+
+					m_displayTime = std::stof(LoadConfig(configPart, "time"));
+				}
+			}
+		}
+
+		m_isEnd = false;
+	}
+}
+
+void CutInEvent::Update(float deltaTime)
+{
+	if(m_timer <= m_displayTime)
+	{
+		if ((m_timer < m_displayTime * 0.1f))
+		{
+			m_graphSpeed = 100;
+		}
+		else if ((m_timer >= m_displayTime * 0.1f) && (m_timer <= m_displayTime * 0.75f))
+		{
+			m_graphSpeed = 1;
+			if (m_rBossNameX > 200)
+			{
+				m_nameSpeed = 100;
+			}
+			else
+			{
+				m_nameSpeed = 1;
+			}
+		}
+		else if (m_timer > m_displayTime * 0.7f)
+		{
+			m_graphSpeed = 100;
+			m_nameSpeed = 100;
+		}
+
+
+		m_bossX -= m_graphSpeed;
+		m_musashiX += m_graphSpeed;
+
+		m_rBossNameX -= m_nameSpeed;
+		m_jBossNameX -= m_nameSpeed;
+
+		m_timer++;
+	}
+	else
+	{
+		m_isEnd = true;
 		return;
 	}
-
-	std::string line;
-
-	while (std::getline(ifs, line))
-	{
-		if (line.empty() || line.rfind("//", 0) == 0 ) continue; //空の行とコメント行を無視
-		m_texts.push_back(line);
-	}
-	ifs.close();
 }
 
-void TalkEvent::DeleteTexts()
+void CutInEvent::End()
 {
-	m_texts.clear();
-	//m_texts.shrink_to_fit();
+	for (auto actor : m_scene->GetActors())
+	{
+		actor->SetState(Actor::State::Active);
+		if (actor->GetType() == ActorType::Player)
+		{
+			auto p = static_cast<PlayerEntity*>(actor);
+			p->SetCanMove(true);
+		}
+	}
+
+	if (m_eventManager)
+	{
+		EventTexture* texManager = m_eventManager->GetEventTexture();
+		if (texManager)
+		{
+			texManager->Clear();
+		}
+	}
+	DeleteTexts();
 }
+
+bool CutInEvent::IsEnd() const
+{
+	return m_isEnd;
+}
+
+
+void CutInEvent::Draw()
+{
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	if((m_bossTextureId != -1) && (m_musashiTextureId != -1))
+	{
+		DrawExtendGraph(m_bandX, m_bandY, m_bandX + m_bandW, m_bandY + m_bandH, m_bandTextureId, TRUE);
+		DrawExtendGraph(m_bossX, m_bossY, m_bossX + m_bossW, m_bossY + m_bossH, m_bossTextureId, TRUE);
+		DrawExtendGraph(m_musashiX, m_musashiY, m_musashiX + m_musashiW, m_musashiY + m_musashiH, m_musashiTextureId, TRUE);
+	}
+
+	//ChangeFont("Nexus Sans");
+	SetFontSize(m_rFontSize);
+	DrawString(m_rBossNameX, m_rBossNameY, m_rBossName.c_str(), m_rBossNameColor.ToDxColor());
+
+	//ChangeFont("HGP 明朝 E");
+	SetFontSize(m_jFontSize);
+	DrawString(m_jBossNameX, m_jBossNameY, m_jBossName.c_str(), m_jBossNameColor.ToDxColor());
+}
+
 
 EventTrigger::EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager)
 	:Actor(scene)

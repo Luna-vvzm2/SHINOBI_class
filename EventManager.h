@@ -54,6 +54,9 @@ public:
 
 protected:
 	std::string LoadConfig(const std::string& text, const std::string& configName) const; //テキストから設定を読み取る
+	void LoadTexts(const std::string& filePath); //テキストファイルの読み込み
+	void DeleteTexts(); //テキストデータの解放
+	std::vector<std::string> m_texts; //表示テキスト
 };
 
 class TalkEvent : public EventBase
@@ -78,7 +81,6 @@ public:
 private:
 	Scene* m_scene{ nullptr };
 	EventManager* m_eventManager{ nullptr };
-	std::vector<std::string> m_texts; //表示テキスト
 	int m_currentLine{ 0 }; //表示中のテキストインデックス
 	int m_skipTimer{ 90 }; //スキップの長押しタイマー
 	bool m_isEnd{ false }; //イベント終了確認
@@ -95,6 +97,7 @@ private:
 	int m_boxW{ 720 };
 	int m_boxH{ 160 };
 
+	int m_fontSize{ 20 };
 	int m_nameX{ 0 };
 	int m_nameY{ m_boxY - 30 };
 	int m_nameX2{ m_boxW + 230 };
@@ -110,10 +113,69 @@ private:
 	
 	//void PlayVoice();
 
-	void LoadTexts(const std::string& filePath); //テキストファイルの読み込み
-	void DeleteTexts(); //テキストデータの解放
-
 }; 
+
+
+class CutInEvent : public EventBase
+{
+public:
+	CutInEvent(Scene* scene, const std::string& filePath, EventManager* eventManager);
+	~CutInEvent() override;
+
+	void Init() override;
+	void Update(float deltaTime) override;
+	void End() override;
+
+	bool IsEnd() const override;
+
+
+private:
+	Scene* m_scene{ nullptr };
+	EventManager* m_eventManager{ nullptr };
+
+	float m_timer{ 0.0f };
+	float m_displayTime{ 180.0f }; //カットインの表示時間
+	bool m_isEnd{ false };
+
+	int m_graphSpeed{ 10 }; //画像の移動速度
+	int m_nameSpeed{ 0 }; //テキストの移動速度
+
+	std::string m_rBossName{ "" }; //ローマ字名
+	std::string m_jBossName{ "" }; //日本語名
+
+	int m_bandTextureId{ -1 };
+	int m_bossTextureId{ -1 };
+	int m_musashiTextureId{ -1 };
+
+	int m_bandX{ 0 };
+	int m_bandY{ 0 };
+	int m_bandW{ 1280 };
+	int m_bandH{ 720 };
+
+	int m_bossX{ 2300 };
+	int m_bossY{ 0 };
+	int m_bossW{ 362 };
+	int m_bossH{ 720 };
+
+	int m_musashiX{ -1400 };
+	int m_musashiY{ 385 };
+	int m_musashiW{ 378 };
+	int m_musashiH{ 335 };
+
+	int m_rBossNameX{ 1280 };
+	int m_rBossNameY{ 320 };
+
+	int m_jBossNameX{ 1430 };
+	int m_jBossNameY{ 380 };
+
+	int m_rFontSize{ 96 };
+	int m_jFontSize{ 60 };
+
+	Color m_rBossNameColor{ 255, 255, 255, 255 };
+	Color m_jBossNameColor{ 230, 7, 7, 255 };
+
+	void Draw() override;
+};
 
 
 class EventTrigger : public Actor

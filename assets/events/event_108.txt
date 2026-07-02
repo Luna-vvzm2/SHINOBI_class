@@ -1,0 +1,6 @@
+[name="赤猿鬼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]……忍たちの家を燃やしてやった。
+[name="赤猿鬼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]道場を破壊し、戦旗を折り、<br>向かってくる忍を全員ひとりひとり殺して<br>やった。
+[name="赤猿鬼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]だが、それもお前で最後……<br>これで、朧一族も終わりだ！
+[name="赤猿鬼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]覚悟しろ、ムサシ！<br>いくぞ！！
+
+//ここでカットインイベント

@@ -1,8 +1,12 @@
 //
 [name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]そこのお前！ 何者だ！？
 [name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]……まだ朧の忍者がいたか。<br>覚悟するんだな。
-[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]:答えろ！<br>何者だと聞いている！！ 
+[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]答えろ！<br>何者だと聞いている！！ 
 [name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]我はルーズ様の配下の忍。<br>朧一族は、すべて殲滅する。
 [name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]せ……殲滅！？
 [name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]お前たちが消えればもはや障害は何もない。<br>ルーズ様率いるNEO-CORPが……<br>世界を支配するのだ。
 [name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]さあ、いくぞ……<br>その首、頂戴する！！
+
+//ここで戦闘イベント
+
+[name="トモエ" time="None" pos="R" path="assets\images\events\stand\tomoe\tomoe1.png"]朧一族を殲滅するだって……？<br>師匠、急ぎましょう！みんなが危ない！！
