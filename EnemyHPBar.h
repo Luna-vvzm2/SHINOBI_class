@@ -81,6 +81,6 @@ private:
     float m_metsuOffsetY = 6.0f; // HPバーの下からのオフセット
     float m_metsuImageOffsetY = 8.0f; // デフォルトで 8px 上に移動（お好みで調整）
     float m_metsuHeight = 6.0f;
-    float m_metsuWidthScale = 0.7f;// 滅ゲージ幅のスケール（0..1）。1.0 = 内側幅いっぱい、0.5 = 半分など
+    float m_metsuWidthScale = 0.75f;// 滅ゲージ幅のスケール（0..1）。1.0 = 内側幅いっぱい、0.5 = 半分など
     std::string m_metsuFullImagePath; // 満タン時に表示する画像
 };
