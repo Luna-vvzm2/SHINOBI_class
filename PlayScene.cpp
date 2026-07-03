@@ -932,19 +932,34 @@ bool PlayScene::StageInit(int stageNo) {
 	float mapH = (float)stage.height * m_mapData.tileSize;
 	m_camera.SetBounds(Vector2d(0, 0), Vector2d(mapW, mapH));
 
-	m_bgHandle = LoadGraph("assets/images/uies/bg1.png");
-	m_fgHandle = LoadGraph("assets/images/uies/fg1.png");
+	switch (m_stageIndex) {
+	case 0:
+		m_bgHandle = LoadGraph("assets/images/uies/bg1.png");
+		m_fgHandle = LoadGraph("assets/images/uies/fg1.png");
+		break;
+	case 1:
+		m_bgHandle = LoadGraph("assets/images/uies/bg2.png");
+		m_fgHandle = LoadGraph("assets/images/uies/fg2.png");
+		break;
+	}
 
 	return true;
 }
 
 void PlayScene::ChangeStage(int index, int spawnIndex) {
-	printf("%d\n", (int)m_actors.size());
+	DeleteGraph(m_bgHandle);
+	DeleteGraph(m_fgHandle);
 	m_stageIndex = index;
 
 	ClearStageActors();
-	printf("%d\n", (int)m_actors.size());
 	StageInit(index);
+
+	auto it = std::find(m_actors.begin(), m_actors.end(), m_player);
+	if (it != m_actors.end())
+	{
+		m_actors.erase(it);
+		m_actors.push_back(m_player);
+	}
 
 	if (spawnIndex >= 0 &&
 		spawnIndex < static_cast<int>(m_playerSpawnPoints.size()))
@@ -1118,8 +1133,14 @@ void PlayScene::Draw() {
 	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
 	// 背景
-	renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), 9270), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
-
+	switch (m_stageIndex) {
+	case 0:
+		renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		break;
+	case 1:
+		renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 960), 5.8f, 5.8f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		break;
+	}
 	
 	// --- アクター描画 ---
 	drawActors(m_backactors);
@@ -1127,9 +1148,16 @@ void PlayScene::Draw() {
 	drawActors(m_UIactors);
 
 	// 前景
-	for (int i = 0; i < 19; i++) {
-		renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	switch (m_stageIndex) {
+	case 0:
+		for (int i = 0; i < 19; i++) {
+			renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 680), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		}
+		break;
+	case 1:
+		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 2480), 17.0f, 17.0f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
 	}
+	
 
 	//イベントのために変更
 	if (m_eventManager->IsRunning())
