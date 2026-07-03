@@ -81,6 +81,17 @@ void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
     OnDamaged(damage, knockback);
 }
 
+void EnemyEntity::TakeMetsu(int metsu)
+{
+    m_metsuGauge += metsu;
+
+    if (m_metsuGauge >= m_metsuMax)
+    {
+        m_metsuGauge = m_metsuMax;
+        m_metsu = true;
+    }
+}
+
 void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
 {
     SetState(Actor::State::Dead);
@@ -92,9 +103,9 @@ std::string EnemyEntity::GetTexturePath() const {
 
 /*
 
-�e����
+弾生成
     auto bullet =
-        new EnemyBullet(m_scene,�@GetPos());
+        new EnemyBullet(m_scene,　GetPos());
     
     m_scene->AddActor(bullet);
 
@@ -102,33 +113,33 @@ std::string EnemyEntity::GetTexturePath() const {
 */
 void EnemyEntity::UpdateMove(float deltaTime)
 {
-    // ��{�� derived class �ŏ㏑������z�肾���A�����Ă������N�G���[�ɂȂ�Ȃ��悤�������p��
-    // ��Ƃ��āA�ړ����x�Ɋ�Â��� velocity ���Z�b�g����ȈՎ���:
+    // 基本は derived class で上書きする想定だが、無くてもリンクエラーにならないよう空実装を用意
+    // 例として、移動速度に基づいて velocity をセットする簡易実装:
     if (m_velocity) {
         Vector2d v = m_velocity->Get();
-        // m_moveSpeed �͐��������̊Ǘ����h�����ɂ���z��
+        // m_moveSpeed は正負方向の管理が派生側にある想定
         v.x = (m_dir ? 1.0f : -1.0f) * m_moveSpeed;
         m_velocity->Set(v);
     }
 }
 
-// �d�͏����̍ŏ�����
+// 重力処理の最小実装
 void EnemyEntity::UpdateGravity(float deltaTime)
 {
-    // �����̏����� GravityComponent �ɔC���Ă��邽�ߋ�ł����Ȃ�
+    // 多くの処理は GravityComponent に任せているため空でも問題ない
     if (m_gravity) {
-        // �����ŗL�̏������K�v�Ȃ炱���ɉ�����
+        // もし固有の処理が必要ならここに加える
     }
 }
 
-// �U�������̍ŏ������i�h���N���X�Ŏ�������z��j
+// 攻撃処理の最小実装（派生クラスで実装する想定）
 void EnemyEntity::UpdateAttack(float deltaTime)
 {
-    // �f�t�H���g�͉������Ȃ�
+    // デフォルトは何もしない
 }
 
-// ��ԍX�V�̍ŏ������i�h���ŏ㏑���j
+// 状態更新の最小実装（派生で上書き）
 void EnemyEntity::UpdateState()
 {
-    // �f�t�H���g�͉������Ȃ�
+    // デフォルトは何もしない
 }
