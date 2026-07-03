@@ -20,6 +20,7 @@
 #include "GroundBlock.h"
 #include "HPBarUI.h"
 #include "BackGroundUI.h"
+#include "Trap.h"
 
 #include "Camera.h"
 #include <iostream>
@@ -129,6 +130,10 @@ bool PlayScene::Init() {
 
 				case 8:
 					AddActor(new SekienkiBossEntity(this,pos,Vector2d(192, 192)));
+					break;
+                
+				case 9:
+					AddActor(new Trap(this, pos, Vector2d(192, 192)));
 					break;
 				}
 			}
@@ -365,7 +370,6 @@ void PlayScene::Draw() {
 	renderer->DrawTextL(Vector2d(m_game->GetWidth() - 150.0f, 0), "PlayScene", Color(255, 64, 0), debugFont, 24, false);
 #endif
 }
-
 void PlayScene::SpawnHitEffect(const Vector2d& pos) {
 	m_effect = new HitEffect(this, pos, {32, 32});
 	AddActor(m_effect);
@@ -490,6 +494,8 @@ void PlayScene::BuildStage(int idx)
 				case 6: AddActor(new GunnerEnemyEntity(this, pos)); break;
 				case 7: AddActor(new YoroiBossEntity(this, pos, Vector2d(192, 192))); break;
 				case 8: AddActor(new SekienkiBossEntity(this, pos, Vector2d(192, 192))); break;
+				case 9: AddActor(new Trap(this, pos, Vector2d(192, 192))); break;
+
 				default: break;
 				}
 			}

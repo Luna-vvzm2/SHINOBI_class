@@ -154,6 +154,7 @@
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
+    <ClCompile Include="Trap.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -203,6 +204,7 @@
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
+    <ClInclude Include="Trap.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>

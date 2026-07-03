@@ -13,8 +13,6 @@ class VelocityComponent;
 class HPComponent;
 class GameOverMenuUI;
 
-
-
 class PlayScene : public Scene
 {
 public:
