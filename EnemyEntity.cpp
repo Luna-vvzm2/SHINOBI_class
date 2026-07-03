@@ -81,17 +81,6 @@ void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
     OnDamaged(damage, knockback);
 }
 
-void EnemyEntity::TakeMetsu(int metsu)
-{
-    m_metsuGauge += metsu;
-
-    if (m_metsuGauge >= m_metsuMax)
-    {
-        m_metsuGauge = m_metsuMax;
-        m_metsu = true;
-    }
-}
-
 void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
 {
     SetState(Actor::State::Dead);
