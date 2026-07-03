@@ -1,5 +1,8 @@
 #pragma once
 #include "EntityActor.h"
+#include <string>
+
+class HPComponent;
 
 class EnemyBullet : public EntityActor
 {

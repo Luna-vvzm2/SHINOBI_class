@@ -76,8 +76,6 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_squat(false)
     , m_canStand(true)
     , m_canCharge(true)
-
-    , m_drawOffset(Vector2d(0.0f, 10.0f))
 {
 }
 
@@ -574,7 +572,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
     }
 
     if (input.IsDown(Action::JUMP) && m_jumpCount == 1 && m_jumpTime < m_maxJumpTime) {
-        vel.y += -1300.0f * deltaTime;
+        vel.y += -1500.0f * deltaTime;
         m_jumpTime += deltaTime;
     }
 
@@ -708,7 +706,7 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
-    m_sprite->SetDrawOffset(0.0f, -48.0f);   // ä¸Šã«48px
+    m_sprite->SetDrawOffset(0.0f, -48.0f);   // ã‚É48px
     m_squat = true;
 }
 
@@ -756,7 +754,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.3f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
                     m_kunaiPending = true;
                     m_anim->Play("KunaiSquat", true);
                 }
@@ -765,7 +763,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.2f;
                     m_attackLockTimer = 0.1f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
                     m_kunaiPending = true;
                     m_anim->Play("KunaiAir", true);
                 }
@@ -774,7 +772,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.3f;
                     m_attackLockTimer = 0.3f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
                     m_kunaiPending = true;
                     m_anim->Play("Kunai", true);
                 }
@@ -1316,7 +1314,7 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
-        // ã—ã‚ƒãŒã¿ãªãŒã‚‰ç§»å‹•
+        // ‚µ‚á‚ª‚Ý‚È‚ª‚çˆÚ“®
         if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
         {
             ChangeState(ActionState::SQUAT_WALK);
@@ -1370,7 +1368,7 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
-        // ç§»å‹•ã‚­ãƒ¼é›¢ã—ãŸ
+        // ˆÚ“®ƒL[—£‚µ‚½
         if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
         {
             ChangeState(ActionState::STOP_LONG);
@@ -1643,7 +1641,7 @@ void PlayerEntity::AddMoney(int delta)
 }
 
 void PlayerEntity::UpdateDead(float deltaTime) {
-    // ç”»é¢ä¸­å¤®ã®ç›®æ¨™åº§æ¨™ï¼ˆã‚²ãƒ¼ãƒ ã®ç”»é¢è§£åƒåº¦ã«åˆã‚ã›ã¦æ•°å€¤ã‚’èª¿æ•´ã—ã¦ãã ã•ã„ï¼‰
+    // ‰æ–Ê’†‰›‚Ì–Ú•WÀ•WiƒQ[ƒ€‚Ì‰æ–Ê‰ð‘œ“x‚É‡‚í‚¹‚Ä”’l‚ð’²®‚µ‚Ä‚­‚¾‚³‚¢j
     Vector2d centerPos(960.0f, 540.0f);
 
     if (!m_isDeadTriggered) {
@@ -1654,16 +1652,16 @@ void PlayerEntity::UpdateDead(float deltaTime) {
         AnimationClip dead;
         dead.frames = { 0, 1, 2, 3, 4, 5 };
         dead.speed = 0.12f;
-        dead.loop = false; // 1å›žå†ç”Ÿã—ãŸã‚‰æœ€å¾Œã®ã‚³ãƒžã§æ­¢ã¾ã‚‹
+        dead.loop = false; // 1‰ñÄ¶‚µ‚½‚çÅŒã‚ÌƒRƒ}‚ÅŽ~‚Ü‚é
         m_anim->AddClip("dead", dead);
         m_anim->Play("dead");
 
-        // æ­»äº¡ã—ãŸçž¬é–“ã«ä¸€çž¬ã§ç”»é¢ä¸­å¤®ã¸ãƒ¯ãƒ¼ãƒ—ã•ã›ã‚‹
+        // Ž€–S‚µ‚½uŠÔ‚Éˆêu‚Å‰æ–Ê’†‰›‚Öƒ[ƒv‚³‚¹‚é
         m_transform->SetPosition(centerPos);
         m_velocity->Set(Vector2d::Zero());
-        // ç‰©ç†ç§»å‹•ã‚’å®Œå…¨ã«åœæ­¢
+        // •¨—ˆÚ“®‚ðŠ®‘S‚É’âŽ~
         m_velocity->Set(Vector2d::Zero());
-        // æ¯Žãƒ•ãƒ¬ãƒ¼ãƒ ç”»é¢ä¸­å¤®ã®ä½ç½®ã«å®Œå…¨ã«å›ºå®šã™ã‚‹
+        // –ˆƒtƒŒ[ƒ€‰æ–Ê’†‰›‚ÌˆÊ’u‚ÉŠ®‘S‚ÉŒÅ’è‚·‚é
         m_transform->SetPosition(centerPos);
 
     }

@@ -213,7 +213,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
             vel.x = 0;
             m_transform->SetPosition(playerPos);
         }
-
     }
     m_velocity->Set(vel);
 }
+

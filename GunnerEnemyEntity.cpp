@@ -1,92 +1,12 @@
 #include "GunnerEnemyEntity.h"
 #include "Scene.h"
 #include "Actor.h"
-#include "EntityActor.h"
-#include "CollisionComponent.h"
-#include "PlayerEntity.h"
+#include "EnemyBullet.h"
 #include "VelocityComponent.h"
 #include "TransformComponent.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
 #include "Vector2d.h"
-
-class GunnerBullet : public EntityActor
-{
-public:
-	GunnerBullet(
-		Scene* scene,
-		const Vector2d& pos,
-		const Vector2d& velocity,
-		float deleteRange,
-		const std::string& texturePath,
-		int damage
-	)
-		: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
-		, m_startPos(pos)
-		, m_bulletVelocity(velocity)
-		, m_deleteRange(deleteRange)
-		, m_texturePath(texturePath)
-		, m_damage(damage)
-	{
-	}
-
-	bool Init() override
-	{
-		if (!EntityActor::Init()) return false;
-		m_velocity->SetVelocity(m_bulletVelocity);
-		m_collision->SetCircle(6.0f);
-		return true;
-	}
-
-	void Update(float deltaTime) override
-	{
-		Actor::Update(deltaTime);
-
-		Vector2d pos = m_transform->GetPosition();
-		pos += m_velocity->GetVelocity() * deltaTime;
-		m_transform->SetPosition(pos);
-
-		if ((pos - m_startPos).length() > m_deleteRange || TryDamagePlayer())
-		{
-			SetState(Actor::State::Dead);
-		}
-	}
-
-	ActorType GetType() const override { return ActorType::Ball; }
-
-private:
-	bool TryDamagePlayer()
-	{
-		for (Actor* actor : m_scene->GetActors())
-		{
-			if (actor == nullptr || actor->GetType() != ActorType::Player || actor->IsDead())
-			{
-				continue;
-			}
-
-			CollisionComponent* playerCollision = actor->GetComponent<CollisionComponent>();
-			if (playerCollision == nullptr || !m_collision->CheckCollision(playerCollision))
-			{
-				continue;
-			}
-
-			PlayerEntity* player = static_cast<PlayerEntity*>(actor);
-			float knockbackX = player->GetPos().x < m_transform->GetPosition().x ? -220.0f : 220.0f;
-			player->TakeDamage(m_damage, Vector2d(knockbackX, -120.0f));
-			return true;
-		}
-
-		return false;
-	}
-
-	std::string GetTexturePath() const override { return m_texturePath; }
-
-	Vector2d m_startPos;
-	Vector2d m_bulletVelocity;
-	float m_deleteRange;
-	std::string m_texturePath;
-	int m_damage;
-};
 
 GunnerEnemyEntity::GunnerEnemyEntity(Scene* scene, const Vector2d& pos)
 	: EnemyEntity(scene, pos, Vector2d(96, 190))
@@ -123,7 +43,6 @@ static const float GUNNER_RECHECK_TIME = 0.2f;          // state recheck time
 static const int GUNNER_SHOT_COUNT = 3;                 // shot count
 static const float GUNNER_SHOT_TIME[GUNNER_SHOT_COUNT] = { 0.8f, 1.3f, 1.8f };
 static const float GUNNER_ATTACK_END_TIME = 3.2f;       // attack end time
-static const int GUNNER_BULLET_DAMAGE = 6;              // bullet damage
 
 static const char* GUNNER_TEXTURE_IDLE = "assets/images/enemy/gunner/idle.png";
 static const char* GUNNER_TEXTURE_WALK = "assets/images/enemy/gunner/walk.png";
@@ -433,13 +352,12 @@ void GunnerEnemyEntity::Update(float deltaTime)
 				);
 
 				m_scene->SpawnActor(
-					new GunnerBullet(
+					new EnemyBullet(
 						m_scene,
 						bulletPos,
 						bulletVel,
 						GUNNER_BULLET_DELETE_RANGE,
-						"assets/images/enemy/bullet/gunner.png",
-						GUNNER_BULLET_DAMAGE
+						"assets/images/enemy/bullet/gunner.png"
 					)
 				);
 

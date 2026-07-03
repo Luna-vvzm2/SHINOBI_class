@@ -37,6 +37,7 @@ public:
 
     int GetCurrentFrame() const { return m_currentFrame; }
     void SetDrawSize(float w, float h) { m_drawW = w; m_drawH = h; }
+    void SetFlipH(bool flipH) { m_flipH = flipH; }
 
     int GetHandle() const { return m_handle; }
 
@@ -55,6 +56,7 @@ private:
 
     float m_drawW = 0;
     float m_drawH = 0;
+    bool m_flipH = false;
 
     Vector2d m_drawOffset = { 0.0f, 0.0f };
 
