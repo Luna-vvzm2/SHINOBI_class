@@ -700,7 +700,14 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 14:
 			{
-				AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+				switch (m_stageIndex) {
+				case 1:
+					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+					break;
+				case 2:
+					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 3));
+					break;
+				}
 			}
 			break;
 
@@ -1135,10 +1142,10 @@ void PlayScene::Draw() {
 	// ”wŒi
 	switch (m_stageIndex) {
 	case 0:
-		renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130.0f), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
 	case 1:
-		renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 960), 5.8f, 5.8f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 960.0f), 5.8f, 5.8f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
 	}
 	
