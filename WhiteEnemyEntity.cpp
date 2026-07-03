@@ -190,7 +190,8 @@ static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
 static const float WHITE_SWORD_GAP_RANGE = WHITE_TILE_SIZE * 0.7f;
 static const float WHITE_FIND_RANGE = 800.0f;
 static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;
-static const float WHITE_BACK_RANGE = 450.0f;
+//剣攻撃と手裏剣攻撃の境目
+static const float WHITE_BACK_RANGE = 250.0f;
 static const float WHITE_STOP_SHURIKEN_RANGE = 612.0f;
 static const float WHITE_SHURIKEN_RANGE = 650.0f;
 static const float WHITE_BULLET_DELETE_RANGE = 1500.0f;
@@ -217,8 +218,10 @@ static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
 // 剣攻撃
+//剣攻撃→待機→剣攻撃のアイドル時間
 static const float WHITE_SWORD_COOLDOWN = 0.225f;
-static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE;
+//剣攻撃範囲
+static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE - 20.0f ;
 static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;
 static const int WHITE_SWORD_DAMAGE = 10;
 static const float WHITE_SWORD_KNOCKBACK_X = 300.0f;
