@@ -3,7 +3,7 @@
 #include "Actor.h"
 
 // --------------------
-// ƒRƒ“ƒXƒgƒ‰ƒNƒ^: Ž©“®‚Å SpriteComponent ‚ðŽæ“¾
+// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿: è‡ªå‹•ã§ SpriteComponent ã‚’å–å¾—
 // --------------------
 AnimationComponent::AnimationComponent(Actor* owner)
     : Component(owner)
@@ -15,7 +15,7 @@ AnimationComponent::AnimationComponent(Actor* owner)
 }
 
 // --------------------
-// ƒNƒŠƒbƒv’Ç‰Á
+// ã‚¯ãƒªãƒƒãƒ—è¿½åŠ 
 // --------------------
 void AnimationComponent::AddClip(const std::string& name, const AnimationClip& clip)
 {
@@ -23,7 +23,7 @@ void AnimationComponent::AddClip(const std::string& name, const AnimationClip& c
 }
 
 // --------------------
-// ƒAƒjƒÄ¶
+// ã‚¢ãƒ‹ãƒ¡å†ç”Ÿ
 // --------------------
 void AnimationComponent::Play(const std::string& name, bool reset)
 {
@@ -58,7 +58,7 @@ bool AnimationComponent::IsFinished() const
 }
 
 // --------------------
-// XViƒtƒŒ[ƒ€Ø‘Öj
+// æ›´æ–°ï¼ˆãƒ•ãƒ¬ãƒ¼ãƒ åˆ‡æ›¿ï¼‰
 // --------------------
 void AnimationComponent::Update(float deltaTime)
 {
@@ -89,6 +89,7 @@ void AnimationComponent::Update(float deltaTime)
         m_timer -= duration;
         m_frameIndex++;
 
+        const auto& frames = m_currentClip->frames;
         int last = static_cast<int>(frames.size()) - 1;
 
         if (m_frameIndex > last)

@@ -5,6 +5,7 @@
 #include <utility>
 #include <iostream>
 
+
 class Scene;
 class Component;
 
@@ -20,7 +21,8 @@ enum class ActorType {
 	UI
 };
 
-class Actor {
+class Actor
+{
 public:
 	enum class State {
 		Active,
@@ -37,12 +39,14 @@ public:
 
 	virtual ActorType GetType() const = 0;
 
+
 	Scene* GetScene() { return m_scene; }
 
 	// 状態管理
 	State GetState() const { return m_state; }
 	void SetState(State state) { m_state = state; }
 
+	// 死亡判定
 	bool IsDead() const { return m_state == State::Dead; }
 
 	// 識別用
@@ -50,7 +54,7 @@ public:
 	const std::string& GetName() const { return m_name; }
 	void SpawnEffect(Actor* effect);
 
-	// コンポーネント管理
+	//	コンポーネント管理
 	template<typename T, typename... Args>
 	T* AddComponent(Args&&... args);
 
@@ -58,6 +62,7 @@ public:
 	T* GetComponent();
 
 protected:
+
 	Scene* m_scene;
 	State m_state;
 	std::string m_name;
@@ -71,7 +76,7 @@ void drawActors(std::vector<Actor*>& actors);
 void releaseActors(std::vector<Actor*>& actors);
 void removeActors(std::vector<Actor*>& actors);
 
-//テンプレート実装
+//	テンプレート実装
 template<typename T, typename... Args>
 T* Actor::AddComponent(Args&&... args) {
 	static_assert(std::is_base_of<Component, T>::value, "T must be derived from Component");
@@ -89,12 +94,14 @@ T* Actor::AddComponent(Args&&... args) {
 	return comp;
 }
 
+
 template<typename T>
 T* Actor::GetComponent() {
 	for (auto comp : m_components) {
-		if (auto c = dynamic_cast<T*>(comp)) return c;
+		if (auto c = dynamic_cast<T*>(comp))
+			return c;
 	}
-
 	return nullptr;
 }
+
 

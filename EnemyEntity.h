@@ -23,7 +23,6 @@ public:
 	void UpdateGravity(float deltaTime);
 	void UpdateAttack(float deltaTime);
 	void UpdateState();
-    //asdfghjk
 
     ActorType GetType() const override { return ActorType::Enemy; }
     CollisionComponent* GetCollision() const { return m_collision; }

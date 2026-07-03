@@ -48,7 +48,7 @@ public:
     void UpdateAttack(float deltaTime);
     void UpdateState();
     void ChangeState(ActionState newState);
-    void UpdateDead(float deltaTime); // €–S‚Ìê—pƒAƒbƒvƒf[ƒg
+    void UpdateDead(float deltaTime); // æ­»äº¡æ™‚ã®å°‚ç”¨ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ
 
     ActorType GetType() const override { return ActorType::Player; }
     CollisionComponent* GetCollision() const { return m_collision; }
@@ -89,10 +89,10 @@ public:
     };
 
     Vector2d GetDrawOffset() const { return m_sprite->GetDrawOffset(); }
-    // š’Ç‰Á: è— Œ•‚Ì”‚ğ•Ô‚·ŠÖ”
+    // â˜…è¿½åŠ : æ‰‹è£å‰£ã®æ•°ã‚’è¿”ã™é–¢æ•°
     int GetShurikenCount() const { return m_kunai; }
 
-    std::function<void(int newMoney, int oldMoney)> OnMoneyChanged; // ƒR[ƒ‹ƒoƒbƒN
+    std::function<void(int newMoney, int oldMoney)> OnMoneyChanged; // ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯
     int GetMoney() const { return m_money; }
     void SetMoney(int amount);
     void AddMoney(int delta);
@@ -112,20 +112,20 @@ private:
 
     bool m_dir;
     bool m_prevDir;
-    float m_jumpSpeed;    // ƒWƒƒƒ“ƒv‘¬“x
-    float m_moveSpeed;    // ˆÚ“®‘¬“x
+    float m_jumpSpeed;    // ã‚¸ãƒ£ãƒ³ãƒ—é€Ÿåº¦
+    float m_moveSpeed;    // ç§»å‹•é€Ÿåº¦
     float m_dashSpeed;
     float m_dashAirSpeed;
     float m_dashTimer;
     bool m_HienCount;
     bool m_isSenten;
-    // EntityActor.bool m_isGround;          // Ú’nƒtƒ‰ƒO
+    // EntityActor.bool m_isGround;          // æ¥åœ°ãƒ•ãƒ©ã‚°
     int m_jumpCount;
     float m_jumpTime;
     float m_maxJumpTime;
 
     bool m_attack;
-    bool m_hit;           // ©g‚ÌUŒ‚‚ª“–‚½‚Á‚½‚©‚Ç‚¤‚©
+    bool m_hit;           // è‡ªèº«ã®æ”»æ’ƒãŒå½“ãŸã£ãŸã‹ã©ã†ã‹
     bool m_HayabusaHit;
     AttackType m_attackType;
     CollisionComponent* m_attackCol;
@@ -143,16 +143,16 @@ private:
     float m_getHitTimer;
     float m_invincibleTime;
 
-    bool m_canMove;       // ˆÚ“®‰Â”Û
-    bool m_squat;         // ‚µ‚á‚ª‚İ
-    bool m_canStand;      // ‚µ‚á‚ª‚İ‰Â”Û
+    bool m_canMove;       // ç§»å‹•å¯å¦
+    bool m_squat;         // ã—ã‚ƒãŒã¿
+    bool m_canStand;      // ã—ã‚ƒãŒã¿å¯å¦
     bool m_canCharge;
 
     SensorData m_sensor;
 
-    bool m_isDeadTriggered = false; // €–S‚Ì‰‰ñˆ——pƒtƒ‰ƒO
+    bool m_isDeadTriggered = false; // æ­»äº¡æ™‚ã®åˆå›å‡¦ç†ç”¨ãƒ•ãƒ©ã‚°
 
-    // ---- è— Œ•Š” ----
+    // ---- æ‰‹è£å‰£æ‰€æŒæ•° ----
 
     int m_money = 0;
 

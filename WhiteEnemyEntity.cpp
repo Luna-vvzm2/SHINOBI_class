@@ -16,6 +16,47 @@
 #include <DxLib.h>
 #include <cmath>
 
+static const float WHITE_ENEMY_DRAW_SCALE = 0.5f;
+static const Vector2d WHITE_SHURIKEN_BASE_DRAW_SIZE = Vector2d(96.0f, 96.0f);
+
+namespace {
+	std::vector<int> BuildTimedFrames(
+		const std::vector<int>& frames,
+		const std::vector<float>& frameDurations,
+		float baseFrameTime
+	)
+	{
+		std::vector<int> timedFrames;
+
+		for (size_t i = 0; i < frames.size(); i++)
+		{
+			float duration = i < frameDurations.size() ? frameDurations[i] : baseFrameTime;
+			int repeatCount = static_cast<int>((duration / baseFrameTime) + 0.5f);
+			if (repeatCount < 1)
+			{
+				repeatCount = 1;
+			}
+
+			for (int count = 0; count < repeatCount; count++)
+			{
+				timedFrames.push_back(frames[i]);
+			}
+		}
+
+		return timedFrames;
+	}
+
+	float GetTotalDuration(const std::vector<float>& frameDurations)
+	{
+		float totalDuration = 0.0f;
+		for (float duration : frameDurations)
+		{
+			totalDuration += duration;
+		}
+		return totalDuration;
+	}
+}
+
 class WhiteShurikenBullet : public EntityActor
 {
 public:
@@ -726,10 +767,17 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 		m_currentMotionName = "";
 		m_damageHoldGroundFrame = false;
 	}
+
+	oldG = nowG;
+	oldH = nowH;
+	oldJ = nowJ;
+#endif
 }
 
 void WhiteEnemyEntity::Update(float deltaTime)
 {
+	UpdateDebugDamageInput();
+
 	if (m_damageState != WHITE_DAMAGE_NONE)
 	{
 		UpdateDamageMotion(deltaTime);
