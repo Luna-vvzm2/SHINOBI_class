@@ -16,10 +16,10 @@ public:
 		I,
 		O,
 		P,
+		M,
 		ESCAPE,
 		SPACE,
 		ENTER,
-		M,
 		KEY_COUNT
 	};
 

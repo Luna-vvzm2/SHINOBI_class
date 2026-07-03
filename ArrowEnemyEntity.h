@@ -1,17 +1,37 @@
 #pragma once
 #include "EnemyEntity.h"
 
-class ArrowEnemyEntity: public EnemyEntity
+class ArrowEnemyEntity : public EnemyEntity
 {
 public:
-	ArrowEnemyEntity(Scene* scene, const Vector2d& pos);
+    ArrowEnemyEntity(Scene* scene, const Vector2d& pos);
 
-	bool Init() override;
-	void Update(float deltaTime) override;
-
-	std::string GetTexturePath() const override;
+    bool Init() override;
+    void Update(float deltaTime) override;
+    void Draw() override;
+    std::string GetTexturePath() const override;
 
 private:
-	int m_bulletCount;
+
+
+    enum class AttackState
+    {
+        Idle,
+        Warning,
+        Attack,
+        Cooldown,
+        Hit,
+        Dead
+    };
+
+    AttackState m_attackState;
+    float m_hpTestTimer;
+    float m_deathTimer;
+    float m_attackTimer;
+    float m_attackInterval;
+    float GetGroundY(float x);
+    Vector2d m_targetPos;
+    bool m_attackExecuted;
 };
+
 

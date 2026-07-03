@@ -24,7 +24,8 @@ public:
 		Play,
 
 	};
-
+	//addactor‚ğˆÚ“®
+	void AddActor(Actor* actor);
 	explicit Scene(class Game* game);
 	virtual ~Scene();
 
@@ -43,7 +44,7 @@ public:
 
 
 protected:
-	void AddActor(Actor* actor);
+	
 	void AddUIActor(Actor* UIactor);
 	void AddBackActor(Actor* backactor);
 	void RemoveDeadActors();   // €‚ñ‚¾Actor‚ğÁ‚·

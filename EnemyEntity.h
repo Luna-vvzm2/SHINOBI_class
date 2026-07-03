@@ -1,6 +1,8 @@
 #pragma once
 #include "EntityActor.h"
 #include "Vector2d.h"
+#include "DropData.h"
+#include <vector>
 
 class TransformComponent;
 class VelocityComponent;
@@ -10,20 +12,24 @@ class CollisionComponent;
 class AnimationComponent;
 class HPComponent;
 
+
 class EnemyEntity : public EntityActor {
+
+
 public:
 	explicit EnemyEntity(Scene* scene, const Vector2d& pos = Vector2d::Zero(), const Vector2d& size = { 90, 196 });
 	~EnemyEntity() override = default;
 
 	virtual bool Init() override;
 	virtual void Update(float deltaTime) override;
-
     virtual void UpdateAI(){}
+    virtual void OnDead();
 	void UpdateMove(float deltaTime);
 	void UpdateGravity(float deltaTime);
 	void UpdateAttack(float deltaTime);
 	void UpdateState();
     //asdfghjk
+
 
     ActorType GetType() const override { return ActorType::Enemy; }
     CollisionComponent* GetCollision() const { return m_collision; }
@@ -69,9 +75,12 @@ protected:
     float m_cooldownTimer;
     bool m_actionLock;
 
-    bool m_canMove;
-
+    bool m_canMove;       // ˆÚ“®‰Â”Û
+    //’Ç‰Á
+    std::vector<DropData> m_dropTable;
+    void SpawnItem(ItemType type);
     virtual std::string GetTexturePath() const override;
 
 };
+
 

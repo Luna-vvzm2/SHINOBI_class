@@ -98,6 +98,18 @@ public:
     void AddMoney(int delta);
 
     void ResetStageState();
+
+    // ===== ドロップアイテム用 =====
+    void AddCoin(int value);
+    void AddKunai(int value);
+    void AddHaku(int value);
+    void HealHP(int value);
+
+    int GetCoin() const { return m_coin; }
+    int GetKunai() const { return m_kunai; }
+    int GetHaku() const { return m_haku; }
+    int GetMaxHaku() const { return m_maxHaku; }
+
 private:
     HPComponent* m_hp;
     GravityComponent* m_gravity;
@@ -152,9 +164,11 @@ private:
 
     bool m_isDeadTriggered = false; // 死亡時の初回処理用フラグ
 
-    // ---- 手裏剣所持数 ----
-
+    // ===== ドロップアイテム用の所持値 =====
     int m_money = 0;
+    int m_coin;
+    int m_haku;
+    int m_maxHaku;
 
     std::string GetTexturePath() const override;
 

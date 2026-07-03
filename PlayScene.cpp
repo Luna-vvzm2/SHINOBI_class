@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "Input.h"
 #include "PlayerEntity.h"
+#include "ScarecrowEnemyEntity.h"
 #include "WhiteEnemyEntity.h"
 #include "YellowEnemyEntity.h"
 #include "ArrowEnemyEntity.h"
@@ -35,7 +36,7 @@
 #include "EventManager.h"
 #include "EventTexture.h"
 
-
+#include <DxLib.h>
 #include <algorithm>
 
 PlayScene::SkillData* PlayScene::GetSelectedSkill()
@@ -700,6 +701,12 @@ bool PlayScene::StageInit(int stageNo) {
 			case 14:
 			{
 				AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+			}
+			break;
+
+			case 201:
+			{
+				AddActor(new ScarecrowEnemyEntity(this, pos));
 			}
 			break;
 

@@ -65,7 +65,10 @@ public:
 	float GetWidth() const { return m_width; }
 	float GetHeight() const { return m_height; }
 	Segment GetSegment() const { return m_segment; }
-
+	void SetOffset(const Vector2d& offset)
+	{
+		m_offset = offset;
+	}
 
 	void DrawDebug() const;
 
@@ -80,7 +83,7 @@ private:
 	bool CheckPointInRect(const Vector2d& point, const Vector2d& center, float w, float h) const;
 	float DistancePointToSegment(const Vector2d& point, const Segment& seg) const;
 	bool DoSegmentsIntersect(const Segment& a, const Segment& b) const;
-
+	Vector2d m_offset = Vector2d::Zero();
 	CollisionShape m_shape;
 
 	//	円形用情報
@@ -94,9 +97,14 @@ private:
 	Segment m_segment;
 
 	// 内部ユーティリティ
-	Vector2d GetOwnerPosition() const {
+	Vector2d GetOwnerPosition() const
+	{
 		auto transform = m_owner->GetComponent<TransformComponent>();
-		return transform ? transform->GetPosition() : Vector2d::Zero();
+
+		if (!transform)
+			return Vector2d::Zero();
+
+		return transform->GetPosition() + m_offset;
 	}
 };
 

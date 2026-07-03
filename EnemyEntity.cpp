@@ -9,6 +9,9 @@
 #include "AnimationComponent.h"
 #include "Game.h"
 #include "PlayScene.h"
+#include "DropData.h"
+#include "DropItemEntity.h"
+#include <cstdlib>
 
 EnemyEntity::EnemyEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
     : EntityActor(scene, pos, size)
@@ -48,16 +51,82 @@ bool EnemyEntity::Init() {
     if (!EntityActor::Init())
         return false;
 
-    m_hp = AddComponent<HPComponent>(GetMaxHP());
-    m_gravity = AddComponent<GravityComponent>(2800.0f);
+    // テスト用：必ずコインを1つ落とす
+    m_dropTable.clear();
+    m_dropTable.push_back({ ItemType::Coin, 1.0f });
 
     return true;
 }
 
 void EnemyEntity::Update(float deltaTime) {
+   
     EntityActor::Update(deltaTime);
-    MoveAndCollide(deltaTime);
+
+   
+    if (GetState() == Actor::State::Dead)
+        return;
+
+  
+
+    UpdateAI();
+
+    UpdateGravity(deltaTime);
+
+
+
 }
+void EnemyEntity::UpdateGravity(float deltaTime)
+{
+    if (!m_velocity)
+        return;
+
+    Vector2d vel = m_velocity->Get();
+
+    // 空中にいるときだけ重力を加える
+    if (!m_isGround)
+    {
+        const float gravity = 1800.0f;
+        vel.y += gravity * deltaTime;
+
+        const float maxFallSpeed = 1200.0f;
+        if (vel.y > maxFallSpeed)
+        {
+            vel.y = maxFallSpeed;
+        }
+    }
+
+    // ★重力を反映した速度を戻す
+    m_velocity->Set(vel);
+
+    // 移動＆地形衝突
+    MoveAndCollide(deltaTime);
+
+    // 着地したら縦速度を止める
+    if (m_isGround)
+    {
+        Vector2d stopVel = m_velocity->Get();
+        stopVel.y = 0.0f;
+        m_velocity->Set(stopVel);
+    }
+}
+void EnemyEntity::OnDead()
+{
+    if (GetState() == Actor::State::Dead)
+        return;
+
+
+    for (const auto& drop : m_dropTable)
+    {
+        float r = static_cast<float>(rand()) / RAND_MAX;
+
+        if (r <= drop.probability)
+        {
+            SpawnItem(drop.type);
+        }
+    }
+    SetState(Actor::State::Dead);
+}
+
 
 void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 {   
@@ -90,35 +159,15 @@ std::string EnemyEntity::GetTexturePath() const {
     return "";
 }
 
-/*
-
-弾生成
-    auto bullet =
-        new EnemyBullet(m_scene,　GetPos());
-    
-    m_scene->AddActor(bullet);
-
-
-*/
-void EnemyEntity::UpdateMove(float deltaTime)
+void EnemyEntity::SpawnItem(ItemType type)
 {
-    // 基本は derived class で上書きする想定だが、無くてもリンクエラーにならないよう空実装を用意
-    // 例として、移動速度に基づいて velocity をセットする簡易実装:
-    if (m_velocity) {
-        Vector2d v = m_velocity->Get();
-        // m_moveSpeed は正負方向の管理が派生側にある想定
-        v.x = (m_dir ? 1.0f : -1.0f) * m_moveSpeed;
-        m_velocity->Set(v);
-    }
-}
+    if (!m_scene || !m_transform)
+        return;
 
-// 重力処理の最小実装
-void EnemyEntity::UpdateGravity(float deltaTime)
-{
-    // 多くの処理は GravityComponent に任せているため空でも問題ない
-    if (m_gravity) {
-        // もし固有の処理が必要ならここに加える
-    }
+    Vector2d pos = m_transform->GetPosition();
+    pos.y -= 80.0f;
+
+    m_scene->AddActor(new DropItemEntity(m_scene, pos, type));
 }
 
 // 攻撃処理の最小実装（派生クラスで実装する想定）

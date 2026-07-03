@@ -47,7 +47,6 @@ public:
 	int GetCombo() const { return m_comboCount; }
 
 	bool IsResult() const { return m_resultShown; }
-
 	Camera& GetCamera() { return m_camera; }
 	const Camera& GetCamera() const { return m_camera; }
 

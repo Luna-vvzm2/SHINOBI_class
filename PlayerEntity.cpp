@@ -76,6 +76,10 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_squat(false)
     , m_canStand(true)
     , m_canCharge(true)
+
+    , m_coin(0)
+    , m_haku(0)
+    , m_maxHaku(100)
 {
 }
 
@@ -1666,18 +1670,54 @@ void PlayerEntity::UpdateDead(float deltaTime) {
 
     }
 }
-    std::string PlayerEntity::GetTexturePath() const { return ""; }
 
-    void PlayerEntity::ResetStageState()
-    {
-        m_velocity->Set({ 0,0 });
+std::string PlayerEntity::GetTexturePath() const { return ""; }
 
-        m_jumpCount = 0;
-        m_isGround = false;
-        m_canMove = true;
-        m_canAttack = true;
-        m_attack = false;
-        m_dashTimer = 0.0f;
+void PlayerEntity::ResetStageState()
+{
+    m_velocity->Set({ 0,0 });
 
-        ChangeState(ActionState::IDLE);
-    }
+    m_jumpCount = 0;
+    m_isGround = false;
+    m_canMove = true;
+    m_canAttack = true;
+    m_attack = false;
+    m_dashTimer = 0.0f;
+    ChangeState(ActionState::IDLE);
+}
+
+//======================================
+// ドロップアイテムから呼ばれる関数
+//======================================
+
+//追加
+void PlayerEntity::AddCoin(int value)
+{
+    m_coin += value;
+    if (m_coin < 0) m_coin = 0;
+}
+
+void PlayerEntity::AddKunai(int value)
+{
+    m_kunai += value;
+    if (m_kunai < 0) m_kunai = 0;
+}
+
+void PlayerEntity::AddHaku(int value)
+{
+    m_haku += value;
+
+    if (m_haku < 0)
+        m_haku = 0;
+
+    if (m_haku > m_maxHaku)
+        m_haku = m_maxHaku;
+}
+
+void PlayerEntity::HealHP(int value)
+{
+    if (!m_hp) return;
+
+  
+}
+
