@@ -51,6 +51,9 @@ bool EnemyEntity::Init() {
     if (!EntityActor::Init())
         return false;
 
+    m_hp = AddComponent<HPComponent>(GetMaxHP());
+    m_gravity = AddComponent<GravityComponent>(2800.0f);
+
     // テスト用：必ずコインを1つ落とす
     m_dropTable.clear();
     m_dropTable.push_back({ ItemType::Coin, 1.0f });

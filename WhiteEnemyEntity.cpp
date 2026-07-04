@@ -2,7 +2,6 @@
 #include "Scene.h"
 #include "Actor.h"
 #include "PlayerEntity.h"
-#include "EntityActor.h"
 #include "CollisionComponent.h"
 #include "GravityComponent.h"
 #include "VelocityComponent.h"
@@ -16,7 +15,7 @@
 #include <DxLib.h>
 #include <cmath>
 
-class WhiteShurikenBullet : public EntityActor
+class WhiteShurikenBullet : public EnemyEntity
 {
 public:
 	WhiteShurikenBullet(
@@ -30,7 +29,7 @@ public:
 		float rotateInterval,
 		float rotateStep
 	)
-		: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
+		: EnemyEntity(scene, pos, Vector2d(12.0f, 12.0f))
 		, m_startPos(pos)
 		, m_bulletVelocity(velocity)
 		, m_deleteRange(deleteRange)
