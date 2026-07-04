@@ -188,6 +188,13 @@ bool PlayScene::Init() {
 }
 
 void PlayScene::Update(float deltaTime) {
+	// ====== フェード遷移中はゲームロジックを止める ======
+	if (m_fadeState != FadeState::None) {
+		UpdateFade(deltaTime);
+		// フェード中も UI（ゲームオーバーメニュー等）は動かしたいならここで
+		updateActors(m_UIactors, deltaTime);
+		return; // 通常更新はスキップ
+	}
 	// ゲームオーバー中はゲーム更新を停止
 	if (!m_isPaused) {
 		updateActors(m_backactors, deltaTime);
@@ -337,24 +344,26 @@ void PlayScene::Update(float deltaTime) {
 	}
 }
 
-void PlayScene::Draw() {
+void PlayScene::Draw()
+{
 	Renderer* renderer = m_game->GetRenderer();
 
-
-
-	// --- アクター描画 ---
 	drawActors(m_backactors);
 	drawActors(m_actors);
 	drawActors(m_UIactors);
 
-	std::vector<NumberInfo> comboInfo = {
-		{ (float)m_comboCount, 0 }
+	std::vector<NumberInfo> comboInfo =
+	{
+		{ (float)m_comboCount,0 }
 	};
 
-	if (m_resultShown) {
+	if (m_resultShown)
+	{
 		const std::string& debugFont = m_game->GatDebugFont();
+
 		renderer->DrawNumberFormatW(
-			Vector2d(m_game->GetWidth() / 2.4f, m_game->GetHeight() / 2.2f),
+			Vector2d(m_game->GetWidth() / 2.4f,
+				m_game->GetHeight() / 2.2f),
 			Color(0, 0, 0),
 			debugFont,
 			32,
@@ -364,17 +373,20 @@ void PlayScene::Draw() {
 		);
 	}
 
-	// --- デバッグ文字 ---
+	// ←ここを追加
+	DrawFadeOverlay();
+
 #ifdef _DEBUG
 	const std::string& debugFont = m_game->GatDebugFont();
-	renderer->DrawTextL(Vector2d(m_game->GetWidth() - 150.0f, 0), "PlayScene", Color(255, 64, 0), debugFont, 24, false);
+	renderer->DrawTextL(
+		Vector2d(m_game->GetWidth() - 150.0f, 0),
+		"PlayScene",
+		Color(255, 64, 0),
+		debugFont,
+		24,
+		false
+	);
 #endif
-}
-void PlayScene::SpawnHitEffect(const Vector2d& pos) {
-	m_effect = new HitEffect(this, pos, {32, 32});
-	AddActor(m_effect);
-	std::cout << "Spawned HitEffect at: " << pos.x << ", " << pos.y << std::endl;
-	
 }
 
 void PlayScene::AddCombo() {
@@ -544,6 +556,7 @@ void PlayScene::GoToStage(int idx)
 void PlayScene::NextStage()
 {
 	int next = m_stageIndex + 1;
+	StartFadeToStage(next);
 	// ステージ数が 0 のときは何もしない
 	if (m_mapData.stages.empty()) return;
 
@@ -579,7 +592,7 @@ void PlayScene::NextStage()
 		return;
 	}
 
-	GoToStage(next);
+	StartFadeToStage(next);
 }
 
 bool PlayScene::ReloadStageFromFolder(int idx, const std::string& stageFolder)
@@ -603,4 +616,115 @@ bool PlayScene::ReloadStageFromFolder(int idx, const std::string& stageFolder)
 	// 置き換えたステージが現在のステージなら再構築
 	if (idx == m_stageIndex) BuildStage(idx);
 	return true;
+}
+
+// ====================================================
+// フェード遷移
+// ====================================================
+
+void PlayScene::StartFadeToStage(int idx)
+{
+	// すでに遷移中なら無視
+	if (m_fadeState != FadeState::None) return;
+
+	// 範囲チェック（最終ステージ超えは無視）
+	if (idx < 0 || idx >= static_cast<int>(m_mapData.stages.size())) {
+		std::cout << "[StartFadeToStage] invalid index: " << idx << std::endl;
+		return;
+	}
+
+	m_pendingStageIndex = idx;
+	m_fadeState = FadeState::FadeOut;
+	m_fadeTimer = 0.0f;
+
+	// プレイヤーの動きを止める（暗転中は動かないほうが自然）
+	if (m_player) {
+		if (auto vel = m_player->GetComponent<VelocityComponent>()) {
+			Vector2d v = vel->Get();
+			v.x = 0.0f;
+			vel->Set(v);
+		}
+	}
+
+	// 連続遷移を防ぐロックも維持
+	m_stageTransitionLock = true;
+	m_stageTransitionTimer = STAGE_TRANSITION_COOLDOWN;
+}
+
+void PlayScene::UpdateFade(float deltaTime)
+{
+	m_fadeTimer += deltaTime;
+
+	switch (m_fadeState)
+	{
+	case FadeState::FadeOut:
+		// 徐々に真っ黒に
+		if (m_fadeTimer >= FADE_OUT_DURATION) {
+			// 真っ黒になった瞬間にステージを構築（見えないので違和感なし）
+			if (m_pendingStageIndex >= 0) {
+				m_stageIndex = m_pendingStageIndex;
+				BuildStage(m_stageIndex);
+				m_pendingStageIndex = -1;
+			}
+			m_fadeState = FadeState::Hold;
+			m_fadeTimer = 0.0f;
+		}
+		break;
+
+	case FadeState::Hold:
+		// 黒画面を一定時間ホールド
+		if (m_fadeTimer >= FADE_HOLD_DURATION) {
+			m_fadeState = FadeState::FadeIn;
+			m_fadeTimer = 0.0f;
+		}
+		break;
+
+	case FadeState::FadeIn:
+		// 徐々に明るく
+		if (m_fadeTimer >= FADE_IN_DURATION) {
+			m_fadeState = FadeState::None;
+			m_fadeTimer = 0.0f;
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void PlayScene::DrawFadeOverlay()
+{
+	if (m_fadeState == FadeState::None) return;
+
+	Renderer* renderer = m_game->GetRenderer();
+
+	float t = 0.0f;
+
+	switch (m_fadeState)
+	{
+	case FadeState::FadeOut:
+		// 0 → 1
+		t = m_fadeTimer / FADE_OUT_DURATION;
+		break;
+
+	case FadeState::Hold:
+		// 完全に黒
+		t = 1.0f;
+		break;
+
+	case FadeState::FadeIn:
+		// 1 → 0
+		t = 1.0f - (m_fadeTimer / FADE_IN_DURATION);
+		break;
+
+	default:
+		return;
+	}
+
+	// クランプ
+	if (t < 0.0f) t = 0.0f;
+	if (t > 1.0f) t = 1.0f;
+
+	int alpha = static_cast<int>(t * 255.0f);
+	renderer->DrawFullScreenFill(Color(0, 0, 0), alpha);
 }

@@ -129,3 +129,18 @@ int Renderer::GetFontHandle(const std::string& fontName, int size) {
     else m_fontCache[key] = handle;
     return handle;
 }
+
+void Renderer::DrawFullScreenFill(const Color& color, int alpha) {
+    if (alpha <= 0) return;
+    if (alpha > 255) alpha = 255;
+
+    int oldBlend, oldAlpha;
+    GetDrawBlendMode(&oldBlend, &oldAlpha);
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
+
+    // useCamera=false 相当。スクリーン座標系で全画面を塗る
+    DrawBox(0, 0, m_screenWidth, m_screenHeight,
+        color.ToDxColor(), TRUE);
+
+    SetDrawBlendMode(oldBlend, oldAlpha);
+}
