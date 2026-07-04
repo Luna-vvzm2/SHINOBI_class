@@ -75,6 +75,7 @@ void EnemyEntity::Update(float deltaTime) {
 
 
 }
+
 void EnemyEntity::UpdateGravity(float deltaTime)
 {
     if (!m_velocity)
@@ -150,6 +151,17 @@ void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
     OnDamaged(damage, knockback);
 }
 
+void EnemyEntity::TakeMetsu(int metsu)
+{
+    m_metsuGauge += metsu;
+
+    if (m_metsuGauge >= m_metsuMax)
+    {
+        m_metsuGauge = m_metsuMax;
+        m_metsu = true;
+    }
+}
+
 void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
 {
     SetState(Actor::State::Dead);
@@ -169,15 +181,28 @@ void EnemyEntity::SpawnItem(ItemType type)
 
     m_scene->AddActor(new DropItemEntity(m_scene, pos, type));
 }
+/*
 
-// 攻撃処理の最小実装（派生クラスで実装する想定）
-void EnemyEntity::UpdateAttack(float deltaTime)
+    auto bullet =
+        new EnemyBullet(m_scene,縲GetPos());
+    
+    m_scene->AddActor(bullet);
+
+
+*/
+void EnemyEntity::UpdateMove(float deltaTime)
 {
-    // デフォルトは何もしない
+    if (m_velocity) {
+        Vector2d v = m_velocity->Get();
+        v.x = (m_dir ? 1.0f : -1.0f) * m_moveSpeed;
+        m_velocity->Set(v);
+    }
 }
 
-// 状態更新の最小実装（派生で上書き）
+void EnemyEntity::UpdateAttack(float deltaTime)
+{
+}
+
 void EnemyEntity::UpdateState()
 {
-    // デフォルトは何もしない
 }

@@ -41,6 +41,7 @@ public:
     HPComponent* GetHP() const { return m_hp; }
     virtual int GetMaxHP() const { return 100;  }
     virtual void TakeDamage(int damage, const Vector2d& knockback);
+    virtual void TakeMetsu(int metsu);
 
 protected:
     virtual void OnDamaged(int damage, const Vector2d& knockback) {}
