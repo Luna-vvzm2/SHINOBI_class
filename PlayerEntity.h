@@ -39,6 +39,7 @@ public:
     bool Init() override;
     void Update(float deltaTime) override;
 
+    void UpdateIgnorePlatform();
     void UpdateInvincible(float deltaTime);
     void UpdateSensor();
 
@@ -61,6 +62,13 @@ public:
     HPComponent* GetHP() const { return m_hp; }
     bool GetDir() const { return m_dir; }
     int GetCombo() const { return m_combo; }
+
+    bool IgnorePlatform() const override { return m_ignorePlatform; }
+    void SetIgnorePlatform(BlockActor* block)
+    {
+        m_ignorePlatform = true;
+        m_ignorePlatformBlock = block;
+    }
 
     void CheckAttackHit(const AttackHitbox& hitbox);
     void TakeDamage(int damage, const Vector2d& knockback);
@@ -131,6 +139,7 @@ private:
     float m_dashTimer;
     bool m_HienCount;
     bool m_isSenten;
+
     // EntityActor.bool m_isGround;          // ê⁄ínÉtÉâÉO
     int m_jumpCount;
     float m_jumpTime;
@@ -159,6 +168,9 @@ private:
     bool m_squat;         // ÇµÇ·Ç™Ç›
     bool m_canStand;      // ÇµÇ·Ç™Ç›â¬î€
     bool m_canCharge;
+
+    bool m_ignorePlatform;
+    BlockActor* m_ignorePlatformBlock = nullptr;
 
     SensorData m_sensor;
 

@@ -94,7 +94,8 @@ public:
     void SetSize(const Vector2d& size);
     Vector2d GetSize() const;
 
-    //’Ç‰Á
+    virtual bool IgnorePlatform() const{ return false; }
+
     CollisionComponent* GetCollision() const { return m_collision; }
     TransformComponent* GetTransform() const { return m_transform; }
     Scene* GetScene() const { return m_scene; }

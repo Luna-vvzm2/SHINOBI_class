@@ -94,6 +94,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         case ActorType::StageExit:
         {
             auto exit = static_cast<StageExitActor*>(actor);
+            if (GetType() != ActorType::Player) continue;
             CollisionComponent* exitCol = exit->GetCollision();
 
             Vector2d exitPos = exit->GetPos();
@@ -115,7 +116,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         case ActorType::StageBack:
         {
             auto back = static_cast<StageBackActor*>(actor);
-
+            if (GetType() != ActorType::Player) continue;
             CollisionComponent* backCol = back->GetCollision();
 
             Vector2d backPos = back->GetPos();
@@ -156,15 +157,28 @@ void EntityActor::MoveAndCollide(float deltaTime) {
         if (overlapY > 0 && overlapX > 0) {
             if (overlapY < overlapX) {
                 if (diffY > 0) { // ‰º‚©‚ç“–‚½‚Á‚½
-                    playerPos.y = actorPos.y + aHalfH + halfH;
-                    vel.y = 0;
+                    if (block->GetBlockType() != BlockType::Platform) {
+                        playerPos.y = actorPos.y + aHalfH + halfH;
+                        vel.y = 0;
+                    }
                 }
                 else { // ã‚Éæ‚Á‚½
-                    
-                    playerPos.y = actorPos.y - aHalfH - halfH;
-                    vel.y = 0;
+                    bool ignorePlatform = false;
+                    if (block->GetBlockType() == BlockType::Platform)
+                    {
+                        if (IgnorePlatform())
+                        {
+                            ignorePlatform = true;
+                        }
+                    }
 
-                    m_isGround = true;
+                    if (!ignorePlatform)
+                    {
+                        playerPos.y = actorPos.y - aHalfH - halfH;
+                        vel.y = 0;
+
+                        m_isGround = true;
+                    }
                 }
             }
             m_transform->SetPosition(playerPos);

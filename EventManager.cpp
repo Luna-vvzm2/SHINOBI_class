@@ -357,7 +357,7 @@ void TalkEvent::DeleteTexts()
 }
 
 EventTrigger::EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager)
-	:Actor(scene)
+	:BlockActor(scene)
 	,m_eventId(eventId)
 	,m_size(size)
 	,m_isTriggered(false)
@@ -421,5 +421,5 @@ void EventTrigger::Update(float deltaTime)
 
 ActorType EventTrigger::GetType() const
 {
-	return ActorType::UI;
+	return ActorType::Block;
 }

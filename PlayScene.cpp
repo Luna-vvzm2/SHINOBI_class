@@ -23,6 +23,7 @@
 #include "YaguraMBlock.h"
 #include "YaguraLBlock.h"
 #include "YaguraLLBlock.h"
+#include "PlatformBlock.h"
 #include "HPBarUI.h"
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
@@ -581,7 +582,7 @@ bool PlayScene::Init() {
 
 	m_mapData.tileSize = 104;
 
-	StageInit(0);
+	StageInit(m_stageIndex);
 
 	m_player = new PlayerEntity(this, m_playerSpawnPoints[0], Vector2d({ 152, 64 }));
 	AddActor(m_player);
@@ -669,6 +670,10 @@ bool PlayScene::StageInit(int stageNo) {
 				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 1.2f);
 				AddActor(new YaguraLLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.25f)));
 				break;
+			case 14:
+				pos = Vector2d(x * tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformBlock(this, pos));
+				break;
 			}
 		}
 	}
@@ -690,6 +695,7 @@ bool PlayScene::StageInit(int stageNo) {
 			switch (objID)
 			{
 			case 1:
+			case 3:
 				m_playerSpawnPoints.push_back(pos);
 				break;
 
@@ -700,7 +706,14 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 14:
 			{
-				AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+				switch (m_stageIndex) {
+				case 1:
+					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+					break;
+				case 2:
+					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 3));
+					break;
+				}
 			}
 			break;
 
@@ -764,7 +777,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 3:
+			case 204:
 			{
 				ArrowEnemyEntity* enemy = new ArrowEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -790,7 +803,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 4:
+			case 208:
 			{
 				HealerEnemyEntity* enemy = new HealerEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -816,7 +829,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 5:
+			case 206:
 			{
 				ArmorEnemyEntity* enemy = new ArmorEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -842,7 +855,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 6:
+			case 207:
 			{
 				GunnerEnemyEntity* enemy = new GunnerEnemyEntity(this, pos);
 				AddActor(enemy);
@@ -868,7 +881,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 7:
+			case 205:
 			{
 				YoroiBossEntity* enemy = new YoroiBossEntity(this, pos, Vector2d(192, 192));
 				AddActor(enemy);
@@ -894,7 +907,7 @@ bool PlayScene::StageInit(int stageNo) {
 					};
 			} break;
 
-			case 8:
+			case 210:
 			{
 				SekienkiBossEntity* enemy = new SekienkiBossEntity(this, pos, Vector2d(192, 192));
 				AddActor(enemy);
@@ -938,17 +951,34 @@ bool PlayScene::StageInit(int stageNo) {
 	float mapH = (float)stage.height * m_mapData.tileSize;
 	m_camera.SetBounds(Vector2d(0, 0), Vector2d(mapW, mapH));
 
-	m_bgHandle = LoadGraph("assets/images/uies/bg1.png");
-	m_fgHandle = LoadGraph("assets/images/uies/fg1.png");
+	switch (m_stageIndex) {
+	case 0:
+		m_bgHandle = LoadGraph("assets/images/uies/bg1.png");
+		m_fgHandle = LoadGraph("assets/images/uies/fg1.png");
+		break;
+	case 1:
+		m_bgHandle = LoadGraph("assets/images/uies/bg2.png");
+		m_fgHandle = LoadGraph("assets/images/uies/fg2.png");
+		break;
+	}
 
 	return true;
 }
 
 void PlayScene::ChangeStage(int index, int spawnIndex) {
+	DeleteGraph(m_bgHandle);
+	DeleteGraph(m_fgHandle);
 	m_stageIndex = index;
 
 	ClearStageActors();
 	StageInit(index);
+
+	auto it = std::find(m_actors.begin(), m_actors.end(), m_player);
+	if (it != m_actors.end())
+	{
+		m_actors.erase(it);
+		m_actors.push_back(m_player);
+	}
 
 	if (spawnIndex >= 0 &&
 		spawnIndex < static_cast<int>(m_playerSpawnPoints.size()))
@@ -966,6 +996,8 @@ void PlayScene::ClearStageActors()
 		case ActorType::Block:
 		case ActorType::Enemy:
 		case ActorType::Effect:
+		case ActorType::StageExit:
+		case ActorType::StageBack:
 			actor->SetState(Actor::State::Dead);
 			break;
 
@@ -982,6 +1014,14 @@ void PlayScene::ClearStageActors()
 	}
 
 	m_enemyToHPBarMap.clear();
+
+	for (Actor* actor : m_actors)
+	{
+		if (actor->GetType() == ActorType::Block)
+			continue;
+
+		printf("%s\n", typeid(*actor).name());
+	}
 }
 
 void PlayScene::RequestStageChange(int stage, int spawnIndex)
@@ -989,6 +1029,7 @@ void PlayScene::RequestStageChange(int stage, int spawnIndex)
 	m_requestStageChange = true;
 	m_nextStage = stage;
 	m_nextSpawnIndex = spawnIndex;
+	printf("Request Stage %d\n", stage);
 }
 
 void PlayScene::Update(float deltaTime) {
@@ -1112,8 +1153,14 @@ void PlayScene::Draw() {
 	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
 	// îwåi
-	renderer->DrawSpriteEx(Vector2d(-350 + (cam.x * 0.5f), 9270), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
-
+	switch (m_stageIndex) {
+	case 0:
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130.0f), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		break;
+	case 1:
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 960.0f), 5.8f, 5.8f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		break;
+	}
 	
 	// --- ÉAÉNÉ^Å[ï`âÊ ---
 	drawActors(m_backactors);
@@ -1121,9 +1168,16 @@ void PlayScene::Draw() {
 	drawActors(m_UIactors);
 
 	// ëOåi
-	for (int i = 0; i < 19; i++) {
-		renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), 9720), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+	switch (m_stageIndex) {
+	case 0:
+		for (int i = 0; i < 19; i++) {
+			renderer->DrawSpriteEx(Vector2d(-1290.0f + i * 1600.0f - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 680.0f), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		}
+		break;
+	case 1:
+		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 2480.0f), 17.0f, 17.0f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
 	}
+	
 
 	//ÉCÉxÉìÉgÇÃÇΩÇﬂÇ…ïœçX
 	if (m_eventManager->IsRunning())
@@ -1165,7 +1219,7 @@ void PlayScene::Draw() {
 
 	// sensorï`âÊ
 	Vector2d Pos = m_player->GetPos();
-	Vector2d offset = { 130.0f, -60.0f };
+	Vector2d offset = { 0.0f, 50.0f };
 	if (m_player->GetDir()) {
 		Pos.x += offset.x;
 		Pos.y += offset.y;
