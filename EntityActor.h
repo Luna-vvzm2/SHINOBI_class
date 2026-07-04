@@ -93,6 +93,8 @@ public:
     void SetSize(const Vector2d& size);
     Vector2d GetSize() const;
 
+    virtual bool IgnorePlatform() const{ return false; }
+
     CollisionComponent* GetCollision() const { return m_collision; }
 
 protected:

@@ -45,7 +45,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_dir(true)
     , m_prevDir(true)
     , m_jumpSpeed(0.0f)
-    , m_moveSpeed(2900.0f)
+    , m_moveSpeed(290.0f)
     , m_dashSpeed(600.0f)
     , m_dashAirSpeed(800.0f)
     , m_dashTimer(0.0f)
@@ -76,6 +76,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_squat(false)
     , m_canStand(true)
     , m_canCharge(true)
+    , m_ignorePlatform(false)
 {
 }
 
@@ -179,7 +180,7 @@ bool PlayerEntity::Init() {
     m_anim->AddClip("jump", jump);
 
     AnimationClip jumpSecond;
-    jumpSecond.frames = { 49, 50, 51, 52, 52, 52, 52, 52, 52, 52, 52, 53 };
+    jumpSecond.frames = { 49, 50, 51, 52, 53, 54, 55, 56, 57, 52, 53, 54, 55, 56, 58 };
     jumpSecond.speed = 0.1f;
     jumpSecond.loop = false;
     m_anim->AddClip("jumpSecond", jumpSecond);
@@ -407,7 +408,7 @@ bool PlayerEntity::Init() {
     m_anim->AddClip("dead", dead);
 
     m_collision->SetRect(85, 152);
-    m_sprite->SetDrawOffset(0.0f, -20.0f);
+    m_sprite->SetDrawOffset(0.0f, -34.0f);
 
     m_anim->Play("idle");
     m_state = ActionState::IDLE;
@@ -416,7 +417,7 @@ bool PlayerEntity::Init() {
 }
 
 void PlayerEntity::Update(float deltaTime) {
-
+    UpdateIgnorePlatform();
     UpdateInvincible(deltaTime);
 
     UpdateMove(deltaTime);
@@ -431,6 +432,29 @@ void PlayerEntity::Update(float deltaTime) {
 
     if (m_anim) m_anim->Update(deltaTime);
     EntityActor::Update(deltaTime);
+}
+
+void PlayerEntity::UpdateIgnorePlatform()
+{
+    if (!m_ignorePlatform)
+        return;
+
+    if (!m_ignorePlatformBlock)
+        return;
+
+    float platformBottom =
+        m_ignorePlatformBlock->GetPos().y +
+        m_ignorePlatformBlock->GetCollision()->GetHeight() * 0.5f;
+
+    float playerTop =
+        m_transform->GetPosition().y -
+        m_collision->GetHeight() * 0.5f;
+
+    if (playerTop > platformBottom)
+    {
+        m_ignorePlatform = false;
+        m_ignorePlatformBlock = nullptr;
+    }
 }
 
 void PlayerEntity::UpdateInvincible(float deltaTime)
@@ -577,7 +601,13 @@ void PlayerEntity::UpdateJump(float deltaTime) {
     if (input.IsTrigger(Action::JUMP)) {
         if (m_squat) {
             ExitSquat();
-            m_sprite->SetDrawOffset(0.0f, -20.0f);
+            m_sprite->SetDrawOffset(0.0f, -34.0f);
+            BlockActor* block = CheckSensor({0.0f, m_collision->GetHeight() * 0.5f + 2.0f });
+            if (block && block->GetBlockType() == BlockType::Platform)
+            {
+                SetIgnorePlatform(block);
+                return;
+            }
         }
 
         if (m_jumpCount == 0) {
@@ -730,7 +760,7 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
-    m_sprite->SetDrawOffset(0.0f, -48.0f);   // ã‚É48px
+    m_sprite->SetDrawOffset(0.0f, -62.0f);   // ã‚É48px
     m_squat = true;
 }
 
@@ -745,7 +775,7 @@ void PlayerEntity::ExitSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(85, 152);
-    m_sprite->SetDrawOffset(0.0f, -20.0f);
+    m_sprite->SetDrawOffset(0.0f, -34.0f);
     m_squat = false;
 }
 
@@ -1280,8 +1310,8 @@ void PlayerEntity::UpdateState() {
                 return;
             }
             else if (m_jumpCount == 2) {
-                m_jumpCount++;
                 ChangeState(ActionState::JUMP_SECOND);
+                m_jumpCount++;
                 return;
             }
         }
@@ -1289,24 +1319,25 @@ void PlayerEntity::UpdateState() {
             if (m_state == ActionState::JUMP_START) {
                 if (m_anim->IsFinished()) {
                     ChangeState(ActionState::JUMP);
-                    return;
                 }
+                return;
             }
 
             if (m_state == ActionState::JUMP) {
                 if (m_anim->IsFinished()) {
                     ChangeState(ActionState::FALL);
-                    return;
                 }
+                return;
             }
 
             if (m_state == ActionState::JUMP_SECOND) {
                 if (m_anim->IsFinished()) {
                     ChangeState(ActionState::FALL);
-                    return;
                 }
+                return;
             }
         }
+        ChangeState(ActionState::FALL);
         return;
     }
 

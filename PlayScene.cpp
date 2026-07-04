@@ -22,6 +22,7 @@
 #include "YaguraMBlock.h"
 #include "YaguraLBlock.h"
 #include "YaguraLLBlock.h"
+#include "PlatformBlock.h"
 #include "HPBarUI.h"
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
@@ -580,7 +581,7 @@ bool PlayScene::Init() {
 
 	m_mapData.tileSize = 104;
 
-	StageInit(0);
+	StageInit(m_stageIndex);
 
 	m_player = new PlayerEntity(this, m_playerSpawnPoints[0], Vector2d({ 152, 64 }));
 	AddActor(m_player);
@@ -667,6 +668,10 @@ bool PlayScene::StageInit(int stageNo) {
 			case 11:
 				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 1.2f);
 				AddActor(new YaguraLLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.25f)));
+				break;
+			case 14:
+				pos = Vector2d(x * tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformBlock(this, pos));
 				break;
 			}
 		}
@@ -1017,6 +1022,7 @@ void PlayScene::RequestStageChange(int stage, int spawnIndex)
 	m_requestStageChange = true;
 	m_nextStage = stage;
 	m_nextSpawnIndex = spawnIndex;
+	printf("Request Stage %d\n", stage);
 }
 
 void PlayScene::Update(float deltaTime) {
@@ -1158,11 +1164,11 @@ void PlayScene::Draw() {
 	switch (m_stageIndex) {
 	case 0:
 		for (int i = 0; i < 19; i++) {
-			renderer->DrawSpriteEx(Vector2d(-1290 + i * 1600 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 680), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+			renderer->DrawSpriteEx(Vector2d(-1290.0f + i * 1600.0f - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 680.0f), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		}
 		break;
 	case 1:
-		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 2480), 17.0f, 17.0f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 2480.0f), 17.0f, 17.0f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
 	}
 	
 
@@ -1206,7 +1212,7 @@ void PlayScene::Draw() {
 
 	// sensor•`‰æ
 	Vector2d Pos = m_player->GetPos();
-	Vector2d offset = { 130.0f, -60.0f };
+	Vector2d offset = { 0.0f, 50.0f };
 	if (m_player->GetDir()) {
 		Pos.x += offset.x;
 		Pos.y += offset.y;
