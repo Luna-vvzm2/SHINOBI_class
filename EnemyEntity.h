@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityActor.h"
 #include "Vector2d.h"
+#include <string>
 
 class TransformComponent;
 class VelocityComponent;
@@ -36,6 +37,8 @@ public:
     virtual int GetMaxHP() const { return 100;  }
     virtual void TakeDamage(int damage, const Vector2d& knockback);
     virtual void TakeMetsu(int metsu);
+    int GetMetsuGauge() const { return m_metsuGauge; }
+    int GetMetsuMax() const { return m_metsuMax; }
 
 protected:
     virtual void OnDamaged(int damage, const Vector2d& knockback) {}

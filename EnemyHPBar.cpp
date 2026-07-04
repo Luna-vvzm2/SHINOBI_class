@@ -124,6 +124,19 @@ void EnemyHPBar::Draw()
     float drawW = innerW * ratio;
 
     renderer->DrawRect(Vector2d(innerX, innerY), drawW, innerH, Color(220, 32, 32), true, false);
+
+    float metsuW = innerW;
+    float metsuH = m_metsuHeight;
+    float metsuX = innerX;
+    float metsuY = posLeftTop.y + m_height + m_metsuOffsetY;
+
+    renderer->DrawRect(Vector2d(metsuX, metsuY), metsuW, metsuH, Color(0, 0, 0), true, false);
+    renderer->DrawRect(Vector2d(metsuX, metsuY), metsuW, metsuH, Color(255, 255, 255), false, false);
+
+    float metsuRatio = m_metsuMax > 0 ? static_cast<float>(m_metsu) / static_cast<float>(m_metsuMax) : 0.0f;
+    metsuRatio = std::clamp(metsuRatio, 0.0f, 1.0f);
+
+    renderer->DrawRect(Vector2d(metsuX, metsuY), metsuW * metsuRatio, metsuH, Color(255, 255, 255), true, false);
 }
 
 void EnemyHPBar::SetPosition(float x, float y)
@@ -172,4 +185,9 @@ void EnemyHPBar::SetPadding(float left, float top, float right, float bottom) {
 void EnemyHPBar::SetGaugeOffset(float offsetX, float offsetY) {
     m_gaugeOffsetX = offsetX;
     m_gaugeOffsetY = offsetY;
+}
+
+void EnemyHPBar::SetMetsuValue(int value, int maxValue) {
+    m_metsu = value;
+    m_metsuMax = (maxValue < 1) ? 1 : maxValue;
 }
