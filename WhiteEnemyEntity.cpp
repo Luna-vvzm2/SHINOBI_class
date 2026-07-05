@@ -2,7 +2,6 @@
 #include "Scene.h"
 #include "Actor.h"
 #include "PlayerEntity.h"
-#include "EntityActor.h"
 #include "CollisionComponent.h"
 #include "GravityComponent.h"
 #include "VelocityComponent.h"

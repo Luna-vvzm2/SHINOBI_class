@@ -1320,28 +1320,35 @@ void PlayerEntity::UpdateState() {
                 return;
             }
         }
-        else {
-            if (m_state == ActionState::JUMP_START) {
-                if (m_anim->IsFinished()) {
-                    ChangeState(ActionState::JUMP);
-                }
-                return;
-            }
 
-            if (m_state == ActionState::JUMP) {
-                if (m_anim->IsFinished()) {
-                    ChangeState(ActionState::FALL);
-                }
-                return;
-            }
+        if (m_state == ActionState::JUMP_START) {
+            if (m_anim->IsFinished()) {
+                ChangeState(ActionState::JUMP);
 
-            if (m_state == ActionState::JUMP_SECOND) {
-                if (m_anim->IsFinished()) {
-                    ChangeState(ActionState::FALL);
-                }
-                return;
+
+
             }
+            return;
         }
+
+        if (m_state == ActionState::JUMP) {
+            if (m_anim->IsFinished()) {
+                ChangeState(ActionState::FALL);
+
+
+            }
+            return;
+        }
+
+        if (m_state == ActionState::JUMP_SECOND) {
+            if (m_anim->IsFinished()) {
+                ChangeState(ActionState::FALL);
+
+
+            }
+            return;
+        }
+
         ChangeState(ActionState::FALL);
         return;
     }
