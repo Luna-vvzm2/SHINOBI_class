@@ -9,6 +9,9 @@ public:
 
     bool Init() override;
     int GetMaxHP() const override { return 1000; }
+
+    void TakeDamage(int damage);
+
 protected:
 
     void UpdateAI(float deltaTime) override;
@@ -21,6 +24,8 @@ private:
     int   m_attackStep;
     int   m_darkAttackCount;
     int   m_maxDarkAttacks;
+    int   m_hp ;
+    bool  m_dead ;
 
     // ’eiaŒ‚jŠÖ˜A
     bool     m_bulletActive;

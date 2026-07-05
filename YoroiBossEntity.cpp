@@ -13,8 +13,10 @@ YoroiBossEntity::YoroiBossEntity(Scene* scene, const Vector2d& pos, const Vector
     , m_darkAttackCount(0)
     , m_maxDarkAttacks(0)
     , m_bulletActive(false)
+    , m_hp(2400)
+    , m_dead(false)
 {
-    printf("Yoroi Spawn\n");
+    //printf("Yoroi Spawn\n");
 }
 
 bool YoroiBossEntity::Init()
@@ -24,8 +26,27 @@ bool YoroiBossEntity::Init()
     return true;
 }
 
+void YoroiBossEntity::TakeDamage(int damage)
+{
+    m_hp -= damage;
+
+    if (m_hp <= 0)
+    {
+        m_dead = true;
+        m_attackTimer = 0.0f;
+        SetVel({ 0.0f, 0.0f });
+    }
+}
+
 void YoroiBossEntity::UpdateAI(float deltaTime)
 {
+
+    if (m_dead)
+    {
+        SetState(Actor::State::Dead);
+        return;
+    }
+
     if (m_attackTimer > 0.0f)
     {
         m_attackTimer -= deltaTime;
