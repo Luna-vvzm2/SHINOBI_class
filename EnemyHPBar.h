@@ -37,6 +37,7 @@ public:
     void SetPadding(float left, float top, float right, float bottom);
 
     void SetGaugeOffset(float offsetX, float offsetY);
+    void SetMetsuValue(int value, int maxValue);
 
 private:
     HPComponent* m_hp = nullptr;
@@ -66,4 +67,9 @@ private:
     float m_padBottom = 2.0f;
     float m_gaugeOffsetX = 0.0f;
     float m_gaugeOffsetY = 0.0f;
+
+    int m_metsu = 0;
+    int m_metsuMax = 100;
+    float m_metsuOffsetY = 6.0f;
+    float m_metsuHeight = 6.0f;
 };

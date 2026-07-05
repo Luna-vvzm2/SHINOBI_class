@@ -1121,6 +1121,8 @@ void PlayScene::Update(float deltaTime) {
 
 		// “GˆÊ’uŽæ“¾
 		if (hpBar && hpBar->GetState() != Actor::State::Dead) {
+			hpBar->SetMetsuValue(enemy->GetMetsuGauge(), enemy->GetMetsuMax());
+
 			auto transform = enemy->GetComponent<TransformComponent>();
 			if (transform) {
 				Vector2d worldPos = transform->GetPosition() + baroffset;
