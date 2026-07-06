@@ -16,18 +16,18 @@
 #include "PlayScene.h"
 #include <Windows.h>
 
-//                       offset, width, height, damage
-AttackHitbox weak1{ Vector2d(100,0), 300, 200, 10 };
-AttackHitbox weak2{ Vector2d(100,0), 300, 200, 10 };
-AttackHitbox weak3{ Vector2d(100,0), 300, 200, 10 };
-AttackHitbox weak4{ Vector2d(100,0), 300, 200, 10 };
-AttackHitbox strong1{ Vector2d(100,-50), 400, 300, 30 };
-AttackHitbox strong2{ Vector2d(100,-50), 400, 300, 30 };
-AttackHitbox airWeak1{ Vector2d(100,50), 300, 200, 10 };
-AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 10 };
-AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 10 };
-AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 30 };
-AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10 };
+//                       offset, width, height, damage, metsu
+AttackHitbox weak1{ Vector2d(100,0), 300, 200, 10, 30 };
+AttackHitbox weak2{ Vector2d(100,0), 300, 200, 10, 30 };
+AttackHitbox weak3{ Vector2d(100,0), 300, 200, 10, 30 };
+AttackHitbox weak4{ Vector2d(100,0), 300, 200, 10, 30 };
+AttackHitbox strong1{ Vector2d(100,-50), 400, 300, 30, 30 };
+AttackHitbox strong2{ Vector2d(100,-50), 400, 300, 30, 30 };
+AttackHitbox airWeak1{ Vector2d(100,50), 300, 200, 10, 30 };
+AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 10, 30 };
+AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 10, 30 };
+AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 30, 30 };
+AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10, 30 };
 
 
 PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
@@ -77,6 +77,10 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_canStand(true)
     , m_canCharge(true)
 
+    , m_isKamae(false)
+    , m_isExecution(false)
+    , m_executionTimer(0.0f)
+
     , m_coin(0)
     , m_haku(0)
     , m_maxHaku(100)
@@ -94,7 +98,7 @@ bool PlayerEntity::Init() {
     m_attackCol = AddComponent<CollisionComponent>();
 
     //m_sprite = AddComponent<SpriteComponent>();
-    m_sprite->LoadTextureDiv("assets/images/entities/players/musashi_sheet.png", 20, 13);
+    m_sprite->LoadTextureDiv("assets/images/entities/players/musashi_sheet.png", 20, 14);
     m_sprite->LoadTextureDiv("kari/player.png", 6, 4);
 
     m_anim = AddComponent<AnimationComponent>();
@@ -404,13 +408,91 @@ bool PlayerEntity::Init() {
     hitAirLanding.frames = { 232, 233, 234, 235, 236, 237, 237, 238, 238, 239 };
     hitAirLanding.speed = 0.1f;
     hitAirLanding.loop = false;
-    m_anim->AddClip("hitAir", hitAirLanding);
+    m_anim->AddClip("hitAirLanding", hitAirLanding);
 
     AnimationClip dead;
     dead.frames = { 240, 240, 240, 240, 240, 240, 240, 240, 240, 240, 240, 240, 240, 240, 240,  241, 241, 242, 242, 243, 243, 244, 244, 245, 245, 246, 246 };
     dead.speed = 0.1f;
     dead.loop = false;
     m_anim->AddClip("dead", dead);
+
+    AnimationClip Kamae;
+    Kamae.frames = { 247, 248, 248, 249 };
+    Kamae.speed = 0.1f;
+    Kamae.loop = false;
+    m_anim->AddClip("Kamae", Kamae);
+
+    AnimationClip KamaeEnd;
+    KamaeEnd.frames = { 248, 248 };
+    KamaeEnd.speed = 0.1f;
+    KamaeEnd.loop = false;
+    m_anim->AddClip("KamaeEnd", KamaeEnd);
+
+    AnimationClip KamaeAir;
+    KamaeAir.frames = { 250, 251, 251, 252, 253 };
+    KamaeAir.speed = 0.1f;
+    KamaeAir.loop = false;
+    m_anim->AddClip("KamaeAir", KamaeAir);
+
+    AnimationClip KamaeAirEnd;
+    KamaeAirEnd.frames = { 254 };
+    KamaeAirEnd.speed = 0.1f;
+    KamaeAirEnd.loop = false;
+    m_anim->AddClip("KamaeAirEnd", KamaeAirEnd);
+
+    AnimationClip JutsuKamae;
+    JutsuKamae.frames = { 255, 256, 257, 258, 259 };
+    JutsuKamae.speed = 0.1f;
+    JutsuKamae.loop = false;
+    m_anim->AddClip("JutsuKamae", JutsuKamae);
+
+    AnimationClip JutsuKamaeEnd;
+    JutsuKamaeEnd.frames = { 255, 255, 258, 258 };
+    JutsuKamaeEnd.speed = 0.1f;
+    JutsuKamaeEnd.loop = false;
+    m_anim->AddClip("JutsuKamaeEnd", JutsuKamaeEnd);
+
+    AnimationClip executionStart;
+    executionStart.frames = { 260, 261, 261, 262, 262, 263, 263, 264, 264, 264, 265, 266, 266 };
+    executionStart.speed = 0.1f;
+    executionStart.loop = false;
+    m_anim->AddClip("executionStart", executionStart);
+
+    AnimationClip executionHorizon;
+    executionHorizon.frames = { 267, 268, 268 };
+    executionHorizon.speed = 0.1f;
+    executionHorizon.loop = false;
+    m_anim->AddClip("executionHorizon", executionHorizon);
+
+    AnimationClip executionVertical;
+    executionVertical.frames = { 269, 270, 270 };
+    executionVertical.speed = 0.1f;
+    executionVertical.loop = false;
+    m_anim->AddClip("executionVertical", executionVertical);
+
+    AnimationClip executionEnd;
+    executionEnd.frames = { 271, 271, 272, 272, 273, 273, 274, 274 };
+    executionEnd.speed = 0.1f;
+    executionEnd.loop = false;
+    m_anim->AddClip("executionEnd", executionEnd);
+
+    AnimationClip KaryuStart;
+    KaryuStart.frames = { 259 };
+    KaryuStart.speed = 0.1f;
+    KaryuStart.loop = false;
+    m_anim->AddClip("KaryuStart", KaryuStart);
+
+    AnimationClip KaryuMid;
+    KaryuMid.frames = { 275 };
+    KaryuMid.speed = 0.1f;
+    KaryuMid.loop = false;
+    m_anim->AddClip("KaryuMid", KaryuMid);
+
+    AnimationClip KaryuEnd;
+    KaryuEnd.frames = { 276, 276, 276, 277, 277, 277, 278, 278, 278 };
+    KaryuEnd.speed = 0.1f;
+    KaryuEnd.loop = false;
+    m_anim->AddClip("KaryuEnd", KaryuEnd);
 
     m_collision->SetRect(85, 152);
     m_sprite->SetDrawOffset(0.0f, -34.0f);
@@ -424,6 +506,9 @@ bool PlayerEntity::Init() {
 void PlayerEntity::Update(float deltaTime) {
     UpdateIgnorePlatform();
     UpdateInvincible(deltaTime);
+
+    UpdateKamae(deltaTime);
+    UpdateExecution(deltaTime);
 
     UpdateMove(deltaTime);
     UpdateSensor();
@@ -488,7 +573,96 @@ void PlayerEntity::UpdateSensor() {
     m_sensor.frontNearGround = CheckSensor({ dir * 60.0f, 80.0f });
 }
 
+void PlayerEntity::UpdateKamae(float deltaTime)
+{
+    if (m_getHit) return;
+    if (m_dashTimer > 0.0f) return;
+    const Input& input = m_scene->GetGame()->GetInput();
+
+    if (input.IsDown(Action::KAMAE))
+    {
+        m_isKamae = true;
+        m_canMove = false;
+    }
+    else
+    {
+        m_isKamae = false;
+        if (!m_isExecution) m_canMove = true;
+    }
+}
+
+void PlayerEntity::UpdateExecution(float deltaTime)
+{
+    if (!m_isExecution) {
+        if (!m_isKamae) return;
+    }
+
+    const Input& input = m_scene->GetGame()->GetInput();
+
+    if (input.IsTrigger(Action::DASH))
+    {
+        PlayScene* play = static_cast<PlayScene*>(m_scene);
+        if (play->GetMetsuEnemies().empty()) return;
+
+        CollectExecutionTargets();
+        if (m_executionTargets.empty()) return;
+        m_isExecution = true;
+        m_executionTimer = 0.7f;
+        m_invincibleTime = m_executionTimer;
+    }
+
+    if (m_executionTimer <= 0.0f) {
+        if (m_executionTargets.empty()) 
+        {
+            m_isExecution = false;
+            return;
+        }
+        EnemyEntity* target = m_executionTargets.back();
+        Vector2d prevPos = m_transform->GetPosition();
+        Vector2d lastPos = target->GetPos();
+        m_transform->SetPosition(lastPos);
+        target->MetsuAttacked();
+        m_executionTimer = m_invincibleTime  = 0.2f;
+
+        m_executionTargets.pop_back();
+
+        if (m_executionTargets.empty())
+        {
+            m_isExecution = false;
+            Vector2d dir = lastPos - prevPos;
+            dir = dir.normalize();
+            dir.y -= 0.3f;
+            m_dir = dir.x > 0.0f ? 1.0f : 0.0f;
+            m_velocity->Set(dir * m_dashSpeed);
+        }
+
+    }
+    else {
+        m_executionTimer -= deltaTime;
+    }
+}
+
+void PlayerEntity::CollectExecutionTargets() {
+    m_executionTargets.clear();
+
+    PlayScene* play = static_cast<PlayScene*>(m_scene);
+
+    for (EnemyEntity* enemy : play->GetMetsuEnemies())
+    {
+        if (enemy == nullptr) continue;
+
+        // ‰æ–Ê“à”»’è
+        Vector2d playerPos = m_transform->GetPosition();
+        Vector2d enemyPos = enemy->GetPos();
+        if (std::abs(playerPos.x - enemyPos.x) > 700) continue;
+        if (std::abs(playerPos.y - enemyPos.y) > 500) continue;
+
+        m_executionTargets.push_back(enemy);
+    }
+}
+
 void PlayerEntity::UpdateMove(float deltaTime) {
+
     const Input& input = m_scene->GetGame()->GetInput();
     float dir = m_dir ? 1.0f : -1.0f;
     m_prevDir = m_dir;
@@ -649,6 +823,10 @@ void PlayerEntity::UpdateJump(float deltaTime) {
 }
 
 void PlayerEntity::UpdateGravity(float deltaTime) {
+    if (m_isExecution) {
+        m_velocity->SetVelocity({0.0f, 0.0f});
+        return;
+    }
     MoveAndCollide(deltaTime);
     
     if (m_isGround) {
@@ -797,6 +975,9 @@ void PlayerEntity::SpawnKunai()
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
+    if (m_isKamae) return;
+    if (m_isExecution) return;
+
     m_hit = false;
 
     const Input& input = m_scene->GetGame()->GetInput();
@@ -1091,6 +1272,7 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
         if (overlapX > 0 && overlapY > 0)
         {
             enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
+            enemy->TakeMetsu(hitbox.metsu);
             m_hit = true;
             m_combo++;
 
@@ -1143,7 +1325,41 @@ void PlayerEntity::UpdateState() {
         m_getHit = false;
     }
 
+    if (m_isExecution) {
+        if (m_state == ActionState::EXECUTION_START) {
+            if (m_anim->IsFinished()) {
+                ChangeState(ActionState::EXECUTION_HORIZON);
+            }
+            return;
+        }
+
+        if (m_state != ActionState::EXECUTION_HORIZON && m_state != ActionState::EXECUTION_VERTICAL) {
+            ChangeState(ActionState::EXECUTION_START);
+            return;
+        }
+        return;
+    }
+
+    if (m_state == ActionState::EXECUTION_HORIZON || m_state == ActionState::EXECUTION_VERTICAL) {
+        ChangeState(ActionState::EXECUTION_END);
+        return;
+    }
+
+    if (m_state == ActionState::EXECUTION_END) {
+        if (!m_anim->IsFinished()) return;
+    }
+
     const Input& input = m_scene->GetGame()->GetInput();
+
+    if (m_isKamae) {
+        if (m_isGround) {
+            ChangeState(ActionState::KAMAE);
+        }
+        else {
+            ChangeState(ActionState::AIR_KAMAE);
+        }
+        return;
+    }
 
     if (m_attack) {
         if (input.IsTrigger(Action::KUNAI)) {
@@ -1561,6 +1777,10 @@ void PlayerEntity::ChangeState(ActionState newState)
         m_anim->Play("rollLanding");
         break;
 
+    case ActionState::SOU_KUNAI_SENTEN:
+        m_anim->Play("SouKunaiSenten");
+        break;
+
     case ActionState::WALL_HOLD:
         m_anim->Play("wallHold");
         break;
@@ -1575,6 +1795,14 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::WALL_CLIMB_UP:
         m_anim->Play("wallClimbUp");
+        break;
+
+    case ActionState::PLATFORM_CLIMB:
+        m_anim->Play("platformClimb");
+        break;
+
+    case ActionState::CLIMB_END:
+        m_anim->Play("climbEnd");
         break;
 
     case ActionState::WEAK_ATTACK1:
@@ -1613,6 +1841,10 @@ void PlayerEntity::ChangeState(ActionState newState)
         m_anim->Play("strongAttack1");
         break;
 
+    case ActionState::STRONG_ATTACK_END:
+        m_anim->Play("strongAttackEnd");
+        break;
+
     case ActionState::STRONG_ATTACK2:
         m_anim->Play("strongAttack2");
         break;
@@ -1637,6 +1869,10 @@ void PlayerEntity::ChangeState(ActionState newState)
         m_anim->Play("KunaiAir");
         break;
 
+    case ActionState::KUNAI_WALL:
+        m_anim->Play("wallKunai");
+        break;
+
     case ActionState::KUNAI_SQUAT:
         m_anim->Play("KunaiSquat");
         break;
@@ -1655,6 +1891,58 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::HIT_AIR_LANDING:
         m_anim->Play("hitAirLanding");
+        break;
+
+    case ActionState::KAMAE:
+        m_anim->Play("Kamae");
+        break;
+
+    case ActionState::KAMAE_END:
+        m_anim->Play("KamaeEnd");
+        break;
+
+    case ActionState::AIR_KAMAE:
+        m_anim->Play("KamaeAir");
+        break;
+
+    case ActionState::AIR_KAMAE_END:
+        m_anim->Play("KamaeAirEnd");
+        break;
+
+    case ActionState::JUTSU_KAMAE:
+        m_anim->Play("JutsuKamae");
+        break;
+
+    case ActionState::JUTSU_KAMAE_END:
+        m_anim->Play("JutsuKamaeEnd");
+        break;
+
+    case ActionState::EXECUTION_START:
+        m_anim->Play("executionStart");
+        break;
+
+    case ActionState::EXECUTION_HORIZON:
+        m_anim->Play("executionHorizon");
+        break;
+
+    case ActionState::EXECUTION_VERTICAL:
+        m_anim->Play("executionVertical");
+        break;
+
+    case ActionState::EXECUTION_END:
+        m_anim->Play("executionEnd");
+        break;
+
+    case ActionState::KARYU_START:
+        m_anim->Play("KaryuStart");
+        break;
+
+    case ActionState::KARYU_MID:
+        m_anim->Play("KaryuMid");
+        break;
+
+    case ActionState::KARYU_END:
+        m_anim->Play("KaryuEnd");
         break;
 
     case ActionState::DEAD:
@@ -1676,6 +1964,7 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     m_invincibleTime = 1.5f;
     m_combo = 0;
 }
+
 void PlayerEntity::SetMoney(int amount)
 {
     int old = m_money;

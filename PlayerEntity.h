@@ -1,5 +1,5 @@
 #pragma once
-#include "EntityActor.h"
+#include "EnemyEntity.h"
 #include "BlockActor.h"
 #include "Vector2d.h"
 #include "SpriteComponent.h"
@@ -12,6 +12,7 @@ struct AttackHitbox
     float width = 0;
     float height = 0;
     int damage = 0;
+    int metsu = 0;
 };
 
 struct SensorData
@@ -42,6 +43,10 @@ public:
     void UpdateIgnorePlatform();
     void UpdateInvincible(float deltaTime);
     void UpdateSensor();
+
+    void UpdateKamae(float deltaTime);
+    void UpdateExecution(float deltaTime);
+    void CollectExecutionTargets();
 
     void UpdateMove(float deltaTime);
     void UpdateJump(float deltaTime);
@@ -168,6 +173,11 @@ private:
     bool m_squat;         // ‚µ‚á‚ª‚Ý
     bool m_canStand;      // ‚µ‚á‚ª‚Ý‰Â”Û
     bool m_canCharge;
+
+    bool m_isKamae;
+    bool m_isExecution;
+    std::vector<EnemyEntity*> m_executionTargets;
+    float m_executionTimer;
 
     bool m_ignorePlatform;
     BlockActor* m_ignorePlatformBlock = nullptr;

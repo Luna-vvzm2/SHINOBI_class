@@ -59,6 +59,7 @@ public:
         KUNAI,
         KUNAI_AIR,
         KUNAI_SQUAT,
+        KUNAI_WALL,
 
         HIT,
         HIT_GROUND,
@@ -71,10 +72,31 @@ public:
         SENTEN,
         ROLL_LANDING,
 
+        SOU_KUNAI_SENTEN,
+
         WALL_HOLD,
         WALL_JUMP,
         WALL_CLIMB,
         WALL_CLIMB_UP,
+        PLATFORM_CLIMB,
+        CLIMB_END,
+
+        KAMAE,
+        KAMAE_END,
+        AIR_KAMAE,
+        AIR_KAMAE_END,
+
+        JUTSU_KAMAE,
+        JUTSU_KAMAE_END,
+
+        EXECUTION_START,
+        EXECUTION_HORIZON,
+        EXECUTION_VERTICAL,
+        EXECUTION_END,
+
+        KARYU_START,
+        KARYU_MID,
+        KARYU_END,
 
         CHASE,
         DEAD,

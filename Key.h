@@ -16,6 +16,7 @@ public:
 		I,
 		O,
 		P,
+		Q,
 		M,
 		ESCAPE,
 		SPACE,

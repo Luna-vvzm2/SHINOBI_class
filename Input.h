@@ -14,8 +14,9 @@ enum class Action {
     WEAK_ATTACK,
     STRONG_ATTACK,
     KUNAI,
-    ESCAPE,
+    KAMAE,
     JUMP,
+    ESCAPE,
     ENTER,
     MENU,
     ACTION_COUNT

@@ -1,5 +1,5 @@
 #include "ArmorEnemyEntity.h"
-#include "Scene.h"
+#include "PlayScene.h"
 #include "Actor.h"
 #include "VelocityComponent.h"
 #include "TransformComponent.h"
@@ -245,6 +245,9 @@ void ArmorEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 	if (m_hp->GetHP() <= 0)
 	{
 		SetState(Actor::State::Dead);
+		PlayScene* play = static_cast<PlayScene*>(m_scene);
+		printf("Remove %p\n", this);
+		play->RemoveMetsuEnemy(this);
 		return;
 	}
 

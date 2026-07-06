@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.h"
 #include "Vector2d.h"
+#include "EnemyEntity.h"
 #include "Camera.h"
 #include "MapData.h"
 #include "ShurikenUI.h"
@@ -8,6 +9,7 @@
 #include <unordered_map>
 
 class PlayerEntity;
+class EnemyEntity;
 class HitEffect;
 class EnemyEntity;
 class HPBarUI;
@@ -42,6 +44,10 @@ public:
 	// Õ“ËƒCƒxƒ“ƒg‚ÉŒÄ‚Ô
 	//void SpawnHitEffect(const Vector2d& pos);
 
+	void AddMetsuEnemy(EnemyEntity* enemy);
+	void RemoveMetsuEnemy(EnemyEntity* enemy);
+	std::vector<EnemyEntity*> GetMetsuEnemies(){ return m_metsuEnemies; }
+
 	void AddCombo();
 
 	int GetCombo() const { return m_comboCount; }
@@ -58,6 +64,7 @@ private:
 	HitEffect* m_effect;
 	MapData m_mapData;
 	std::vector<Vector2d> m_playerSpawnPoints;
+	std::vector<EnemyEntity*> m_metsuEnemies;
 	bool m_requestStageChange = false;
 	int m_nextStage = 0;
 	int m_nextSpawnIndex = 0;

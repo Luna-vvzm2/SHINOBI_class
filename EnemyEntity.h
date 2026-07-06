@@ -28,7 +28,6 @@ public:
 	void UpdateGravity(float deltaTime);
 	void UpdateAttack(float deltaTime);
 	void UpdateState();
-    //asdfghjk
 
 
     ActorType GetType() const override { return ActorType::Enemy; }
@@ -42,6 +41,7 @@ public:
     virtual int GetMaxHP() const { return 100;  }
     virtual void TakeDamage(int damage, const Vector2d& knockback);
     virtual void TakeMetsu(int metsu);
+    void MetsuAttacked();
     int GetMetsuGauge() const { return m_metsuGauge; }
     int GetMetsuMax() const { return m_metsuMax; }
 

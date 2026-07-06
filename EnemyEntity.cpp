@@ -144,6 +144,10 @@ void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
     if (m_hp->GetHP() <= 0)
     {
         OnDeadFromDamage(damage, knockback);
+
+        PlayScene* play = static_cast<PlayScene*>(m_scene);
+        printf("Remove %p\n", this);
+        play->RemoveMetsuEnemy(this);
         return;
     }
 
@@ -158,11 +162,28 @@ void EnemyEntity::TakeMetsu(int metsu)
 {
     m_metsuGauge += metsu;
 
-    if (m_metsuGauge >= m_metsuMax)
+    if (m_metsuGauge >= m_metsuMax && !m_metsu)
     {
         m_metsuGauge = m_metsuMax;
         m_metsu = true;
+
+        PlayScene* play = static_cast<PlayScene*>(m_scene);
+        play->AddMetsuEnemy(this);
     }
+}
+
+void EnemyEntity::MetsuAttacked()
+{
+    // 追加ドロップ
+
+    // エフェクト
+
+    // PlaySceneの滅リストから削除
+    static_cast<PlayScene*>(m_scene)->RemoveMetsuEnemy(this);
+
+    // 死亡
+    m_hp->Damage((int)m_hp->GetHP());
+    SetState(State::Dead);
 }
 
 void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)

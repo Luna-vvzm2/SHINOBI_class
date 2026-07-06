@@ -1,5 +1,5 @@
 #include "WhiteEnemyEntity.h"
-#include "Scene.h"
+#include "PlayScene.h"
 #include "Actor.h"
 #include "PlayerEntity.h"
 #include "CollisionComponent.h"
@@ -626,6 +626,9 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 	if (m_hp->GetHP() <= 0)
 	{
 		StartDeadHit();
+		PlayScene* play = static_cast<PlayScene*>(m_scene);
+		printf("Remove %p\n", this);
+		play->RemoveMetsuEnemy(this);
 		return;
 	}
 

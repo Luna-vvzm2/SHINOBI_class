@@ -505,7 +505,7 @@ PlayScene::PlayScene(Game* game)
 bool PlayScene::Init() {
 	m_isRunning = true;
 	m_type = Type::Play;
-	m_stageIndex = 0;
+	m_stageIndex = 1;
 	//m_lockedSkillIcon = LoadGraph("assets/images/skills/locked.png");
 
 	//スキルデータ
@@ -1014,7 +1014,7 @@ void PlayScene::ClearStageActors()
 	}
 
 	m_enemyToHPBarMap.clear();
-
+#ifdef _DEBUG
 	for (Actor* actor : m_actors)
 	{
 		if (actor->GetType() == ActorType::Block)
@@ -1022,6 +1022,8 @@ void PlayScene::ClearStageActors()
 
 		printf("%s\n", typeid(*actor).name());
 	}
+#endif
+	m_metsuEnemies.clear();
 }
 
 void PlayScene::RequestStageChange(int stage, int spawnIndex)
@@ -1083,7 +1085,6 @@ void PlayScene::Update(float deltaTime) {
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
-	RemoveDeadActors(); 
 
 
 	// カメラ設定など（既にある処理）
@@ -1160,7 +1161,7 @@ void PlayScene::Draw() {
 		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130.0f), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
 	case 1:
-		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 960.0f), 5.8f, 5.8f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1760.0f), 1.45f, 1.45f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
 	}
 	
@@ -1177,7 +1178,7 @@ void PlayScene::Draw() {
 		}
 		break;
 	case 1:
-		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 2480.0f), 17.0f, 17.0f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 4960.0f), 4.3f, 4.3f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
 	}
 	
 
@@ -1218,7 +1219,7 @@ void PlayScene::Draw() {
 	}
 	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);*/
 	//------------------------------------------
-
+#ifdef _DEBUG
 	// sensor描画
 	Vector2d Pos = m_player->GetPos();
 	Vector2d offset = { 0.0f, 50.0f };
@@ -1231,7 +1232,7 @@ void PlayScene::Draw() {
 		Pos.y += offset.y;
 	}
 	renderer->DrawRectCenter(Pos, 4.0f, 4.0f, GetColor(0, 255, 0), false, true);
-
+#endif
 	std::vector<NumberInfo> comboInfo = {
 		{ (float)m_player->GetCombo(), 0 }
 	};
@@ -1270,6 +1271,24 @@ void PlayScene::Draw() {
 //	std::cout << "Spawned HitEffect at: " << pos.x << ", " << pos.y << std::endl;
 //	
 //}
+
+void PlayScene::AddMetsuEnemy(EnemyEntity* enemy)
+{
+	if (enemy == nullptr) return;
+
+	auto it = std::find(m_metsuEnemies.begin(), m_metsuEnemies.end(), enemy);
+	if (it == m_metsuEnemies.end())
+	{
+		m_metsuEnemies.push_back(enemy);
+	}
+	printf("滅敵数: %zd\n", m_metsuEnemies.size());
+}
+
+void PlayScene::RemoveMetsuEnemy(EnemyEntity* enemy)
+{
+	auto it = std::remove(m_metsuEnemies.begin(), m_metsuEnemies.end(), enemy);
+	m_metsuEnemies.erase(it, m_metsuEnemies.end());
+}
 
 void PlayScene::AddCombo() {
 	m_comboCount++;

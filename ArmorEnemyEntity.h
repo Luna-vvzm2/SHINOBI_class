@@ -10,7 +10,7 @@ public:
 
 	bool Init() override;
 	void Update(float deltaTime) override;
-	void TakeDamage(int damage, const Vector2d& knockback);
+	void TakeDamage(int damage, const Vector2d& knockback) override;
 
 	std::string GetTexturePath() const override;
 	int GetGuard() const { return m_guard; }
