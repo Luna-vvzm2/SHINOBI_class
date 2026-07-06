@@ -3,12 +3,15 @@
 #include "Vector2d.h"
 #include "Camera.h"
 #include "MapData.h"
+#include "SaveData.h"
 
 
 class PlayerEntity;
 class HitEffect;
 
-
+//ƒCƒxƒ“ƒg‚Ì‚½‚ß’Ç‰Á
+class EventTexture;
+class EventManager;
 
 class PlayScene : public Scene
 {
@@ -37,6 +40,10 @@ public:
 	Camera& GetCamera() { return m_camera; }
 	const Camera& GetCamera() const { return m_camera; }
 
+	bool SaveGameData();
+	bool LoadGameData();
+	bool DeleteGameData();
+
 private:
 
 	PlayerEntity* m_player;
@@ -50,5 +57,5 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
-
+	SaveData m_saveData;
 };

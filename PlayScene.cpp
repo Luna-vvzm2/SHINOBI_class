@@ -28,7 +28,8 @@ PlayScene::PlayScene(Game* game)
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
 	m_stageIndex(0),
 	m_comboCount(0),
-	m_currentStage(1)
+	m_currentStage(1),
+	m_saveData{}
 {
 
 }
@@ -153,6 +154,13 @@ bool PlayScene::Init() {
 	// Renderer に Camera をセット
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
+	// ★ セーブデータが存在したら自動ロード
+	if (FileDataExists())
+	{
+		printf("[PlayScene] セーブデータを発見しました。ロードしますか？(y/n)\n");
+		// ここはユーザー操作が必要な場合は、メニュー画面で処理する
+	}
+
 	return true;
 }
 
@@ -230,4 +238,56 @@ void PlayScene::SpawnHitEffect(const Vector2d& pos) {
 void PlayScene::AddCombo() {
 	m_comboCount++;
 	std::cout << "Combo: " << m_comboCount << std::endl;
+}
+
+bool PlayScene::SaveGameData()
+{
+	// プレイヤーデータをセーブ構造体にコピー
+	if (m_player != nullptr)
+	{
+		/*m_saveData.currentStage = m_currentStage;  // 現在ステージを設定（必要に応じて）
+		m_saveData.playerMaxHp = m_player->GetHP()->GetMaxHP();
+		m_saveData.playerCurrentHp = m_player->GetHP()->GetCurrentHP();
+		m_saveData.money = m_player->GetMoney();
+		m_saveData.coin = m_player->GetCoin();
+		m_saveData.kunai = m_player->GetKunai();
+		m_saveData.playTime = static_cast<int>(m_playTime);  // プレイ時間
+		m_saveData.clearStages = m_clearStageCount;  // クリアステージ数
+		*/
+	}
+
+	return FileSaveData(m_saveData);
+}
+
+bool PlayScene::LoadGameData()
+{
+	if (!FileLoadData(m_saveData))
+	{
+		return false;
+	}
+
+	// ロードしたデータをプレイヤーに適用
+	if (m_player != nullptr)
+	{
+		/*m_player->SetPosition(Vector2d(100, 100));  // リスポーン位置を設定
+
+		// HPを復元
+		if (m_saveData.playerCurrentHp > 0)
+		{
+			m_player->GetHP()->SetCurrentHP(m_saveData.playerCurrentHp);
+		}
+
+		// 所持品を復元
+		m_player->SetMoney(m_saveData.money);
+		// コイン、手裏剣、薄も適宜復元
+		*/
+	}
+
+	return true;
+}
+
+// ★ データ削除機能の実装
+bool PlayScene::DeleteGameData()
+{
+	return FileDeleteData();
 }
