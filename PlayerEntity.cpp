@@ -609,6 +609,10 @@ void PlayerEntity::UpdateExecution(float deltaTime)
         m_isExecution = true;
         m_executionTimer = 0.7f;
         m_invincibleTime = m_executionTimer;
+        auto effect = new EffectActor(m_scene, GetPos(), EffectType::ExecutionStart, !m_dir);
+        effect->SetFollowTarget(this, { m_dir ? -20.0f : 20.0f, -20.0f });
+
+        SpawnEffect(effect);
     }
 
     if (m_executionTimer <= 0.0f) {

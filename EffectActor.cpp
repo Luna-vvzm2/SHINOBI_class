@@ -210,6 +210,32 @@ bool EffectActor::LoadEffects()
     squat.size = { 64,64 };
     s_effects[EffectType::SquatAttack] = squat;
 
+    LoadEffectTexture("assets/images/effects/EF_musashiExecution.png", 4, 5, attackHandles);
+
+    EffectData executionStart;
+    executionStart.handles = attackHandles;
+    executionStart.clip.frames = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    executionStart.clip.speed = 0.1f;
+    executionStart.clip.loop = false;
+    executionStart.size = { 64,64 };
+    s_effects[EffectType::ExecutionStart] = executionStart;
+
+    EffectData executionMove;
+    executionMove.handles = attackHandles;
+    executionMove.clip.frames = { 11, 12, 13 };
+    executionMove.clip.speed = 0.1f;
+    executionMove.clip.loop = false;
+    executionMove.size = { 64,64 };
+    s_effects[EffectType::ExecutionMove] = executionMove;
+
+    EffectData executionEnemy;
+    executionEnemy.handles = attackHandles;
+    executionEnemy.clip.frames = { 14, 15, 16, 17, 18 };
+    executionEnemy.clip.speed = 0.1f;
+    executionEnemy.clip.loop = false;
+    executionEnemy.size = { 64,64 };
+    s_effects[EffectType::ExecutionEnemy] = executionEnemy;
+
     return true;
 }
 

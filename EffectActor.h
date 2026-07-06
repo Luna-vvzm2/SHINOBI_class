@@ -26,6 +26,9 @@ enum class EffectType
 	WeakAirAttack3,
 	Hayabusa,
 	SquatAttack,
+	ExecutionStart,
+	ExecutionMove,
+	ExecutionEnemy,
 	Jump,
 	JumpSecond,
 };
