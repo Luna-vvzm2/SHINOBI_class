@@ -11,5 +11,7 @@ public:
 
 	std::string GetTexturePath() const override;
 
+private:
+	bool m_isHit = false;
 };
 

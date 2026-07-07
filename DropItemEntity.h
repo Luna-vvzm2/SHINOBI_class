@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityActor.h"
 #include "DropData.h"
+#include "AnimationComponent.h"
 
 class PlayerEntity;
 
@@ -28,6 +29,7 @@ public:
  std::string GetTexturePath() const override;
  virtual ActorType GetType() const override;
 private:
+	AnimationComponent* m_animation;
 	ItemType m_itemType;
 	bool m_isCollected = false;
 	void ApplyEffect(PlayerEntity* player);

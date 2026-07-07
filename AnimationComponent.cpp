@@ -52,7 +52,9 @@ void AnimationComponent::Update(float deltaTime)
 
     m_timer += deltaTime;
 
-    if (m_timer >= m_currentClip->speed) {
+    if (m_timer >= m_currentClip->speed)
+    {
+
         m_timer -= m_currentClip->speed;
         m_frameIndex++;
 

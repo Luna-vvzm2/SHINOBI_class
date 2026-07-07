@@ -2,6 +2,8 @@
 #include "EnemyEntity.h"
 #include "CollisionComponent.h"
 
+class AnimationComponent;
+
 struct AttackRect
 {
 	int x;
@@ -45,5 +47,7 @@ private:
 	bool m_faceRight = true;
 	bool m_isHit = false;
 	AttackRect m_attackRect = { 0,0,0,0 };
+	AnimationComponent* m_animation = nullptr;
+
 };
 

@@ -57,6 +57,7 @@ void SpriteComponent::Update(float deltaTime) {}
 // 描画
 // --------------------
 void SpriteComponent::Draw() {
+    
     if (m_handle == -1) {
         DrawBox(
             -16,
@@ -93,8 +94,16 @@ void SpriteComponent::Draw() {
     Vector2d scale = transform->GetScale();
 
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, 0.0f, m_handle,
-        true, Vector2d(texW, texH) * 0.5f, 255, false, false
+        pos,
+        scale.x,
+        scale.y,
+        0.0f,
+        m_handle,
+        true,
+        Vector2d(texW, texH) * 0.5f,
+        m_alpha,
+        false,
+        false
     );
 }
 
@@ -122,6 +131,11 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
     // フレーム配列確保
     m_frames.resize(total);
 
+    SetDrawBlendMode(
+        DX_BLENDMODE_ALPHA,
+        m_alpha
+    );
+
     // 正しい幅・高さで分割読み込み
     int ret = LoadDivGraph(
         path.c_str(),
@@ -131,6 +145,10 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
         frameW,
         frameH,
         m_frames.data()
+    );
+    SetDrawBlendMode(
+        DX_BLENDMODE_NOBLEND,
+        255
     );
 
     if (ret == -1) {
@@ -155,11 +173,17 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
 // --------------------
 void SpriteComponent::SetFrame(int index)
 {
+    
     if (index < 0 || index >= (int)m_frames.size())
         return;
 
     m_currentFrame = index;
     m_handle = m_frames[index];
+    std::cout
+        << "Frame " << index
+        << " Handle = " << m_handle
+        << std::endl;
+
 }
 
 // --------------------
@@ -208,3 +232,4 @@ void SpriteComponent::ReleaseTextures()
         s_textureCache
     );
 }
+

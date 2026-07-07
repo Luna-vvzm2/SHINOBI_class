@@ -167,37 +167,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
 
 void PlayerEntity::UpdateGravity(float deltaTime) {
     
-    //追加
-    // 重力加算
-    Vector2d vel = m_velocity->Get();
-
-    if (!m_isGround) {
-        const float gravity = 1800.0f;
-        vel.y += gravity * deltaTime;
-
-        // 落下速度上限（必要なら）
-        const float maxFallSpeed = 1200.0f;
-        if (vel.y > maxFallSpeed)
-        {
-            vel.y = maxFallSpeed;
-        }
-    }
-
-    m_velocity->Set(vel);
-
-    MoveAndCollide(deltaTime);
-
-    if (m_isGround) {
-        m_jumpCount = 0;
-    }
-   
-
-        // 着地したら当たり判定を元に戻す
-        if (m_collision)
-        {
-            m_collision->SetRect(85, 192);
-        }
-    
+ 
 
 }
 

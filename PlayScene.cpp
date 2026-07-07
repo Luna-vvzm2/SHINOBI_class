@@ -17,6 +17,7 @@
 #include "GroundBlock.h"
 #include "HPBarUI.h"
 #include "BackGroundUI.h"
+#include "TreasureBox.h"
 
 #include "Camera.h"
 #include <DxLib.h>
@@ -127,6 +128,10 @@ bool PlayScene::Init() {
 				//’Ç‰Á
 				case 9:
 					AddActor(new ScarecrowEnemyEntity(this, pos));
+					break;
+
+				case 10:
+					AddActor(new TreasureBoxEntity(this, pos));
 					break;
 				}
 			}

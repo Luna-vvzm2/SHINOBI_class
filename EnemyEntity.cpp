@@ -54,7 +54,7 @@ bool EnemyEntity::Init() {
     // テスト用：必ずコインを1つ落とす
     m_dropTable.clear();
     m_dropTable.push_back({ ItemType::Coin, 1.0f });
-
+    m_dropTable.push_back({ ItemType::Kunai,0.9f });
     return true;
 }
 

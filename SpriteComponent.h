@@ -28,7 +28,6 @@ public:
 
     bool LoadTexture(const std::string& path);
     void SetSize(float w, float h);
-
     static void ReleaseTextures();
 
     float GetWidth() const { return m_width; }
@@ -38,6 +37,10 @@ public:
     void SetDrawSize(float w, float h) { m_drawW = w; m_drawH = h; }
 
     int GetHandle() const { return m_handle; }
+    void SetAlpha(int alpha) { m_alpha = alpha; }
+    int GetAlpha() const { return m_alpha; }
+    //追加
+    bool LoadTextureList(const std::vector<std::string>& paths);
 
 private:
     int m_handle;
@@ -51,4 +54,7 @@ private:
 
     std::vector<int> m_frames;   // 分割されたフレームのハンドル
     int m_currentFrame = 0;      // 現在のフレーム番号
+    int m_alpha = 255;
+
+
 };

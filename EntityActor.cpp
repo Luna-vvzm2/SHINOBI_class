@@ -171,6 +171,8 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 void EntityActor::Update(float deltaTime)
 {
     MoveAndCollide(deltaTime);
+    Actor::Update(deltaTime);
 }
+
 
 

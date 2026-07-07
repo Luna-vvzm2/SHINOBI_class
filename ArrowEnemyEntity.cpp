@@ -8,6 +8,10 @@
 #include "Renderer.h"
 #include "Game.h"
 #include "BlockActor.h"
+#include "DropItemEntity.h"
+#include "EntityActor.h"
+#include <cmath>
+
 
 ArrowEnemyEntity::ArrowEnemyEntity(Scene* scene, const Vector2d& pos)
     : EnemyEntity(scene, pos, Vector2d(96, 190))
@@ -25,17 +29,39 @@ bool ArrowEnemyEntity::Init() {
 
 	m_hp = AddComponent<HPComponent>(50);
 
+    // =========================
+  // ドロップ設定（テスト用）
+  // =========================
+    m_dropTable.clear();
+
+    m_dropTable.push_back({ ItemType::Coin, 1.0f });
+    m_dropTable.push_back({ ItemType::Kunai,1.0f });
 	return true;
 }
 
 void ArrowEnemyEntity::Update(float deltaTime)
 {
    
+    m_isHit = false;
+    // 先に死亡済みなら何もしない
+    if (GetState() == Actor::State::Dead)
+        return;
+
+    m_damageTimer += deltaTime;
+    if (m_damageTimer >= 1.0f)
+    {
+        m_damageTimer -= 1.0f;
+
+        if (m_hp)
+        {
+            m_hp->Damage(10);
+        }
+    }
 
     if (m_hp && m_hp->GetHP() <= 0)
     {
         std::cout << "ArrowEnemy Dead" << std::endl;
-        SetState(State::Dead);
+        OnDead();
         return;
     }
 
@@ -140,10 +166,7 @@ void ArrowEnemyEntity::Update(float deltaTime)
 
         m_deathTimer -= deltaTime;
 
-        if (m_deathTimer <= 0)
-        {
-            SetState(State::Dead);
-        }
+       
         break;
     }
 
