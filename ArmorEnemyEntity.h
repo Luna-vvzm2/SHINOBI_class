@@ -22,18 +22,21 @@ private:
 	void UpdateGuardRecover(float deltaTime);
 	void PlayMotion(
 		const std::string& motionName,
-		const std::string& texturePath,
-		int frameCount,
-		float frameSpeed,
-		bool loop
+		bool reset = false
 	);
+	void DefineAnimationClips();
 	void StartArmorsAttack();
 	void TriggerExplosion(const Vector2d& playerPos, PlayerEntity* player);
 	void OnHPChanged(int newHP, int oldHP);
-	void StartKnockback(const Vector2d& knockback);
+	void StartDamageMotion(const Vector2d& knockback);
+	void StartDeadMotion();
+	void StartTurnMotion();
+	void UpdateDeadMotion(float deltaTime);
+	void UpdateTurnMotion(float deltaTime);
 	void BreakGuard(const Vector2d& knockback);
 	void RecoverGuard();
 	float GetDirSign() const;
+	void SetFacing();
 
 private:
 	bool m_attackOnce;
@@ -43,5 +46,9 @@ private:
 	bool m_guardRecovering;
 	float m_guardRecoverMotionTimer;
 	float m_knockbackTimer;
-	std::string m_currentTexturePath;
+	bool m_deadMotion;
+	float m_deadMotionTimer;
+	bool m_turning;
+	float m_turnTimer;
+	std::string m_currentMotionName;
 };

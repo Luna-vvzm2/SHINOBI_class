@@ -19,9 +19,17 @@ ArmorEnemyEntity::ArmorEnemyEntity(Scene* scene, const Vector2d& pos)
 	, m_guardRecovering(false)
 	, m_guardRecoverMotionTimer(0.0f)
 	, m_knockbackTimer(0.0f)
-	, m_currentTexturePath("")
+	, m_deadMotion(false)
+	, m_deadMotionTimer(0.0f)
+	, m_turning(false)
+	, m_turnTimer(0.0f)
+	, m_currentMotionName("")
 {
 }
+
+static const char* ARMOR_TEXTURE_SHEET = "assets/images/enemy/armor/armer_sheet.png";
+static const int ARMOR_SHEET_X_NUM = 3;
+static const int ARMOR_SHEET_Y_NUM = 6;
 
 bool ArmorEnemyEntity::Init()
 {
@@ -35,6 +43,13 @@ bool ArmorEnemyEntity::Init()
 
 	m_anim = AddComponent<AnimationComponent>();
 	m_anim->SetSprite(m_sprite);
+	if (m_sprite != nullptr)
+	{
+		m_sprite->LoadTextureDiv(ARMOR_TEXTURE_SHEET, ARMOR_SHEET_X_NUM, ARMOR_SHEET_Y_NUM);
+		m_sprite->SetDrawSize(96.0f, 190.0f);
+	}
+	DefineAnimationClips();
+	PlayMotion("idle", true);
 
 	return true;
 }
@@ -48,25 +63,31 @@ static const float ARMOR_ATTACK_KNOCKBACK_X = 420.0f;  // explosion knockback x
 static const float ARMOR_ATTACK_KNOCKBACK_Y = -260.0f; // explosion knockback y
 static const int ARMOR_ATTACK_DAMAGE = 15;             // explosion damage
 static const float ARMOR_GUARD_RECOVER_TIME = 5.0f;    // guard recover seconds
-static const float ARMOR_GUARD_RECOVER_MOTION_TIME = 1.0f;
+static const float ARMOR_GUARD_RECOVER_MOTION_TIME = 10.0f / 60.0f;
 static const float ARMOR_DAMAGE_KNOCKBACK_X = 420.0f;
 static const float ARMOR_DAMAGE_KNOCKBACK_Y = -260.0f;
 static const float ARMOR_DAMAGE_KNOCKBACK_TIME = 0.25f;
 
-static const float ARMOR_PRE_TIME = 0.65f;             // pre motion
-static const float ARMOR_ATTACK_TIME = 0.15f;          // active motion
-static const float ARMOR_AFTER_TIME = 0.85f;           // after motion
+static const float ARMOR_PRE_TIME = 23.0f / 60.0f;     // frame 1
+static const float ARMOR_ATTACK_TIME = 10.0f / 60.0f;  // frame 2
+static const float ARMOR_AFTER_TIME = 2.0f / 60.0f;    // frame 3
 static const float ARMOR_RECHECK_TIME = 0.2f;          // state recheck time
-
-static const char* ARMOR_TEXTURE_IDLE = "assets/images/enemy/armor/idle.png";
-static const char* ARMOR_TEXTURE_WALK = "assets/images/enemy/armor/walk.png";
-static const char* ARMOR_TEXTURE_ATTACK_PRE = "assets/images/enemy/armor/attack_pre.png";
-static const char* ARMOR_TEXTURE_ATTACK = "assets/images/enemy/armor/attack.png";
-static const char* ARMOR_TEXTURE_ATTACK_AFTER = "assets/images/enemy/armor/attack_after.png";
+static const float ARMOR_DAMAGE_MOTION_TIME = 35.0f / 60.0f;
+static const float ARMOR_TURN_MOTION_TIME = 5.0f / 60.0f;
 
 float ArmorEnemyEntity::GetDirSign() const
 {
 	return m_dir ? 1.0f : -1.0f;
+}
+
+void ArmorEnemyEntity::SetFacing()
+{
+	if (m_sprite == nullptr)
+	{
+		return;
+	}
+
+	m_sprite->SetFlipX(!m_dir);
 }
 
 bool ArmorEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player) const
@@ -135,7 +156,7 @@ void ArmorEnemyEntity::UpdateGuardRecover(float deltaTime)
 	}
 
 	m_guardRecoverMotionTimer += deltaTime;
-	PlayMotion("guard_recover", ARMOR_TEXTURE_ATTACK_AFTER, 3, 0.12f, false);
+	PlayMotion("idle");
 
 	if (m_guardRecoverMotionTimer >= ARMOR_GUARD_RECOVER_MOTION_TIME)
 	{
@@ -143,40 +164,82 @@ void ArmorEnemyEntity::UpdateGuardRecover(float deltaTime)
 	}
 }
 
-void ArmorEnemyEntity::PlayMotion(
-	const std::string& motionName,
-	const std::string& texturePath,
-	int frameCount,
-	float frameSpeed,
-	bool loop
-)
+void ArmorEnemyEntity::PlayMotion(const std::string& motionName, bool reset)
 {
-	if (m_currentTexturePath == texturePath)
+	if (m_anim == nullptr)
 	{
 		return;
 	}
 
-	if (m_sprite == nullptr || m_anim == nullptr || frameCount <= 0)
+	if (!reset && m_currentMotionName == motionName)
 	{
 		return;
 	}
 
-	if (!m_sprite->LoadTextureDiv(texturePath, frameCount, 1))
+	m_anim->Play(motionName, reset);
+	m_currentMotionName = motionName;
+}
+
+void ArmorEnemyEntity::DefineAnimationClips()
+{
+	if (m_anim == nullptr)
 	{
 		return;
 	}
 
-	AnimationClip clip;
-	for (int i = 0; i < frameCount; i++)
-	{
-		clip.frames.push_back(i);
-	}
-	clip.speed = frameSpeed;
-	clip.loop = loop;
+	AnimationClip idle;
+	idle.frames = { 9 };
+	idle.frameDurations = { 10.0f / 60.0f };
+	idle.loop = true;
+	m_anim->AddClip("idle", idle);
 
-	m_anim->AddClip(motionName, clip);
-	m_anim->Play(motionName, true);
-	m_currentTexturePath = texturePath;
+	AnimationClip attack;
+	attack.frames = { 0, 1, 2 };
+	attack.frameDurations = {
+		23.0f / 60.0f,
+		10.0f / 60.0f,
+		2.0f / 60.0f
+	};
+	attack.loop = false;
+	m_anim->AddClip("attack", attack);
+
+	AnimationClip damage;
+	damage.frames = { 9, 3, 4, 5, 6 };
+	damage.frameDurations = {
+		1.0f / 60.0f,
+		25.0f / 60.0f,
+		5.0f / 60.0f,
+		1.0f / 60.0f,
+		3.0f / 60.0f
+	};
+	damage.loop = false;
+	m_anim->AddClip("damage", damage);
+
+	AnimationClip turn;
+	turn.frames = { 9, 7, 8 };
+	turn.frameDurations = {
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		1.0f / 60.0f
+	};
+	turn.loop = false;
+	m_anim->AddClip("turn", turn);
+
+	AnimationClip run;
+	run.frames = { 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+	run.frameDurations = {
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		3.0f / 60.0f,
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		3.0f / 60.0f,
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		1.0f / 60.0f
+	};
+	run.loop = true;
+	m_anim->AddClip("run", run);
 }
 
 // Start armor punch attack.
@@ -189,7 +252,8 @@ void ArmorEnemyEntity::StartArmorsAttack()
 
 	m_attackActive = false;
 	m_attackOnce = false;
-	PlayMotion("attack_pre", ARMOR_TEXTURE_ATTACK_PRE, 3, 0.12f, false);
+	SetFacing();
+	PlayMotion("attack", true);
 	m_actionLock = true;
 }
 
@@ -244,11 +308,11 @@ void ArmorEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 
 	if (m_hp->GetHP() <= 0)
 	{
-		SetState(Actor::State::Dead);
+		StartDeadMotion();
 		return;
 	}
 
-	StartKnockback(knockback);
+	StartDamageMotion(knockback);
 }
 
 void ArmorEnemyEntity::OnHPChanged(int newHP, int oldHP)
@@ -277,10 +341,16 @@ void ArmorEnemyEntity::OnHPChanged(int newHP, int oldHP)
 		return;
 	}
 
-	StartKnockback(Vector2d(ARMOR_DAMAGE_KNOCKBACK_X, ARMOR_DAMAGE_KNOCKBACK_Y));
+	if (newHP <= 0)
+	{
+		StartDeadMotion();
+		return;
+	}
+
+	StartDamageMotion(Vector2d(ARMOR_DAMAGE_KNOCKBACK_X, ARMOR_DAMAGE_KNOCKBACK_Y));
 }
 
-void ArmorEnemyEntity::StartKnockback(const Vector2d& knockback)
+void ArmorEnemyEntity::StartDamageMotion(const Vector2d& knockback)
 {
 	Vector2d damageKnockback = knockback;
 	Vector2d playerPos = Vector2d::Zero();
@@ -294,12 +364,73 @@ void ArmorEnemyEntity::StartKnockback(const Vector2d& knockback)
 
 	m_velocity->SetVelocity(damageKnockback);
 	m_knockbackTimer = ARMOR_DAMAGE_KNOCKBACK_TIME;
+	PlayMotion("damage", true);
 
 	if (m_guard <= 0)
 	{
 		m_attackType = 0;
 		m_attackActive = false;
 		m_attackOnce = false;
+		m_actionLock = false;
+	}
+}
+
+void ArmorEnemyEntity::StartDeadMotion()
+{
+	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+	m_attackType = 0;
+	m_attackActive = false;
+	m_attackOnce = false;
+	m_actionLock = true;
+	m_guardRecovering = false;
+	m_turning = false;
+	m_deadMotion = true;
+	m_deadMotionTimer = 0.0f;
+	PlayMotion("damage", true);
+}
+
+void ArmorEnemyEntity::StartTurnMotion()
+{
+	m_turning = true;
+	m_turnTimer = 0.0f;
+	m_actionLock = true;
+	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+	SetFacing();
+	PlayMotion("turn", true);
+}
+
+void ArmorEnemyEntity::UpdateDeadMotion(float deltaTime)
+{
+	if (!m_deadMotion)
+	{
+		return;
+	}
+
+	m_deadMotionTimer += deltaTime;
+	float ratio = ARMOR_DAMAGE_MOTION_TIME > 0.0f ? m_deadMotionTimer / ARMOR_DAMAGE_MOTION_TIME : 1.0f;
+	if (ratio > 1.0f)
+	{
+		ratio = 1.0f;
+	}
+
+	if (m_deadMotionTimer >= ARMOR_DAMAGE_MOTION_TIME)
+	{
+		OnDead();
+	}
+}
+
+void ArmorEnemyEntity::UpdateTurnMotion(float deltaTime)
+{
+	if (!m_turning)
+	{
+		return;
+	}
+
+	m_turnTimer += deltaTime;
+	if (m_turnTimer >= ARMOR_TURN_MOTION_TIME)
+	{
+		m_turning = false;
+		m_turnTimer = 0.0f;
 		m_actionLock = false;
 	}
 }
@@ -311,7 +442,7 @@ void ArmorEnemyEntity::BreakGuard(const Vector2d& knockback)
 	m_guardRecovering = false;
 	m_guardRecoverTimer = 0.0f;
 	m_guardRecoverMotionTimer = 0.0f;
-	StartKnockback(knockback);
+	StartDamageMotion(knockback);
 }
 
 void ArmorEnemyEntity::RecoverGuard()
@@ -332,6 +463,13 @@ void ArmorEnemyEntity::Update(float deltaTime)
 		deltaTime = 0.05f;
 	}
 
+	if (m_deadMotion)
+	{
+		UpdateDeadMotion(deltaTime);
+		EnemyEntity::Update(deltaTime);
+		return;
+	}
+
 	UpdateGuardRecover(deltaTime);
 
 	if (m_guardRecovering)
@@ -341,11 +479,18 @@ void ArmorEnemyEntity::Update(float deltaTime)
 		return;
 	}
 
+	if (m_knockbackTimer > 0.0f)
+	{
+		EnemyEntity::Update(deltaTime);
+		return;
+	}
+
 	Vector2d playerPos = Vector2d::Zero();
 	PlayerEntity* player = nullptr;
 
 	if (!TryGetPlayerInfo(playerPos, player))
 	{
+		PlayMotion("idle");
 		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 		EnemyEntity::Update(deltaTime);
 		return;
@@ -383,7 +528,7 @@ void ArmorEnemyEntity::Update(float deltaTime)
 		else
 		{
 			m_armorState = 0;
-			PlayMotion("idle", ARMOR_TEXTURE_IDLE, 4, 0.16f, true);
+			PlayMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			EnemyEntity::Update(deltaTime);
 			return;
@@ -396,11 +541,23 @@ void ArmorEnemyEntity::Update(float deltaTime)
 		{
 			if (distanceX >= 0.0f)
 			{
-				m_dir = true;
+				if (!m_dir)
+				{
+					m_dir = true;
+					StartTurnMotion();
+					EnemyEntity::Update(deltaTime);
+					return;
+				}
 			}
 			else
 			{
-				m_dir = false;
+				if (m_dir)
+				{
+					m_dir = false;
+					StartTurnMotion();
+					EnemyEntity::Update(deltaTime);
+					return;
+				}
 			}
 
 			/*----------------
@@ -432,6 +589,13 @@ void ArmorEnemyEntity::Update(float deltaTime)
 			m_actionLock = true;
 		}
 
+		if (m_turning)
+		{
+			UpdateTurnMotion(deltaTime);
+			EnemyEntity::Update(deltaTime);
+			return;
+		}
+
 		m_actionTimer += deltaTime;
 
 		float dir = GetDirSign();
@@ -439,13 +603,13 @@ void ArmorEnemyEntity::Update(float deltaTime)
 		switch (m_armorState)
 		{
 		case 0:
-			PlayMotion("idle", ARMOR_TEXTURE_IDLE, 4, 0.16f, true);
+			PlayMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			m_actionLock = false;
 			break;
 
 		case 1:
-			PlayMotion("walk", ARMOR_TEXTURE_WALK, 4, 0.12f, true);
+			PlayMotion("run");
 			m_velocity->SetVelocity(Vector2d(ARMOR_MOVE_SPEED * dir, 0.0f));
 
 			if (distance < ARMOR_ATTACK_RANGE)
@@ -455,7 +619,7 @@ void ArmorEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 2:
-			PlayMotion("idle", ARMOR_TEXTURE_IDLE, 4, 0.16f, true);
+			PlayMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (m_cooldownTimer <= 0.0f)
@@ -469,7 +633,7 @@ void ArmorEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			SetState(Actor::State::Dead);
+			StartDeadMotion();
 			break;
 		}
 	}
@@ -486,12 +650,12 @@ void ArmorEnemyEntity::Update(float deltaTime)
 
 		if (attackTime < ATTACK_START)
 		{
-			PlayMotion("attack_pre", ARMOR_TEXTURE_ATTACK_PRE, 3, 0.12f, false);
+			PlayMotion("attack");
 			m_attackActive = false;
 		}
 		else if (attackTime < ATTACK_END)
 		{
-			PlayMotion("attack", ARMOR_TEXTURE_ATTACK, 3, 0.08f, false);
+			PlayMotion("attack");
 			m_attackActive = true;
 
 			if (m_attackOnce == false)
@@ -502,7 +666,7 @@ void ArmorEnemyEntity::Update(float deltaTime)
 		}
 		else if (attackTime < END_TIME)
 		{
-			PlayMotion("attack_after", ARMOR_TEXTURE_ATTACK_AFTER, 3, 0.12f, false);
+			PlayMotion("attack");
 			m_attackActive = false;
 		}
 		else
@@ -522,5 +686,5 @@ void ArmorEnemyEntity::Update(float deltaTime)
 
 std::string ArmorEnemyEntity::GetTexturePath() const
 {
-	return ARMOR_TEXTURE_IDLE;
+	return "";
 }
