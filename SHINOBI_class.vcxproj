@@ -131,8 +131,9 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -144,16 +145,25 @@
     <ClCompile Include="BlockActor.cpp" />
     <ClCompile Include="BossEntity.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ClearBlock.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="EffectActor.cpp" />
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyEntity.cpp" />
+    <ClCompile Include="EnemyHPBar.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="EventTexture.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="HouseBlock.cpp" />
+    <ClCompile Include="KunaiActor.cpp" />
+    <ClCompile Include="MoneyUI.cpp" />
+    <ClCompile Include="PlatformBlock.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
+    <ClCompile Include="ShurikenUI.cpp" />
+    <ClCompile Include="StageBackActor.cpp" />
+    <ClCompile Include="StageExitActor.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -161,7 +171,10 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GravityComponent.cpp" />
     <ClCompile Include="GroundBlock.cpp" />
-    <ClCompile Include="HitEffect.cpp" />
+    <ClCompile Include="HitEffect.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="HPBerUI.cpp" />
     <ClCompile Include="HPComponent.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -180,6 +193,11 @@
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIActor.cpp" />
     <ClCompile Include="VelocityComponent.cpp" />
+    <ClCompile Include="WhiteShurikenBullet.cpp" />
+    <ClCompile Include="YaguraLBlock.cpp" />
+    <ClCompile Include="YaguraLLBlock.cpp" />
+    <ClCompile Include="YaguraMBlock.cpp" />
+    <ClCompile Include="YaguraSBlock.cpp" />
     <ClCompile Include="YellowEnemyEntity.cpp" />
     <ClCompile Include="YoroiBossEntity.cpp" />
   </ItemGroup>
@@ -192,17 +210,26 @@
     <ClInclude Include="BlockActor.h" />
     <ClInclude Include="BossEntity.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ClearBlock.h" />
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="EffectActor.h" />
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyEntity.h" />
+    <ClInclude Include="EnemyHPBar.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventTexture.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="HouseBlock.h" />
+    <ClInclude Include="KunaiActor.h" />
+    <ClInclude Include="MoneyUI.h" />
+    <ClInclude Include="PlatformBlock.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
+    <ClInclude Include="ShurikenUI.h" />
+    <ClInclude Include="StageBackActor.h" />
+    <ClInclude Include="StageExitActor.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -210,7 +237,10 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GravityComponent.h" />
     <ClInclude Include="GroundBlock.h" />
-    <ClInclude Include="HitEffect.h" />
+    <ClInclude Include="HitEffect.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="HPBarUI.h" />
     <ClInclude Include="HPComponent.h" />
     <ClInclude Include="Input.h" />
@@ -229,6 +259,11 @@
     <ClInclude Include="UIActor.h" />
     <ClInclude Include="Vector2d.h" />
     <ClInclude Include="VelocityComponent.h" />
+    <ClInclude Include="WhiteShurikenBullet.h" />
+    <ClInclude Include="YaguraLBlock.h" />
+    <ClInclude Include="YaguraLLBlock.h" />
+    <ClInclude Include="YaguraMBlock.h" />
+    <ClInclude Include="YaguraSBlock.h" />
     <ClInclude Include="YellowEnemyEntity.h" />
     <ClInclude Include="YoroiBossEntity.h" />
   </ItemGroup>
@@ -238,6 +273,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\images\blocks\ground.png" />
+    <Image Include="assets\images\entities\players\musashi_sheet.PNG" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

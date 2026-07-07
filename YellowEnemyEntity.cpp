@@ -5,6 +5,7 @@
 
 YellowEnemyEntity::YellowEnemyEntity(Scene* scene, const Vector2d& pos) : EnemyEntity(scene, pos, Vector2d(96, 190))
 {
+	printf("yellow Spawn\n");
 }
 
 bool YellowEnemyEntity::Init() {

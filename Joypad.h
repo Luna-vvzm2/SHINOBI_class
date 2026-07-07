@@ -42,7 +42,7 @@ public:
 	const float& GetStickRT() const { return m_RT; }
 
 private:
-	int m_padNumber;  // 使用するパッド番号（通常0）
+	int m_padNumber = 0;  // 使用するパッド番号（通常0）
 	std::array<bool, BUTTON_COUNT> m_nowButtons{};
 	std::array<bool, BUTTON_COUNT> m_oldButtons{};
 	std::array<int, BUTTON_COUNT> m_pressFrames{};

@@ -1,4 +1,5 @@
 //
+[TYPE="TALK"]
 [name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]そこのお前！ 何者だ！？
 [name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]……まだ朧の忍者がいたか。<br>覚悟するんだな。
 [name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe2.png"]答えろ！<br>何者だと聞いている！！ 
@@ -8,5 +9,16 @@
 [name="忍者" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]さあ、いくぞ……<br>その首、頂戴する！！
 
 //ここで戦闘イベント
+[TYPE="BATTLE"]
+[enemyType="1" posX="50.0f" posY="0.0f"]
+[enemyType="1" posX="720.0f" posY="0.0f"]
+[enemyType="1" posX="820.0f" posY="0.0f"]
 
+[TYPE="BATTLE"]
+[enemyType="1" posX="50.0f" posY="0.0f"]
+[enemyType="1" posX="720.0f" posY="0.0f"]
+[enemyType="1" posX="820.0f" posY="0.0f"]
+
+
+[TYPE="TALK"]
 [name="トモエ" time="None" pos="R" path="assets\images\events\stand\tomoe\tomoe1.png"]朧一族を殲滅するだって……？<br>師匠、急ぎましょう！みんなが危ない！！

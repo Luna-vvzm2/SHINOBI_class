@@ -34,16 +34,20 @@ public:
 
     HPComponent* GetHP() const { return m_hp; }
     virtual int GetMaxHP() const { return 100;  }
+    virtual void TakeDamage(int damage, const Vector2d& knockback);
 
 protected:
+    virtual void OnDamaged(int damage, const Vector2d& knockback) {}
+    virtual void OnDeadFromDamage(int damage, const Vector2d& knockback);
+
     HPComponent* m_hp;
     GravityComponent* m_gravity;
     //SpriteComponent* m_sprite;
     AnimationComponent* m_anim;
 
     bool m_dir;
-    float m_jumpSpeed;    // ジャンプ速度
-    float m_moveSpeed;    // 移動速度
+    float m_jumpSpeed;
+    float m_moveSpeed;
 
     int  m_guard;
     int  m_guardMax;
@@ -65,7 +69,7 @@ protected:
     float m_cooldownTimer;
     bool m_actionLock;
 
-    bool m_canMove;       // 移動可否
+    bool m_canMove;
 
     virtual std::string GetTexturePath() const override;
 

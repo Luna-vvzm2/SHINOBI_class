@@ -1,6 +1,7 @@
-[name="èµ¤çŒ¿é¬¼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]â€¦â€¦å¿ãŸã¡ã®å®¶ã‚’ç‡ƒã‚„ã—ã¦ã‚„ã£ãŸã€‚
-[name="èµ¤çŒ¿é¬¼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]é“å ´ã‚’ç ´å£Šã—ã€æˆ¦æ——ã‚’æŠ˜ã‚Šã€<br>å‘ã‹ã£ã¦ãã‚‹å¿ã‚’å…¨å“¡ã²ã¨ã‚Šã²ã¨ã‚Šæ®ºã—ã¦<br>ã‚„ã£ãŸã€‚
-[name="èµ¤çŒ¿é¬¼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]ã ãŒã€ãã‚Œã‚‚ãŠå‰ã§æœ€å¾Œâ€¦â€¦<br>ã“ã‚Œã§ã€æœ§ä¸€æ—ã‚‚çµ‚ã‚ã‚Šã ï¼
-[name="èµ¤çŒ¿é¬¼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]è¦šæ‚Ÿã—ã‚ã€ãƒ ã‚µã‚·ï¼<br>ã„ããï¼ï¼
+[TYPE="TALK"]
+[name="ˆ«—ì‚ÌŠZ•m" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]‚Ü‚¾O‚Ì”EÒ‚ªc‚Á‚Ä‚¢‚½‚©cc
+[name="ˆ«—ì‚ÌŠZ•m" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]ŠoŒå‚µ‚ëcc‰ä‚É“|‚³‚êA<br>Î‚Æ‚È‚Á‚½’‡ŠÔ‚½‚¿‚Æ“¯‚¶‰^–½‚ğ‚½‚Ç‚é‚Ì‚¾B 
 
-//ã“ã“ã§ã‚«ãƒƒãƒˆã‚¤ãƒ³ã‚¤ãƒ™ãƒ³ãƒˆ
+//‚±‚±‚Åí“¬ƒCƒxƒ“ƒg
+[TYPE="BATTLE"]
+[enemyType="7" posX="720.0f" posY="0.0f"]

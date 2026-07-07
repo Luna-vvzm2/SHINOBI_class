@@ -1,10 +1,8 @@
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]ã¾ã æœ§ã®å¿è€…ãŒæ®‹ã£ã¦ã„ãŸã‹â€¦â€¦
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]ã„ã‚„â€¦â€¦æœ€å¾Œã®ç”Ÿãæ®‹ã‚Šã€<br>ã¨ã„ã†ã¹ãã‹ãªã€‚
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]è¦‹ã¦ã®é€šã‚Šã€æœ§ã®é‡Œã¯æ®²æ»…ã•ã›ã¦ã‚‚ã‚‰ã£ãŸã‚ˆã€‚<br>ã“ã‚Œã§ã€ç§ã®é‡æœ›ã‚’é‚ªé­”ã™ã‚‹ã‚‚ã®ã¯ã„ãªã<br>ãªã£ãŸã€‚
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]æœ€å¾Œã®ã²ã¨ã‚Šâ€¦â€¦<br>ãŠå‰ã‚’å€’ã—ã¦ã€ã™ã¹ã¦çµ‚ã‚ã‚Šã ã€‚
-[name="ã‚¸ãƒ§ãƒ¼ãƒ»ãƒ ã‚µã‚·" time="None" pos="L" path="assets\images\events\stand\musashi\musashi.png"]â€¦â€¦
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]ã»ã†ã€ã„ã„ç›®ã‚’ã—ã¦ã„ã‚‹ãªâ€¦â€¦<br>æ†ã„ã‹ã€ã“ã®ä¿ºãŒã€‚æ®ºã—ãŸã„ã»ã©ã«ï¼ 
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]èµ¤çŒ¿é¬¼ï¼
-[name="èµ¤çŒ¿é¬¼" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]ã¯ã£ï¼<br>ãƒã‚¹ã‚¿ãƒ¼ã€ã“ã“ã«ï¼ï¼
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]ã‚³ã‚¤ãƒ„ã‚’æ®ºã›ï¼<br>ä¸–ç•Œã®å¸Œæœ›ã¨ã‚„ã‚‰ã‚’æ¶ˆæ»…ã•ã›ã‚‹ã®ã ï¼ï¼
-[name="ãƒ«ãƒ¼ã‚ºå¿" time="None" pos="R" path="assets\images\events\stand\enemy\shiro.png"]æœ§ä¸€æ—ã®è‹±é›„ã‚ˆâ€¦â€¦ã•ã‚‰ã°ã ã€‚<br>ãƒãƒ¼ãƒƒãƒãƒƒãƒãƒƒãƒãƒƒï¼ï¼
+[TYPE="TALK"]
+[name="“Xå" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]‚æ‚¤AƒVƒmƒrI<br>‰´‚Ì—d‰öƒVƒ‡ƒbƒv‚É‚æ‚¤‚±‚»I<br>‰½‚©”ƒ‚Á‚Ä‚¢‚­‚©‚¢H
+[name="ƒWƒ‡[Eƒ€ƒTƒV" time="None" pos="L" path="assets\images\events\stand\musashi\musashi.png"]cc
+[name="“Xå" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]‚¸A‚¸‚¢‚Ô‚ñƒmƒŠ‚Ìˆ«‚¢‚â‚Â‚¾‚Ècc<br>‚Ü‚ ‚¢‚¢‚âcc‚Æ‚É‚©‚­cc 
+[name="“Xå" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]‚±‚±O‚Ì—¢‚ÉŒ»‚ê‚½’jB<br>‚¦‚Á‚ÆAƒ‹[ƒY‚Æ‚©Œ¾‚Á‚½‚©B
+[name="“Xå" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]‚ ‚¢‚Â‚Í–\‚ê‰ß‚¬‚¾B<br>‚±‚±‚¾‚¯‚¶‚á‚Ë‚¦B—d‰ö‚Ì¢ŠE‚Å‚à‚¾B
+[name="“Xå" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]D‚«•ú‘è–\‚ê‚½ã‚ÉA<br>‰´‚½‚¿—d‰ö‚ğ”z‰º‚É‚µ‚Ä—˜—p‚µ‚Ä‚â‚ª‚éB<br>³’¼cc‹–‚¹‚Ë‚¦B
+[name="“Xå" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]‚¾‚©‚ç‚æA‰´‚Í‚ ‚ñ‚½‚É‹¦—Í‚·‚éB<br>ƒ‹[ƒY‚ğ~‚ß‚Ä‚­‚êB 

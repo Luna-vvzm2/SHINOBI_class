@@ -17,5 +17,6 @@ protected:
 
     virtual void UpdateAI(float deltaTime) = 0;
     virtual void UpdateAttack(float deltaTime) = 0;
+
 };
 

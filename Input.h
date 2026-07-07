@@ -10,11 +10,14 @@ enum class Action {
     DOWN,
     LEFT,
     RIGHT,
+    DASH,
     WEAK_ATTACK,
     STRONG_ATTACK,
+    KUNAI,
     ESCAPE,
     JUMP,
     ENTER,
+    MENU,
     ACTION_COUNT
 };
 

@@ -9,7 +9,7 @@ namespace {
 
 	//フォント名
 	const std::string GameFont = "x12y16pxMaruMonica";
-	const std::string DebugFont = "x14y20pxScoreDozer";
+	const std::string DebugFont = "HGSｺﾞｼｯｸE";
 
 	//	ウィンドウの幅と長さ
 	constexpr UINT WinWidth = 1280;

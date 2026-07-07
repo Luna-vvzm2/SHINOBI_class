@@ -1,8 +1,0 @@
-[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]くっ……敵の数が多すぎる！<br>こ、このままでは……！！
-
-//ここで滅のチュートリアル + 戦闘イベント
-
-[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]師匠、ありがとうございます。<br>助かりました。 
-[name="ジョー・ムサシ" time="None" pos="R" path="assets\images\events\stand\musashi\musashi.png"]……
-[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]……確かに、師匠の言う通りですね。<br>悔しいですが、私の実力では足手まといに…… 
-[name="トモエ" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]であれば、<br>私は、師匠の家でナオコさんを守ります。<br>師匠は早くみんなを助けに行ってください。

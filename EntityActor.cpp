@@ -1,6 +1,8 @@
 #include "EntityActor.h"
-#include "Scene.h"
+#include "PlayScene.h"
 #include "BlockActor.h"
+#include "StageBackActor.h"
+#include "StageExitActor.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "SpriteComponent.h"
@@ -65,13 +67,12 @@ void EntityActor::MoveAndCollide(float deltaTime) {
     Vector2d pos = m_transform->GetPosition();
     Vector2d vel = m_velocity->Get();
 
-    // 
+    // === Y•ûŒüˆÚ“® ===
     pos.y += vel.y * deltaTime;
     m_transform->SetPosition(pos);
 
-    // 
+    // === Y•ûŒüÕ“Ëˆ— ===
     for (auto actor : m_scene->GetActors()) {
-
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
         BlockActor* block = nullptr;
@@ -87,12 +88,58 @@ void EntityActor::MoveAndCollide(float deltaTime) {
             if (std::abs(actorPos.y - pos.y) > 300)
                 continue;
             break;
+        case ActorType::StageExit:
+        {
+            auto exit = static_cast<StageExitActor*>(actor);
+            CollisionComponent* exitCol = exit->GetCollision();
+
+            Vector2d exitPos = exit->GetPos();
+
+            float halfW = m_collision->GetWidth() * 0.5f;
+            float halfH = m_collision->GetHeight() * 0.5f;
+            float exitHalfW = exitCol->GetWidth() * 0.5f;
+            float exitHalfH = exitCol->GetHeight() * 0.5f;
+
+            Vector2d playerPos = m_transform->GetPosition();
+
+            if (std::abs(playerPos.x - exitPos.x) < halfW + exitHalfW &&
+                std::abs(playerPos.y - exitPos.y) < halfH + exitHalfH)
+            {
+                static_cast<PlayScene*>(m_scene)->RequestStageChange(exit->GetNextStage(), 0);
+            }
+            continue;
+        } break;
+        case ActorType::StageBack:
+        {
+            auto back = static_cast<StageBackActor*>(actor);
+
+            CollisionComponent* backCol = back->GetCollision();
+
+            Vector2d backPos = back->GetPos();
+
+            float halfW = m_collision->GetWidth() * 0.5f;
+            float halfH = m_collision->GetHeight() * 0.5f;
+            float backHalfW = backCol->GetWidth() * 0.5f;
+            float backHalfH = backCol->GetHeight() * 0.5f;
+
+            Vector2d playerPos = m_transform->GetPosition();
+
+            if (std::abs(playerPos.x - backPos.x) < halfW + backHalfW &&
+                std::abs(playerPos.y - backPos.y) < halfH + backHalfH)
+            {
+                static_cast<PlayScene*>(m_scene)->RequestStageChange(
+                    back->GetPrevStage(),
+                    back->GetSpawnIndex());
+            }
+
+            continue;
+        }
+        break;
         default:
             continue;
         }
 
         Vector2d playerPos = m_transform->GetPosition();
-
         float halfW = m_collision->GetWidth() * 0.5f;
         float halfH = m_collision->GetHeight() * 0.5f;
         float aHalfW = actorCol->GetWidth() * 0.5f;
@@ -110,6 +157,7 @@ void EntityActor::MoveAndCollide(float deltaTime) {
                     vel.y = 0;
                 }
                 else { // ã‚Éæ‚Á‚½
+                    
                     playerPos.y = actorPos.y - aHalfH - halfH;
                     vel.y = 0;
 
@@ -162,6 +210,8 @@ void EntityActor::MoveAndCollide(float deltaTime) {
                     playerPos.x = actorPos.x - aHalfW - halfW;
                 }
             }
+            vel.x = 0;
+            m_transform->SetPosition(playerPos);
         }
     }
     m_velocity->Set(vel);

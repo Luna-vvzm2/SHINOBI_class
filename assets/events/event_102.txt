@@ -1,4 +1,5 @@
 //
+[TYPE="TALK"]
 [name="トモエ" time="None" pos="R" path="assets\images\events\stand\tomoe\tomoe1.png"]師匠！ お迎えに参りました！
 [name="ナオコ" time="None" pos="R" path="assets\images\events\stand\tomoe\tomoe1.png"]忙しいところすみませんが、<br>今日の鍛錬、よろしくお願いします。<br>技の習得に苦戦している子も多いですからね。
 [name="ナオコ" time="None" pos="R" path="assets\images\events\stand\tomoe\tomoe1.png"]い、いや私は苦戦してないですよ！？

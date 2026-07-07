@@ -6,7 +6,15 @@
 #include "PlayScene.h"
 #include "PlayerEntity.h"
 #include "Game.h"
-
+#include "Actor.h"
+#include "WhiteEnemyEntity.h"
+#include "YellowEnemyEntity.h"
+#include "ArrowEnemyEntity.h"
+#include "HealerEnemyEntity.h"
+#include "ArmorEnemyEntity.h"
+#include "GunnerEnemyEntity.h"
+#include "YoroiBossEntity.h"
+#include "SekienkiBossEntity.h"
 
 
 EventManager::EventManager(Scene* scene, EventTexture* eventTexture)
@@ -19,35 +27,64 @@ EventManager::~EventManager() = default;
 
 void EventManager::Init(std::unique_ptr<EventBase> event)
 {
-
+	
 	if (!event) return;
-	m_currentEvent = std::move(event);
-	m_currentEvent->Init();
+	m_eventQueue.clear();
+	m_eventQueue.push_back(std::move(event));
+	m_currentEventIndex = 0;
+
+	m_eventQueue[m_currentEventIndex]->Init();
 }
 
 void EventManager::Update(float deltaTime)
 {
-	if (!m_currentEvent) return;
-	m_currentEvent->Update(deltaTime);
-	if (m_currentEvent->IsEnd())
+	if (m_currentEventIndex >= m_eventQueue.size()) return;
+	m_eventQueue[m_currentEventIndex]->Update(deltaTime);
+
+	if (m_eventQueue[m_currentEventIndex]->IsEnd())
 	{
-		m_currentEvent->End();
-		m_currentEvent.reset();
+		m_eventQueue[m_currentEventIndex]->End();
+		m_currentEventIndex++;
+
+		if(m_currentEventIndex < m_eventQueue.size())
+		{
+			m_eventQueue[m_currentEventIndex]->Init();
+		}
+		else
+		{
+			m_eventQueue.clear();
+			m_currentEventIndex = 0;
+		}
 	}
 }
 
 void EventManager::End()
 {
-	if (m_currentEvent)
+	if (m_currentEventIndex < m_eventQueue.size())
 	{
-		m_currentEvent->End();
-		m_currentEvent.reset();
+		m_eventQueue[m_currentEventIndex]->End();
 	}
+
+	m_eventQueue.clear();
+	m_currentEventIndex = 0;
 }
 
 bool EventManager::IsRunning() const
 {
-	return m_currentEvent != nullptr;
+	return m_currentEventIndex < m_eventQueue.size();
+}
+
+bool EventManager::IsBattleEvent() const
+{
+	if (m_currentEventIndex >= m_eventQueue.size()) return false;
+
+	if (m_eventQueue[m_currentEventIndex]->GetType() == EventType::Battle)
+	{
+		auto battleEvent = static_cast<BattleEvent*>(m_eventQueue[m_currentEventIndex].get());
+		return true;
+	}
+
+	return false;
 }
 
 bool EventManager::IsEventTriggered(int eventId) const
@@ -60,9 +97,69 @@ void EventManager::RegisterEvent(int eventId)
 	m_triggeredEvents.insert(eventId);
 }
 
+void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d& triggerPos)
+{
+	m_eventQueue.clear();
+	m_currentEventIndex = 0;
+
+	std::ifstream ifs(filePath);
+	if (!ifs.is_open()) return;
+
+	std::string text;
+	std::string eventType = "TALK"; //デフォルトのイベントタイプ
+	std::vector<std::string> eventTexts;
+
+	auto pushEvent = [&]()
+		{
+			if (eventTexts.empty()) return;
+
+			if (eventType == "TALK")
+			{
+				m_eventQueue.push_back(std::make_unique<TalkEvent>(m_scene, eventTexts, this));
+			}
+			else if (eventType == "BATTLE")
+			{
+				auto battleEvent = std::make_unique<BattleEvent>(m_scene, eventTexts, this);
+				battleEvent->SetTrigger(triggerPos);
+				m_eventQueue.push_back(std::move(battleEvent));
+			}
+			else if (eventType == "CUTIN")
+			{
+				m_eventQueue.push_back(std::make_unique<CutInEvent>(m_scene, eventTexts, this));
+			}
+			eventTexts.clear();
+		};
+
+	while (std::getline(ifs, text))
+	{
+		if (text.empty() || text.rfind("//", 0) == 0)continue;
+
+		if (text.find("[TYPE=") != std::string::npos)
+		{
+			pushEvent();
+
+			if (text.find("TALK") != std::string::npos) eventType = "TALK";
+			else if (text.find("BATTLE") != std::string::npos) eventType = "BATTLE";
+			else if (text.find("CUTIN") != std::string::npos) eventType = "CUTIN";
+			continue;
+		}
+		eventTexts.push_back(text);
+	}
+	pushEvent();
+	ifs.close();
+
+	if(!m_eventQueue.empty())
+	{
+		m_eventQueue[0]->Init();
+	}
+}
+
 void EventManager::Draw()
 {
-	m_currentEvent->Draw();
+	if (m_currentEventIndex < m_eventQueue.size())
+	{
+		m_eventQueue[m_currentEventIndex]->Draw();
+	}
 }
 
 EventTexture* EventManager::GetEventTexture() const
@@ -81,13 +178,6 @@ std::string EventBase::LoadConfig(const std::string& text, const std::string& co
 	size_t end = text.find("\"", start);
 	if (end == std::string::npos) return "";
 	return text.substr(start, end - start);
-}
-
-TalkEvent::TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
-	: m_scene(scene)
-	, m_eventManager(eventManager)
-{
-	LoadTexts(filePath);
 }
 
 void EventBase::LoadTexts(const std::string& filePath)
@@ -116,6 +206,21 @@ void EventBase::DeleteTexts()
 {
 	m_texts.clear();
 	m_texts.shrink_to_fit();
+}
+
+
+TalkEvent::TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	LoadTexts(filePath);
+}
+
+TalkEvent::TalkEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
 }
 
 TalkEvent::~TalkEvent() = default;
@@ -359,11 +464,233 @@ void TalkEvent::Draw()
 }
 
 
+BattleEvent::BattleEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	LoadTexts(filePath);
+}
+
+BattleEvent::BattleEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
+}
+
+BattleEvent::~BattleEvent() = default;
+
+void BattleEvent::Init()
+{
+	m_areaXMin = -64.0f;
+	m_areaXMax = 1016.0f;
+
+	for (auto actor : m_scene->GetActors())
+	{
+		actor->SetState(Actor::State::Active);
+		if (actor->GetType() == ActorType::Player)
+		{
+			auto p = static_cast<PlayerEntity*>(actor);
+			p->SetCanMove(true);
+
+			Vector2d playerPos = actor->GetComponent<TransformComponent>()->GetPosition();
+		}
+	}
+	if (m_eventManager)
+	{
+		Vector2d triggerPos = m_eventManager->GetTriggerPosition();
+
+		m_areaXMin += triggerPos.x;
+		m_areaXMax += m_areaXMin;
+
+		m_isAreaSet = true;
+	}
+	m_isSpawned = false;
+	m_isEnd = false;
+}
+
+void BattleEvent::Update(float deltaTime)
+{
+	if (!m_isSpawned)
+	{
+		for (const std::string& text : m_texts)
+		{
+			
+			size_t configEndPos = text.find(']');
+			if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+			{
+				std::string configPart = text.substr(1, configEndPos - 1);
+
+				std::string enemyStr = LoadConfig(configPart, "enemyType");
+				if (!enemyStr.empty() && enemyStr != "None") m_enemyType = std::stoi(enemyStr);
+
+				std::string posXStr = LoadConfig(configPart, "posX");
+				if (!posXStr.empty() && posXStr != "None") m_enemyPos.x = std::stof(posXStr);
+
+				std::string posYStr = LoadConfig(configPart, "posY");
+				if (!posYStr.empty() && posYStr != "None") m_enemyPos.y = std::stof(posYStr);
+
+				std::string areaMinStr = LoadConfig(configPart, "areaMin");
+				if (!areaMinStr.empty() && areaMinStr != "None") m_areaXMin = std::stof(areaMinStr);
+
+				std::string areaMaxStr = LoadConfig(configPart, "areaMax");
+				if (!areaMaxStr.empty() && areaMaxStr != "None") m_areaXMax = std::stof(areaMaxStr);
+
+				EnemySpawn();
+			}
+		}
+		m_isSpawned = true;
+		return;
+	}
+
+	bool enemyAlive = false;
+	for (auto actor : m_scene->GetActors())
+	{
+		if (actor->GetType() == ActorType::Enemy && actor->GetState() == Actor::State::Active)
+		{
+
+			if (m_isAreaSet)
+			{
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (transform)
+				{
+					float posX = transform->GetPosition().x;
+					if (posX < m_areaXMin || posX > m_areaXMax)
+					{
+						continue;
+					}
+				}
+			}
+			enemyAlive = true;
+			break;
+		}
+	}
+
+
+	if (!enemyAlive)
+	{
+		m_isEnd = true; 
+		return;
+	}
+
+	if (m_isAreaSet)
+	{
+		for (auto actor : m_scene->GetActors())
+		{
+			if (actor->GetState() == Actor::State::Active && (actor->GetType() == ActorType::Player || actor->GetType() == ActorType::Enemy))
+			{
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (!transform) continue;
+
+				Vector2d pos = transform->GetPosition();
+
+				// 左右の壁で押し戻す
+				if (pos.x < m_areaXMin) pos.x = m_areaXMin;
+				if (pos.x > m_areaXMax) pos.x = m_areaXMax;
+
+				transform->SetPosition(pos);
+			}
+		}
+	}
+}
+
+
+void BattleEvent::End()
+{
+	DeleteTexts();
+}
+
+bool BattleEvent::IsEnd() const
+{
+	return m_isEnd;
+}
+
+void BattleEvent::EnemySpawn()
+{
+	Vector2d triggerPos{ 0.0f, 0.0f };
+	if (m_eventManager)
+	{
+		triggerPos = m_eventManager->GetTriggerPosition();
+	}
+	m_enemyPos += triggerPos;
+	m_enemyPos.y += 64.0f;
+	
+
+	switch (m_enemyType)
+	{
+	case 1:
+	{
+		WhiteEnemyEntity* enemy = new WhiteEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 2:
+	{
+		YellowEnemyEntity* enemy = new YellowEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 3:
+	{
+		ArrowEnemyEntity* enemy = new ArrowEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 4:
+	{
+		HealerEnemyEntity* enemy = new HealerEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 5:
+	{
+		ArmorEnemyEntity* enemy = new ArmorEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 6:
+	{
+		GunnerEnemyEntity* enemy = new GunnerEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 7:
+	{
+		YoroiBossEntity* enemy = new YoroiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 8:
+	{
+		SekienkiBossEntity* enemy = new SekienkiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	default:
+		std::cerr << "無効な値のため敵を生成できません。\n";
+		break;
+	}
+
+}
+
+void BattleEvent::Draw()
+{
+	return;
+}
+
+
 CutInEvent::CutInEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
 	: m_scene(scene)
 	, m_eventManager(eventManager)
 {
 	LoadTexts(filePath);
+}
+
+CutInEvent::CutInEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
 }
 
 CutInEvent::~CutInEvent() = default;
@@ -526,7 +853,7 @@ void CutInEvent::Draw()
 
 
 EventTrigger::EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager)
-	:Actor(scene)
+	:BlockActor(scene)
 	,m_eventId(eventId)
 	,m_size(size)
 	,m_isTriggered(false)
@@ -575,11 +902,10 @@ void EventTrigger::Update(float deltaTime)
 			}
 
 			m_eventManager->RegisterEvent(m_eventId); //重複を避ける
+			m_eventManager->SetTriggerPosition(myPos);
 
 			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".txt";
-			auto talkEvent = std::make_unique<TalkEvent>(m_scene, filePath, m_eventManager);
-
-			m_eventManager->Init(std::move(talkEvent));
+			m_eventManager->LoadEventTimeLine(filePath, myPos);
 		}
 
 		SetState(Actor::State::Dead);
@@ -588,7 +914,7 @@ void EventTrigger::Update(float deltaTime)
 	
 }
 
-ActorType EventTrigger::GetType() const
+BlockType EventTrigger::GetBlockType() const
 {
-	return ActorType::UI;
+	return BlockType::Solid;
 }

@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 #include "Color.h"
-#include "Actor.h"
+#include "BlockActor.h"
 #include "Vector2d.h"
 
 class Scene;
@@ -23,8 +23,13 @@ public:
 	void End(); //イベント終了
 
 	bool IsRunning() const; //イベントが実行中か
+	bool IsBattleEvent() const; //戦闘専用
 	bool IsEventTriggered(int eventId) const;
 	void RegisterEvent(int eventId);
+
+	void LoadEventTimeLine(const std::string& filePath, const Vector2d& triggerPos); //複数の連続するイベントを読み込む
+	void SetTriggerPosition(const Vector2d& pos) { m_triggerPos = pos; }
+	const Vector2d& GetTriggerPosition() const { return m_triggerPos; }
 
 	void Draw();
 
@@ -33,16 +38,29 @@ public:
 private:
 	Scene* m_scene; //イベントを管理するシーン
 	EventTexture* m_eventTexture{ nullptr }; //イベントの画像を管理
-	std::unique_ptr<EventBase> m_currentEvent{ nullptr }; //実行中のイベント
+	//std::unique_ptr<EventBase> m_currentEvent{ nullptr }; //実行中のイベント
+	std::vector<std::unique_ptr<EventBase>> m_eventQueue; //イベントのキュー
+	size_t m_currentEventIndex{ 0 };
 	std::set<int> m_triggeredEvents;
+
+	Vector2d m_triggerPos{ 0.0f, 0.0f };
 };
 
+enum class EventType
+{
+	Talk,
+	CutIn,
+	Battle
+};
 
 class EventBase
 {
 public:
+
 	EventBase(); //コンストラクタ
 	virtual ~EventBase(); //デストラクタ
+
+	virtual EventType GetType() const = 0;
 
 	virtual void Init() = 0; //イベント開始時の処理
 	virtual void Update(float deltaTime) = 0; //更新
@@ -63,7 +81,10 @@ class TalkEvent : public EventBase
 {
 public:
 	TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager); //コンストラクタ
+	TalkEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
 	~TalkEvent() override; //デストラクタ
+
+	EventType GetType() const override { return EventType::Talk; }
 
 	void Init() override;
 	void Update(float deltaTime) override;
@@ -116,11 +137,51 @@ private:
 }; 
 
 
+class BattleEvent : public EventBase
+{
+public:
+	BattleEvent(Scene* scene, const std::string& filePath, EventManager* eventManager);
+	BattleEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
+	~BattleEvent() override;
+
+	EventType GetType() const override { return EventType::Battle; }
+
+	void Init() override;
+	void Update(float deltaTime) override;
+	void End() override;
+
+	bool IsEnd() const override;
+
+	void SetTrigger(const Vector2d& pos) { m_triggerPos = pos; }
+
+private:
+	Scene* m_scene{ nullptr };
+	EventManager* m_eventManager{ nullptr };
+
+    bool m_isEnd{ false };
+	bool m_isSpawned{ false };
+	bool m_isAreaSet{ false };
+
+	int m_enemyType{ 0 };
+	Vector2d m_enemyPos{ 0.0f, -88.0f };
+	Vector2d m_triggerPos{ 0.0f, 0.0f };
+
+	float m_areaXMin{ -64.0f };
+	float m_areaXMax{ 1016.0f };
+
+	void EnemySpawn();
+	void Draw() override;
+};
+
+
 class CutInEvent : public EventBase
 {
 public:
 	CutInEvent(Scene* scene, const std::string& filePath, EventManager* eventManager);
+	CutInEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
 	~CutInEvent() override;
+
+	EventType GetType() const override { return EventType::CutIn; }
 
 	void Init() override;
 	void Update(float deltaTime) override;
@@ -178,7 +239,7 @@ private:
 };
 
 
-class EventTrigger : public Actor
+class EventTrigger : public BlockActor
 {
 public:
 	EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager);
@@ -186,7 +247,8 @@ public:
 	void Update(float deltaTime) override;
 	void Draw() override {}
 
-	ActorType GetType() const override;
+	BlockType GetBlockType() const override;
+	std::string GetTexturePath() const override { return ""; }
 
 private:
 	int m_eventId;

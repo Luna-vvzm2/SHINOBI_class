@@ -29,6 +29,7 @@ public:
 
     void AddClip(const std::string& name, const AnimationClip& clip);
     void Play(const std::string& name, bool reset = false);
+    bool IsFinished() const;
 
     const std::string& GetCurrentName() const { return m_currentName; }
 
@@ -43,5 +44,5 @@ private:
     std::string m_currentName;
 
     float m_timer;
-    float m_frameIndex;
+    int m_frameIndex;
 };

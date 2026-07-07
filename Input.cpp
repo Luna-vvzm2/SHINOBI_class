@@ -11,19 +11,24 @@ void Input::Init() {
     m_actionKeyMap[static_cast<size_t>(Action::DOWN)] = { Key::DOWN, Key::S };
     m_actionKeyMap[static_cast<size_t>(Action::LEFT)] = { Key::LEFT, Key::A };
     m_actionKeyMap[static_cast<size_t>(Action::RIGHT)] = { Key::RIGHT, Key::D };
+    m_actionKeyMap[static_cast<size_t>(Action::DASH)] = { Key::U };
     m_actionKeyMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Key::I };
     m_actionKeyMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Key::O };
+    m_actionKeyMap[static_cast<size_t>(Action::KUNAI)] = { Key::P };
     m_actionKeyMap[static_cast<size_t>(Action::JUMP)] = { Key::SPACE };
     m_actionKeyMap[static_cast<size_t>(Action::ESCAPE)] = { Key::ESCAPE };
     m_actionKeyMap[static_cast<size_t>(Action::ENTER)] = { Key::ENTER };
+    m_actionKeyMap[static_cast<size_t>(Action::MENU)] = { Key::M };
 
     // ジョイパッドも同様に
     m_actionPadMap[static_cast<size_t>(Action::UP)] = { Joypad::UP };
     m_actionPadMap[static_cast<size_t>(Action::DOWN)] = { Joypad::DOWN };
     m_actionPadMap[static_cast<size_t>(Action::LEFT)] = { Joypad::LEFT };
     m_actionPadMap[static_cast<size_t>(Action::RIGHT)] = { Joypad::RIGHT };
-    m_actionPadMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Joypad::Y };
-    m_actionPadMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Joypad::X };
+    m_actionPadMap[static_cast<size_t>(Action::DASH)] = { Joypad::RB };
+    m_actionPadMap[static_cast<size_t>(Action::WEAK_ATTACK)] = { Joypad::X };
+    m_actionPadMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Joypad::Y };
+    m_actionPadMap[static_cast<size_t>(Action::KUNAI)] = { Joypad::B };
     m_actionPadMap[static_cast<size_t>(Action::JUMP)] = { Joypad::A };
     m_actionPadMap[static_cast<size_t>(Action::ENTER)] = { Joypad::B };
     m_key.Init();
@@ -96,7 +101,7 @@ int Input::GetPressFrame(Action action) const {
 
     // パッド側チェック（最大値をとる）
     for (auto btn : m_actionPadMap[idx]) {
-        if (m_key.GetPressFrame(btn) > frame) {
+        if (m_pad.GetPressFrame(btn) > frame) {
             frame = m_pad.GetPressFrame(btn);
         }
     }

@@ -1,7 +1,22 @@
-[name="åº—ä¸»" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ã‚ˆã†ã€ã‚·ãƒãƒ“ï¼<br>ä¿ºã®å¦–æ€ªã‚·ãƒ§ãƒƒãƒ—ã«ã‚ˆã†ã“ãï¼<br>ä½•ã‹è²·ã£ã¦ã„ãã‹ã„ï¼Ÿ
-[name="ã‚¸ãƒ§ãƒ¼ãƒ»ãƒ ã‚µã‚·" time="None" pos="L" path="assets\images\events\stand\musashi\musashi.png"]â€¦â€¦
-[name="åº—ä¸»" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ãšã€ãšã„ã¶ã‚“ãƒãƒªã®æ‚ªã„ã‚„ã¤ã ãªâ€¦â€¦<br>ã¾ã‚ã„ã„ã‚„â€¦â€¦ã¨ã«ã‹ãâ€¦â€¦ 
-[name="åº—ä¸»" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ã“ã“æœ§ã®é‡Œã«ç¾ã‚ŒãŸç”·ã€‚<br>ãˆã£ã¨ã€ãƒ«ãƒ¼ã‚ºã¨ã‹è¨€ã£ãŸã‹ã€‚
-[name="åº—ä¸»" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ã‚ã„ã¤ã¯æš´ã‚Œéãã ã€‚<br>ã“ã“ã ã‘ã˜ã‚ƒã­ãˆã€‚å¦–æ€ªã®ä¸–ç•Œã§ã‚‚ã ã€‚
-[name="åº—ä¸»" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]å¥½ãæ”¾é¡Œæš´ã‚ŒãŸä¸Šã«ã€<br>ä¿ºãŸã¡å¦–æ€ªã‚’é…ä¸‹ã«ã—ã¦åˆ©ç”¨ã—ã¦ã‚„ãŒã‚‹ã€‚<br>æ­£ç›´â€¦â€¦è¨±ã›ã­ãˆã€‚
-[name="åº—ä¸»" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ã ã‹ã‚‰ã‚ˆã€ä¿ºã¯ã‚ã‚“ãŸã«å”åŠ›ã™ã‚‹ã€‚<br>ãƒ«ãƒ¼ã‚ºã‚’æ­¢ã‚ã¦ãã‚Œã€‚ 
+[TYPE="TALK"]
+[name="ƒgƒ‚ƒG" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]‚­‚Ácc“G‚Ì”‚ª‘½‚·‚¬‚éI<br>‚±A‚±‚Ì‚Ü‚Ü‚Å‚ÍccII
+
+//‚±‚±‚Å–Å‚Ìƒ`ƒ…[ƒgƒŠƒAƒ‹ + í“¬ƒCƒxƒ“ƒg
+[TYPE="BATTLE"]
+[enemyType="1" posX="50.0f" posY="0.0f"]
+[enemyType="2" posX="720.0f" posY="0.0f"]
+[enemyType="2" posX="820.0f" posY="0.0f"]
+
+[TYPE="BATTLE"]
+[enemyType="1" posX="50.0f" posY="0.0f"]
+[enemyType="2" posX="720.0f" posY="0.0f"]
+
+[TYPE="BATTLE"]
+[enemyType="2" posX="720.0f" posY="0.0f"]
+[enemyType="2" posX="820.0f" posY="0.0f"]
+
+[TYPE="TALK"]
+[name="ƒgƒ‚ƒG" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]t A‚ ‚è‚ª‚Æ‚¤‚²‚´‚¢‚Ü‚·B<br>•‚©‚è‚Ü‚µ‚½B 
+[name="ƒWƒ‡[Eƒ€ƒTƒV" time="None" pos="R" path="assets\images\events\stand\musashi\musashi.png"]cc
+[name="ƒgƒ‚ƒG" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]ccŠm‚©‚ÉAt ‚ÌŒ¾‚¤’Ê‚è‚Å‚·‚ËB<br>‰÷‚µ‚¢‚Å‚·‚ªA„‚ÌÀ—Í‚Å‚Í‘«è‚Ü‚Æ‚¢‚Écc 
+[name="ƒgƒ‚ƒG" time="None" pos="L" path="assets\images\events\stand\tomoe\tomoe3.png"]‚Å‚ ‚ê‚ÎA<br>„‚ÍAt ‚Ì‰Æ‚ÅƒiƒIƒR‚³‚ñ‚ğç‚è‚Ü‚·B<br>t ‚Í‘‚­‚İ‚ñ‚È‚ğ•‚¯‚És‚Á‚Ä‚­‚¾‚³‚¢B

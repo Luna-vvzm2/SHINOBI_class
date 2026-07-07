@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include "TransformComponent.h"
 #include "CollisionComponent.h"
+#include "PlayerEntity.h"
 
 std::unordered_map<std::string, int>
 SpriteComponent::s_textureCache;
@@ -32,7 +33,6 @@ SpriteComponent::SpriteComponent(Actor* actor, const std::string& texturePath)
     , m_texturePath(texturePath)
 {
 }
-
 // --------------------
 // デストラクタ
 // --------------------
@@ -58,14 +58,14 @@ void SpriteComponent::Update(float deltaTime) {}
 // --------------------
 void SpriteComponent::Draw() {
     if (m_handle == -1) {
-        DrawBox(
+        /*DrawBox(
             -16,
             -16,
             16,
             16,
             GetColor(255, 0, 255),
             TRUE
-        );
+        );*/
 
         return;
     }
@@ -88,7 +88,7 @@ void SpriteComponent::Draw() {
     GetGraphSize(m_handle, &texW, &texH);
 
     // Collision の位置とサイズに合わせて描画
-    Vector2d pos = transform->GetPosition();
+    Vector2d pos = transform->GetPosition() + m_drawOffset;
     // ★ Transform の scale をそのまま使う
     Vector2d scale = transform->GetScale();
     if (m_drawH > 0.0f && texH > 0)
@@ -105,8 +105,8 @@ void SpriteComponent::Draw() {
     }
 
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, 0.0f, m_handle,
-        true, Vector2d(static_cast<float>(texW), static_cast<float>(texH)) * 0.5f, 255, m_flipH, false
+        pos, scale.x, scale.y, transform->GetAngle(), m_handle,
+        true, Vector2d((float)texW, (float)texH) * 0.5f, 255, m_flipX, false
     );
 }
 
@@ -133,7 +133,6 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
 
     // フレーム配列確保
     m_frames.resize(total);
-
     // 正しい幅・高さで分割読み込み
     int ret = LoadDivGraph(
         path.c_str(),
@@ -167,11 +166,27 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
 // --------------------
 void SpriteComponent::SetFrame(int index)
 {
+    if (index == -1) {
+        m_handle = -1;
+        return;
+    }
+
     if (index < 0 || index >= (int)m_frames.size())
         return;
 
     m_currentFrame = index;
     m_handle = m_frames[index];
+}
+
+void SpriteComponent::SetEffectFrames(const std::vector<int>& frames)
+{
+    m_frames = frames;
+
+    if (!m_frames.empty())
+    {
+        m_currentFrame = 0;
+        m_handle = m_frames[0];
+    }
 }
 
 // --------------------
@@ -194,7 +209,7 @@ bool SpriteComponent::LoadTexture(const std::string& path) {
     else {
         m_handle = LoadGraph(path.c_str());
         if (m_handle == -1) {
-            std::cerr << "[ERROR] 画像読み込み失敗: " << path << std::endl;
+            std::cerr << "[ERROR] 画像読み込み失敗:  " << path << std::endl;
             m_width = 32;
             m_height = 32;
 

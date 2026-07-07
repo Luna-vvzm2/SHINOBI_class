@@ -24,6 +24,7 @@ public:
     // 分割画像の読み込み
     bool LoadTextureDiv(const std::string& path, int xNum, int yNum);
     void SetFrame(int index);   // 指定フレームに切り替え
+    void SetEffectFrames(const std::vector<int>& frames);
     void SetTexture(int handle); // 指定ハンドルに切り替え
 
     bool LoadTexture(const std::string& path);
@@ -40,6 +41,12 @@ public:
 
     int GetHandle() const { return m_handle; }
 
+    void SetFlipX(bool flip) { m_flipX = flip; }
+    bool GetFlipX() const { return m_flipX; }
+
+    Vector2d GetDrawOffset() { return m_drawOffset; }
+    void SetDrawOffset(float x, float y) { m_drawOffset = Vector2d{ x, y }; }
+
 private:
     int m_handle;
     float m_width;
@@ -50,6 +57,10 @@ private:
     float m_drawW = 0;
     float m_drawH = 0;
     bool m_flipH = false;
+
+    Vector2d m_drawOffset = { 0.0f, 0.0f };
+
+    bool m_flipX = false;
 
     std::vector<int> m_frames;   // 分割されたフレームのハンドル
     int m_currentFrame = 0;      // 現在のフレーム番号

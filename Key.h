@@ -12,11 +12,14 @@ public:
 		A,
 		S,
 		D,
+		U,
 		I,
 		O,
+		P,
 		ESCAPE,
 		SPACE,
 		ENTER,
+		M,
 		KEY_COUNT
 	};
 

@@ -2,6 +2,8 @@
 #include "EnemyEntity.h"
 #include <vector>
 
+class PlayerEntity;
+
 class WhiteEnemyEntity : public EnemyEntity
 {
 public:
@@ -9,11 +11,11 @@ public:
 
 	bool Init() override;
 	void Update(float deltaTime) override;
+	void TakeDamage(int damage, const Vector2d& knockback) override;
 
 	std::string GetTexturePath() const override;
 
-private:
-	bool TryGetPlayerInfo(Vector2d& playerPos, HPComponent*& playerHp, bool& playerOnGround) const;
+	bool TryGetPlayerInfo(Vector2d& playerPos, PlayerEntity*& player, bool& playerOnGround) const;
 	void PlayMotion(
 		const std::string& motionName,
 		const std::string& texturePath,
@@ -29,8 +31,16 @@ private:
 	);
 	void StartShurikenAttack();
 	void StartSwordAttack();
+	void StartWeakHit();
+	void StartBlowHit(const Vector2d& knockback);
+	void StartLargeBlowHit(const Vector2d& knockback);
+	void StartDeadHit();
+	void UpdateDamageMotion(float deltaTime);
+	void CancelAttackForDamage();
+	// void UpdateDebugDamageInput();
 
 	float GetDirSign() const;
+	void SetFacing(bool flipH);
 	void PrepareMoveTracking(float wantedMoveX);
 
 private:
@@ -44,4 +54,8 @@ private:
 	float m_lastWantedMoveX;
 	float m_wallStopTimer;
 	Vector2d m_lastMoveStartPos;
+	int m_damageState;
+	int m_damageFrameIndex;
+	float m_damageFrameTimer;
+	bool m_damageHoldGroundFrame;
 };
