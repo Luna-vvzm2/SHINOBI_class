@@ -7,6 +7,7 @@
 #include "DropItemEntity.h"
 #include "EntityActor.h"
 #include "AnimationComponent.h"
+#include "SpriteComponent.h"
 
 #include <cmath>
 
@@ -37,13 +38,15 @@ bool YellowEnemyEntity::Init() {
 
     // 必ずコインを落とす
     m_dropTable.push_back({ ItemType::Coin, 1.0f });
-   
-    if (!EnemyEntity::Init())
-        return false;
 
+    m_sprite->LoadTextureDiv(
+        GetTexturePath(),
+        4,
+        11
+    );
     m_animation = AddComponent<AnimationComponent>();
     m_animation->SetSprite(m_sprite);
-
+    
     AnimationClip stay;
     stay.frames = {0,1,2,3,4};
     stay.speed = 0.12f;
@@ -51,38 +54,38 @@ bool YellowEnemyEntity::Init() {
 
 
     AnimationClip walk;
-    walk.frames = { 6,7,8,9,10,11,12,13,14,15 };
+    walk.frames = { 5,6,7,8,9,10,11,12,13,14 };
     walk.speed = 0.12f;
     walk.loop = true;
 
     AnimationClip attackReady;
-    attackReady.frames = { 16,17,18,19 };
+    attackReady.frames = { 15,16,17,18 };
     attackReady.speed = 0.12f;
     attackReady.loop = false;
 
     AnimationClip attack1;
-    attack1.frames = { 20,21,22 };
+    attack1.frames = { 19,20,21 };
     attack1.speed = 0.08f;
     attack1.loop = false;
 
     AnimationClip attack2;
-    attack2.frames = { 23,24,25,26 };
+    attack2.frames = { 22,23,24,25 };
     attack2.speed = 0.08f;
     attack2.loop = false;
 
     AnimationClip hit;
-    hit.frames = {27,28,29,30};
+    hit.frames = {26,27,28,29,};
     hit.speed = 0.08f;
     hit.loop = false;
 
     AnimationClip hitback;
-    hitback.frames = { 27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43 };
+    hitback.frames = { 26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42 };
     hitback.speed = 0.08f;
     hitback.loop = false;
 
 
     AnimationClip dead;
-    dead.frames = { 27,28,29,30,31,32,33,34,35,36,37,38,39,40 };
+    dead.frames = { 26,27,28,29,30,31,32,33,34,35,36,37,38,39 };
     dead.speed = 0.1f;
     dead.loop = false;
 
@@ -98,6 +101,7 @@ bool YellowEnemyEntity::Init() {
 
     // ⑤ 最初は待機アニメーション
     m_animation->Play("Stay");
+    m_transform->SetScale(Vector2d(0.4f, 0.4f));
     return true;
 }
 
@@ -109,7 +113,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
         return;
 
     // デバッグ用：毎秒ダメージ
-    /*
+   /*
     m_damageTimer += deltaTime;
     if (m_damageTimer >= 1.0f)
     {
@@ -136,25 +140,23 @@ void YellowEnemyEntity::Update(float deltaTime) {
         player->GetPos().x - GetPos().x;
 
     
-    if (m_hp && m_hp->GetHP() <= 0)
+    if (m_hp && m_hp->GetHP() <= 0 && !m_isDying)
     {
+        m_isDying = true;
+        m_state = Dead;
 
-        OnDead();
-        return;
+        m_deadTimer = 0.0f;
+
+        m_velocity->Set(Vector2d::Zero());
+
+        m_animation->Play("Dead", true);
     }
 
     switch (m_state)
     {
-    case Dead:
-        if (m_animation->GetCurrentName() != "Dead")
-        {
-            m_animation->Play("Dead");
-        }
-        vel.x = 0.0f;
-        
-        break;
 
     case Idle:
+        m_sprite->SetDrawOffset(Vector2d(0.0f, 0.0f));
         if (m_animation->GetCurrentName() != "Stay")
         {
             m_animation->Play("Stay");
@@ -166,8 +168,30 @@ void YellowEnemyEntity::Update(float deltaTime) {
         }
         break;
 
+    case Dead:
+    {
+        vel.x = 0.0f;
+
+        m_deadTimer += deltaTime;
+        m_sprite->SetDrawOffset(Vector2d(0.0f, 10.0f));
+        if (m_deadTimer > 2.0f)
+        {
+            float t = (m_deadTimer - 2.0f) / 1.0f;
+
+            int alpha = (int)(255 * (1.0f - t));
+
+            m_sprite->SetAlpha(alpha);
+        }
+        if (m_deadTimer >= 3.0f)
+        {
+            OnDead();
+            return;
+        }
+
+        break;
+    }
     case Chase:
-       
+        m_sprite->SetDrawOffset(Vector2d(0.0f, -10.0f));
         if (m_animation->GetCurrentName() != "Walk")
         {
             m_animation->Play("Walk");
@@ -175,23 +199,26 @@ void YellowEnemyEntity::Update(float deltaTime) {
         if (distance > 0)
         {
             m_faceRight = true;
+            m_sprite->SetFlipH(true);
             vel.x = m_moveSpeed;
         }
         else
         {
             m_faceRight = false;
+            m_sprite->SetFlipH(false);
             vel.x = -m_moveSpeed;
         }
 
         if (std::abs(distance) < m_attackRange)
         {
             m_state = AttackReady;
-            m_attackTimer = 0.7f;
+            m_attackTimer = 0.6f;
             vel.x = 0.0f;
         }
         break;
 
     case AttackReady:
+        m_sprite->SetDrawOffset(Vector2d(0, -20.0f));
         if (m_animation->GetCurrentName() != "AttackReady")
         {
             m_animation->Play("AttackReady");
@@ -202,28 +229,31 @@ void YellowEnemyEntity::Update(float deltaTime) {
         if (m_attackTimer <= 0)
         {
             m_state = Attack1;
-            m_attackTimer = 0.2f;
+            m_attackTimer = 0.3f;
             m_attackHit = false;
         }
         break;
 
     case Attack1:
+        m_sprite->SetDrawOffset(Vector2d(0.0f, -20.0f));
         if (m_animation->GetCurrentName() != "Attack1")
         {
             m_animation->Play("Attack1");
         }
         vel.x = 0.0f;
-        m_attackCollision->SetRect(60.0f, 120.0f);
+        
         if (m_faceRight)
         {
+            m_attackCollision->SetRect(150.0f, 200.0f);
             m_attackCollision->SetOffset(
-                Vector2d(1000.0f, 0.0f));
+                Vector2d(100.0f, 0.0f));
 
         }
         else
         {
+        m_attackCollision->SetRect(150.0f, 200.0f);
         m_attackCollision->SetOffset(
-            Vector2d(-60.0f, 0.0f));
+            Vector2d(-100.0f, 0.0f));
             
         }
 
@@ -231,27 +261,30 @@ void YellowEnemyEntity::Update(float deltaTime) {
         if (m_attackTimer <= 0)
         {
             m_state = Attack2;
-            m_attackTimer = 0.2f;
+            m_attackTimer = 0.3f;
             m_attackHit = false;
         }
         break;
 
     case Attack2:
+        m_sprite->SetDrawOffset(Vector2d(0.0f, -20.0f));
         if (m_animation->GetCurrentName() != "Attack2")
         {
             m_animation->Play("Attack2");
         }
         vel.x = 0.0f;
-        m_attackCollision->SetRect(200.0f, 120.0f);
+        
         if (m_faceRight)
         {
+            m_attackCollision->SetRect(300.0f, 200.0f);
             m_attackCollision->SetOffset(
-                Vector2d(100.0f, 0.0f));
+                Vector2d(0.0f, 0.0f));
         }
         else
         {
+            m_attackCollision->SetRect(300.0f, 200.0f);
             m_attackCollision->SetOffset(
-                Vector2d(-100.0f,-200.0f));
+                Vector2d(0.0f,0.0f));
         }
 
         m_attackTimer -= deltaTime;
@@ -264,6 +297,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
         break;
 
     case Recovery:
+        m_sprite->SetDrawOffset(Vector2d(0.0f, 0.0f));
         if (m_animation->GetCurrentName() != "Stay")
         {
             m_animation->Play("Stay");
@@ -303,6 +337,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
     }
     m_velocity->Set(vel);
     EnemyEntity::Update(deltaTime);
+
 }
 
 

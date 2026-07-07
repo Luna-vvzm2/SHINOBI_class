@@ -97,6 +97,7 @@ std::string TreasureBoxEntity::GetTexturePath() const
     return "Assets/images/objects/crateSmall.png";
 }
 
+
 void TreasureBoxEntity::OnDead()
 {
     if (m_isFading)

@@ -89,7 +89,7 @@ void SpriteComponent::Draw() {
     GetGraphSize(m_handle, &texW, &texH);
 
     // Collision の位置とサイズに合わせて描画
-    Vector2d pos = transform->GetPosition();
+    Vector2d pos = transform->GetPosition() + m_drawOffset;
     // ★ Transform の scale をそのまま使う
     Vector2d scale = transform->GetScale();
 
@@ -102,8 +102,8 @@ void SpriteComponent::Draw() {
         true,
         Vector2d(texW, texH) * 0.5f,
         m_alpha,
-        false,
-        false
+        m_flipH,
+        m_flipV
     );
 }
 
@@ -233,3 +233,13 @@ void SpriteComponent::ReleaseTextures()
     );
 }
 
+//画像位置調整
+void SpriteComponent::SetDrawOffset(const Vector2d& offset)
+{
+    m_drawOffset = offset;
+}
+
+const Vector2d& SpriteComponent::GetDrawOffset() const
+{
+    return m_drawOffset;
+}

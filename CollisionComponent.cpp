@@ -87,16 +87,7 @@ bool CollisionComponent::CheckCollision(const CollisionComponent* other) const {
 	Vector2d posA = GetOwnerPosition();
 	Vector2d posB = other->GetOwnerPosition();
 
-	//デバッグ
-	printfDx(
-		"Collision\n"
-		" A=(%.0f,%.0f) Size=(%.0f,%.0f)\n"
-		" B=(%.0f,%.0f) Size=(%.0f,%.0f)\n",
-		posA.x, posA.y,
-		m_width, m_height,
-		posB.x, posB.y,
-		other->GetWidth(), other->GetHeight()
-	);
+
 
 	CollisionShape shapeA = m_shape;
 	CollisionShape shapeB = other->GetShape();
@@ -145,10 +136,7 @@ bool CollisionComponent::CheckRectToRect(const Vector2d& a, float aw, float ah, 
 	float halfWB = bw * 0.5f;
 	float halfHB = bh * 0.5f;
 
-	printfDx(
-		"A=(%.0f,%.0f) B=(%.0f,%.0f)\n",
-		a.x, a.y, b.x, b.y
-	);
+	
 
 	return (std::abs(a.x - b.x) <= halfWA + halfWB) &&
 		(std::abs(a.y - b.y) <= halfHA + halfHB);
@@ -266,7 +254,7 @@ void CollisionComponent::DrawDebug() const {
 	auto transform = m_owner->GetComponent<TransformComponent>();
 	if (!transform) return;
 
-	Vector2d pos = transform->GetPosition();
+	Vector2d pos = GetOwnerPosition();
 
 
 
