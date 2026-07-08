@@ -151,6 +151,8 @@ void SkillMenu::Draw()
     //----------------------------------
     // カーソル
     //----------------------------------
+    if (m_owner->GetCursorArea() == Menu::MenuCursorArea::SkillList)
+    {
     if (cursor.GetCategory() < 0 ||
         cursor.GetCategory() >= static_cast<int>(m_categories.size()))
     {
@@ -214,6 +216,7 @@ void SkillMenu::Draw()
         );
     }
 }
+}
 
 void SkillMenu::Update(float deltaTime)
 {
@@ -224,68 +227,48 @@ void SkillMenu::Update(float deltaTime)
 
     cursor.Update(input, deltaTime);
 
-//----------------------
-// 下入力
-//----------------------
+    //----------------------------------
+    // 初回入力
+    //----------------------------------
+
     if (input.IsTrigger(Action::DOWN))
     {
-        if (cursor.GetCategory() == 3)
-        {
-            // 戦闘技
-            int index = cursor.GetIndex();
-
-            if (index < 9)
-            {
-                // 1段目→2段目
-                if (index == 8)
-                {
-                    // 一番右は最後のマスへ
-                    cursor.SetIndex(16);
-                }
-                else
-                {
-                    cursor.SetIndex(index + 9);
-                }
-            }
-        }
-        else
-        {
-            cursor.SetCategory(cursor.GetCategory() + 1);
-        }
+        MoveDown();
     }
 
-    //----------------------
-    // 上入力
-    //----------------------
     if (input.IsTrigger(Action::UP))
     {
-        if (cursor.GetCategory() == 3)
-        {
-            int index = cursor.GetIndex();
+        MoveUp();
+    }
 
-            if (index >= 9)
-            {
-                // 2段目→1段目
-                if (index == 16)
-                {
-                    // 最後のマスは右端へ戻す
-                    cursor.SetIndex(8);
-                }
-                else
-                {
-                    cursor.SetIndex(index - 9);
-                }
-            }
-            else
-            {
-                // 戦闘技1段目から上へ
-                cursor.SetCategory(cursor.GetCategory() - 1);
-            }
-        }
-        else
+    //----------------------------------
+    // 長押し
+    //----------------------------------
+
+    if (input.IsDown(Action::DOWN) ||
+        input.IsDown(Action::UP))
+    {
+        m_verticalRepeatTimer += deltaTime;
+
+        if (m_verticalRepeatTimer >= VerticalRepeatDelay)
         {
-            cursor.SetCategory(cursor.GetCategory() - 1);
+            while (m_verticalRepeatTimer >=
+                VerticalRepeatDelay + VerticalRepeatInterval)
+            {
+                m_verticalRepeatTimer -=
+                    VerticalRepeatInterval;
+
+                if (input.IsDown(Action::DOWN))
+                    MoveDown();
+
+                if (input.IsDown(Action::UP))
+                    MoveUp();
+            }
         }
+    }
+    else
+    {
+        m_verticalRepeatTimer = 0.0f;
     }
 
     cursor.ClampCategory(
@@ -293,6 +276,51 @@ void SkillMenu::Update(float deltaTime)
     );
 
     ClampCursor();
+}
+
+void SkillMenu::MoveDown()
+{
+    auto& cursor = m_owner->GetCursor();
+
+    if (cursor.GetCategory() == 3)
+    {
+        if (cursor.GetIndex() < 9)
+        {
+            cursor.SetIndex(cursor.GetIndex() + 9);
+        }
+    }
+    else
+    {
+        cursor.SetCategory(cursor.GetCategory() + 1);
+    }
+}
+
+void SkillMenu::MoveUp()
+{
+    auto& cursor = m_owner->GetCursor();
+
+    if (cursor.GetCategory() == 3)
+    {
+        if (cursor.GetIndex() >= 9)
+        {
+            cursor.SetIndex(cursor.GetIndex() - 9);
+        }
+        else
+        {
+            cursor.SetCategory(cursor.GetCategory() - 1);
+        }
+    }
+    else
+    {
+        if (cursor.GetCategory() == 0)
+        {
+            m_owner->SetCursorArea(Menu::MenuCursorArea::Tab);
+        }
+        else
+        {
+            cursor.SetCategory(cursor.GetCategory() - 1);
+        }
+    }
 }
 
 void SkillMenu::ClampCursor()

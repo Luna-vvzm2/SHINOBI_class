@@ -53,4 +53,12 @@ private:
         int y,
         const SkillData& skill) const;
 
+    float m_verticalRepeatTimer = 0.0f;
+
+    static constexpr float VerticalRepeatDelay = 0.25f;
+    static constexpr float VerticalRepeatInterval = 0.08f;
+
+    void MoveUp();
+    void MoveDown();
+
 };

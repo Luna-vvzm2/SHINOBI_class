@@ -39,15 +39,17 @@ void Menu::Update(float deltaTime)
 		if (input.IsTrigger(Action::LEFT))
 			m_tabCursor = 1;
 
-		if (input.IsTrigger(Action::ENTER))
+		if (input.IsTrigger(Action::DOWN) ||
+			input.IsTrigger(Action::ENTER))
 		{
 			if (m_tabCursor == 0)
 				m_currentTab = Tab::Skill;
 			else
-				m_currentTab = Tab::Equipment;
+				m_currentTab = Tab::Skill;//–{—ˆ‚ÍEquipment
 
-			m_cursorArea =
-				MenuCursorArea::SkillList;
+			m_cursorArea = MenuCursorArea::SkillList;
+
+			return;   
 		}
 	}
 
@@ -145,10 +147,7 @@ void Menu::DrawTabs()
 	//====================
 	if (GetCursorArea() == MenuCursorArea::Tab)
 	{
-		int x =
-			(GetTabCursor() == 0)
-			? skillX
-			: equipX;
+		int x = (m_tabCursor == 0) ? skillX : equipX;
 
 		DrawBox(
 			x - 4,

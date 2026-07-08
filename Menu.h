@@ -40,6 +40,8 @@ public:
         return m_cursor;
     }
 
+    void SetCursorArea(MenuCursorArea area);
+
 private:
 
     void DrawTabs();
@@ -65,6 +67,6 @@ private:
 
     bool m_isOpen = false;
 
-    void SetCursorArea(MenuCursorArea area);
+
 
 };
