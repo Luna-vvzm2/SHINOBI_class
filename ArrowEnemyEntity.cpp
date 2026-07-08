@@ -47,7 +47,7 @@ void ArrowEnemyEntity::Update(float deltaTime)
     if (GetState() == Actor::State::Dead)
         return;
 
-    m_damageTimer += deltaTime;
+    /*m_damageTimer += deltaTime;
     if (m_damageTimer >= 1.0f)
     {
         m_damageTimer -= 1.0f;
@@ -56,7 +56,7 @@ void ArrowEnemyEntity::Update(float deltaTime)
         {
             m_hp->Damage(10);
         }
-    }
+    }*/
 
     if (m_hp && m_hp->GetHP() <= 0)
     {

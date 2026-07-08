@@ -712,6 +712,12 @@ bool PlayScene::StageInit(int stageNo) {
 				AddActor(new StageExitActor(this, pos, m_stageIndex + 1));
 			} break;
 
+			case 4:
+			{
+				AddActor(new TreasureBoxEntity(this, pos));
+				break;
+			}
+
 			case 9:
 				AddActor(new Trap(this, pos, Vector2d(192, 192)));
 				break;
