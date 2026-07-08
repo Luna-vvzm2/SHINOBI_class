@@ -57,6 +57,7 @@ void SpriteComponent::Update(float deltaTime) {}
 // 描画
 // --------------------
 void SpriteComponent::Draw() {
+    
     if (m_handle == -1) {
         /*DrawBox(
             -16,
@@ -133,6 +134,12 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
 
     // フレーム配列確保
     m_frames.resize(total);
+
+    SetDrawBlendMode(
+        DX_BLENDMODE_ALPHA,
+        m_alpha
+    );
+
     // 正しい幅・高さで分割読み込み
     int ret = LoadDivGraph(
         path.c_str(),
@@ -142,6 +149,10 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
         frameW,
         frameH,
         m_frames.data()
+    );
+    SetDrawBlendMode(
+        DX_BLENDMODE_NOBLEND,
+        255
     );
 
     if (ret == -1) {
@@ -176,6 +187,11 @@ void SpriteComponent::SetFrame(int index)
 
     m_currentFrame = index;
     m_handle = m_frames[index];
+    std::cout
+        << "Frame " << index
+        << " Handle = " << m_handle
+        << std::endl;
+
 }
 
 void SpriteComponent::SetEffectFrames(const std::vector<int>& frames)

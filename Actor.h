@@ -17,6 +17,7 @@ enum class ActorType {
 	Effect,
 	StageBack,
 	StageExit,
+	TreasureBox,
 	UI,
 	DropItem
 };

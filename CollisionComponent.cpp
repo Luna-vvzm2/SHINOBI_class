@@ -249,7 +249,7 @@ void CollisionComponent::DrawDebug() const {
 	auto transform = m_owner->GetComponent<TransformComponent>();
 	if (!transform) return;
 
-	Vector2d pos = transform->GetPosition();
+	Vector2d pos = GetOwnerPosition();
 
 
 

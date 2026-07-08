@@ -29,7 +29,6 @@ public:
 
     bool LoadTexture(const std::string& path);
     void SetSize(float w, float h);
-
     static void ReleaseTextures();
 
     float GetWidth() const { return m_width; }
@@ -40,6 +39,13 @@ public:
     void SetFlipH(bool flipH) { m_flipH = flipH; }
 
     int GetHandle() const { return m_handle; }
+    void SetAlpha(int alpha) { m_alpha = alpha; }
+    int GetAlpha() const { return m_alpha; }
+
+    void SetFlipV(bool flip)
+    {
+        m_flipV = flip;
+    }
 
     void SetFlipX(bool flip) { m_flipX = flip; }
     bool GetFlipX() const { return m_flipX; }
@@ -53,15 +59,18 @@ private:
     float m_height;
     std::string m_texturePath;
     static std::unordered_map<std::string, int> s_textureCache;
+    //画像位置調整
+    Vector2d m_drawOffset = Vector2d::Zero();
 
     float m_drawW = 0;
     float m_drawH = 0;
     bool m_flipH = false;
-
-    Vector2d m_drawOffset = { 0.0f, 0.0f };
+    bool  m_flipV = false;
 
     bool m_flipX = false;
 
     std::vector<int> m_frames;   // 分割されたフレームのハンドル
     int m_currentFrame = 0;      // 現在のフレーム番号
+    int m_alpha = 255;
+    
 };

@@ -2,6 +2,8 @@
 #include "EnemyEntity.h"
 #include "CollisionComponent.h"
 
+class AnimationComponent;
+
 struct AttackRect
 {
 	int x;
@@ -33,10 +35,10 @@ private:
 	State m_state = Idle;
 
 	float m_attackTimer = 0.0f;
-	float m_detectRange = 100.0f;
+	float m_detectRange = 300.0f;
 	float m_attackRange = 50.0f;
 	float m_deadTimer = 0.0f;
-	CollisionComponent* m_attackCollision ;
+	CollisionComponent* m_attackCollision = nullptr;
 
 	bool m_attackHit = false;
 
@@ -44,6 +46,10 @@ private:
 	int m_damagePerSecond = 10;
 	bool m_faceRight = true;
 	bool m_isHit = false;
+	bool m_isDying = false;      // éÄñSèàóùíÜÇ©
+
 	AttackRect m_attackRect = { 0,0,0,0 };
+	AnimationComponent* m_animation = nullptr;
+
 };
 

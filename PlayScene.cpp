@@ -32,6 +32,8 @@
 #include "HPBarUI.h"
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
+#include "TreasureBox.h"
+
 #include "Camera.h"
 #include "MoneyUI.h"
 #include "EnemyHPBar.h"

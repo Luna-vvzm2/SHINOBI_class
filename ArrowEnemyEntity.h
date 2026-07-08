@@ -32,6 +32,9 @@ private:
     float GetGroundY(float x);
     Vector2d m_targetPos;
     bool m_attackExecuted;
+    float m_damageTimer = 0.0f;
+    int m_damagePerSecond = 10;
+    bool m_isHit = false;
 };
 
 

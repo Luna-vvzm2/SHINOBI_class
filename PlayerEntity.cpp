@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "BlockActor.h"
 #include "KunaiActor.h"
+#include "TreasureBox.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "GravityComponent.h"
@@ -1300,6 +1301,11 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
 
         if (overlapX > 0 && overlapY > 0)
         {
+            if (actor->GetType() == ActorType::TreasureBox) {
+                TreasureBoxEntity* enemy = static_cast<TreasureBoxEntity*>(actor);
+                enemy->Open();
+                continue;
+            }
             enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
             enemy->TakeMetsu(hitbox.metsu);
             m_hit = true;

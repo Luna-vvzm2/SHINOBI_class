@@ -45,6 +45,11 @@ public:
 	//	線分の当たり判定を作る
 	void SetSegment(const Vector2d& start, const Vector2d& end);
 
+
+	const Vector2d& GetOffset() const
+	{
+		return m_offset;
+	}
 	// 衝突判定
 	// pos: このオブジェクトの座標
 	// other: 判定対象のCollision

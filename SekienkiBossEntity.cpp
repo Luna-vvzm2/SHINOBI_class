@@ -261,7 +261,6 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
     if (prevStep != m_attackStep)
     {
-        printf("[Step Change] %d -> %d\n", prevStep, m_attackStep);
         prevStep = m_attackStep;
     }
  

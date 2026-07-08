@@ -5,9 +5,9 @@
 #include "CollisionComponent.h"
 #include "PlayScene.h"
 #include "PlayerEntity.h"
-
 #include "DropData.h"
 #include <DxLib.h>
+
 
 DropItemEntity::DropItemEntity(Scene* scene, const Vector2d& pos, ItemType type) 
 	: EntityActor(scene, pos, Vector2d(48, 48))
@@ -23,12 +23,33 @@ bool DropItemEntity::Init()
 		return false;
 
     GetTransform()->SetScale(Vector2d(0.3f, 0.3f));
-   
+
+    m_animation = AddComponent<AnimationComponent>();
+    m_animation->SetSprite(m_sprite);
+
+        if (m_itemType == ItemType::Coin)
+        {
+            m_sprite->LoadTextureDiv(
+                "assets/images/DropItem/coin/coin_sheet.png",
+                3,
+                5
+            );
+        
+
+            AnimationClip spin;
+            spin.frames = { 0,1,2,3,4,5,6,7,8,9,10,11,12 };
+            spin.speed = 0.08f;
+            spin.loop = true;
+
+            m_animation->AddClip("Spin", spin);
+            m_animation->Play("Spin");
+        }
     return true;
 }
 
 void DropItemEntity::Update(float deltaTime)
 {
+    EntityActor::Update(deltaTime);
     PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
     if (!playScene) return;
 
@@ -125,13 +146,13 @@ std::string DropItemEntity::GetTexturePath() const
     switch (m_itemType)
     {
     case ItemType::Coin:
-        return "assets/images/DropItem/coin.png";
+        return "";
 
     case ItemType::Heal:
-        return "";
+        return "assets/images/DropItem/heal.png";
 
     case ItemType::Kunai:
-        return "";
+        return "assets/images/DropItem/kunai.png";
 
     case ItemType::Haku:
         return "";
