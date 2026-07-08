@@ -497,8 +497,21 @@ bool PlayerEntity::Init() {
     m_collision->SetRect(85, 152);
     m_sprite->SetDrawOffset(0.0f, -34.0f);
 
+    // HPが0になったときのコールバックを設定
+    if (m_hp) {
+        m_hp->OnDeath = [this]() {
+            std::cout << "Player died! Showing Game Over Menu..." << std::endl;
+            // PlaySceneを取得してゲームオーバーメニューを表示
+            PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
+            if (playScene) {
+                playScene->ShowGameOverMenu();
+            }
+            };
+    }
+
     m_anim->Play("idle");
     m_state = ActionState::IDLE;
+
 
     return true;
 }
@@ -522,6 +535,18 @@ void PlayerEntity::Update(float deltaTime) {
 
     if (m_anim) m_anim->Update(deltaTime);
     EntityActor::Update(deltaTime);
+
+    // デバッグ用：4キーを押すとHPが0になる
+#ifdef _DEBUG
+    const Input& input = m_scene->GetGame()->GetInput();
+    if (input.GetKey().IsTrigger(Key::NUM_4)) {
+        if (m_hp) {
+            m_hp->Damage(m_hp->GetMaxHP());
+            std::cout << "[Debug] Player HP set to 0 by pressing 4 key" << std::endl;
+        }
+    }
+#endif
+
 }
 
 void PlayerEntity::UpdateIgnorePlatform()

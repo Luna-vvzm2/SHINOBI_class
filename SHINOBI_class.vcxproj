@@ -155,17 +155,20 @@
     <ClCompile Include="EnemyHPBar.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="EventTexture.cpp" />
+    <ClCompile Include="GameOverMenuUI.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="HouseBlock.cpp" />
     <ClCompile Include="KunaiActor.cpp" />
     <ClCompile Include="MoneyUI.cpp" />
+    <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PlatformBlock.cpp" />
     <ClCompile Include="ScarecrowEnemyEntity.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="ShurikenUI.cpp" />
     <ClCompile Include="StageBackActor.cpp" />
     <ClCompile Include="StageExitActor.cpp" />
+    <ClCompile Include="Trap.cpp" />
     <ClCompile Include="TreasureBox.cpp" />
     <ClCompile Include="WhiteEnemyEntity.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -225,17 +228,20 @@
     <ClInclude Include="EnemyHPBar.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventTexture.h" />
+    <ClInclude Include="GameOverMenuUI.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="HouseBlock.h" />
     <ClInclude Include="KunaiActor.h" />
     <ClInclude Include="MoneyUI.h" />
+    <ClInclude Include="Mouse.h" />
     <ClInclude Include="PlatformBlock.h" />
     <ClInclude Include="ScarecrowEnemyEntity.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="ShurikenUI.h" />
     <ClInclude Include="StageBackActor.h" />
     <ClInclude Include="StageExitActor.h" />
+    <ClInclude Include="Trap.h" />
     <ClInclude Include="WhiteEnemyEntity.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>

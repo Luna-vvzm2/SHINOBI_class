@@ -1,5 +1,9 @@
 #define NOMINMAX
 #include "PlayScene.h"
+#include "TransformComponent.h"
+#include "VelocityComponent.h"
+#include "HPComponent.h"
+#include "GameOverMenuUI.h"
 #include "Game.h"
 #include "Renderer.h"
 #include "Input.h"
@@ -24,11 +28,10 @@
 #include "YaguraLBlock.h"
 #include "YaguraLLBlock.h"
 #include "PlatformBlock.h"
+#include "Trap.h"
 #include "HPBarUI.h"
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
-#include "TransformComponent.h"
-#include "HPComponent.h"
 #include "Camera.h"
 #include "MoneyUI.h"
 #include "EnemyHPBar.h"
@@ -487,7 +490,6 @@ void PlayScene::DrawSkillMenu()
 PlayScene::PlayScene(Game* game)
 	: Scene(game),
 	m_player(nullptr),
-	m_effect(nullptr),
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
 	m_stageIndex(0),
 	m_comboCount(0),
@@ -497,7 +499,11 @@ PlayScene::PlayScene(Game* game)
 	m_bgHandle(0),
 	m_fgHandle(0),
 	m_eventTexture(std::make_unique<EventTexture>()),
-	m_eventManager(std::make_unique<EventManager>(this, m_eventTexture.get())) //イベントのため変更
+	m_eventManager(std::make_unique<EventManager>(this, m_eventTexture.get())), //イベントのため変更
+	m_respawnPos(200, 800),
+	m_gameOverMenu(nullptr),
+	m_isGameOver(false),
+	m_isPaused(false)
 {
 
 }
@@ -703,6 +709,10 @@ bool PlayScene::StageInit(int stageNo) {
 			{
 				AddActor(new StageExitActor(this, pos, m_stageIndex + 1));
 			} break;
+
+			case 9:
+				AddActor(new Trap(this, pos, Vector2d(192, 192)));
+				break;
 
 			case 14:
 			{
@@ -943,6 +953,14 @@ bool PlayScene::StageInit(int stageNo) {
 		} // for x
 	} // for y
 
+	// ---- ゲームオーバーメニューUI 作成 ----
+	m_gameOverMenu = new GameOverMenuUI(this);
+	AddUIActor(m_gameOverMenu);
+
+	BackGroundUI* back = new BackGroundUI(this, "assets/images/uies/bg.png");
+	AddBackActor(back);
+
+
 	float halfTile = m_mapData.tileSize * 0.5f;
 	m_camera.SetTileHalfSize(Vector2d(halfTile, halfTile));
 
@@ -984,6 +1002,15 @@ void PlayScene::ChangeStage(int index, int spawnIndex) {
 		spawnIndex < static_cast<int>(m_playerSpawnPoints.size()))
 	{
 		m_player->SetPosition(m_playerSpawnPoints[spawnIndex]);
+		if (m_player)
+		{
+			Vector2d playerPos = m_player->GetPos();
+
+			Vector2d camPos = playerPos;
+			camPos.y -= 150;
+
+			m_camera.SetCenter(camPos);
+		}
 	}
 }
 
@@ -1028,17 +1055,29 @@ void PlayScene::ClearStageActors()
 
 void PlayScene::RequestStageChange(int stage, int spawnIndex)
 {
+	if (m_requestStageChange || m_fadeState != FadeState::None)
+		return;
 	m_requestStageChange = true;
 	m_nextStage = stage;
 	m_nextSpawnIndex = spawnIndex;
-	printf("Request Stage %d\n", stage);
+	printf("Request Stage %d  fade=%d\n",
+		stage,
+		(int)m_fadeState);
 }
 
 void PlayScene::Update(float deltaTime) {
+	// ====== フェード遷移中はゲームロジックを止める ======
+	if (m_fadeState != FadeState::None) {
+		UpdateFade(deltaTime);
+		// フェード中も UI（ゲームオーバーメニュー等）は動かしたいならここで
+		updateActors(m_UIactors, deltaTime);
+		return; // 通常更新はスキップ
+	}
+
 	if (m_requestStageChange)
 	{
 		m_requestStageChange = false;
-		ChangeStage(m_nextStage, m_nextSpawnIndex);
+		StartFadeToStage(m_nextStage, m_nextSpawnIndex);
 	}
 
 	//イベントのため変更
@@ -1086,8 +1125,36 @@ void PlayScene::Update(float deltaTime) {
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
 
+	// ゲームオーバーメニューの処理
+	if (m_gameOverMenu && m_gameOverMenu->IsActive()) {
+		if (m_gameOverMenu->IsDecided()) {
+			m_gameOverMenu->ResetDecided();
 
-	// カメラ設定など（既にある処理）
+			switch (m_gameOverMenu->GetSelectedItem()) {
+			case GameOverMenuUI::MenuItem::CONTINUE:
+				// コンティニュー：リスポーン
+				m_isPaused = false;
+				m_isGameOver = false;
+				m_gameOverMenu->SetActive(false);
+				RespawnPlayer();
+				break;
+
+			case GameOverMenuUI::MenuItem::WORLD_MAP:
+				// ワールドマップ画面へ移動
+				// TODO: ワールドマップシーンへの遷移処理を追加
+				std::cout << "Transition to World Map (not implemented yet)" << std::endl;
+				break;
+
+			case GameOverMenuUI::MenuItem::TITLE:
+				// タイトル画面へ移動
+				m_isRunning = false;  // PlaySceneを終了
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
 	if (m_player) {
 		Vector2d playerPos = m_player->GetComponent<TransformComponent>()->GetPosition();
 
@@ -1096,6 +1163,21 @@ void PlayScene::Update(float deltaTime) {
 		camPos.y -= 150;
 		m_camera.SetCenter(camPos);
 		m_camera.SetZoom(1.0f);
+		/*
+		// 線形補間で徐々にズーム変更
+		float currentZoom = m_camera.GetZoom();
+		float zoomSpeed = 5.0f;
+		float newZoom = currentZoom + (targetZoom - currentZoom) * std::min(zoomSpeed * deltaTime, 1.0f);
+		*/
+
+		float fixedCameraY = 400.0f;  // スクロール開始位置の上限
+
+		if (playerPos.y < fixedCameraY) {
+			camPos.y = playerPos.y - 200;  // 上に移動したらカメラもスクロール
+		}
+		else {
+			camPos.y = fixedCameraY - 200;  // それ以外はカメラ固定
+		}
 	}
 
 	// 敵ごとのHPバー追従：World -> Screen using m_camera (PlayScene の m_camera)
@@ -1135,7 +1217,7 @@ void PlayScene::Update(float deltaTime) {
 
 			}
 		}
-		
+
 		++it;
 	}
 	RemoveDeadActors();
@@ -1146,7 +1228,7 @@ void PlayScene::Update(float deltaTime) {
 	}
 
 }
-
+		
 void PlayScene::Draw() {
 	Renderer* renderer = m_game->GetRenderer();
 	if (!renderer) return;
@@ -1165,10 +1247,8 @@ void PlayScene::Draw() {
 		break;
 	}
 	
-	// --- アクター描画 ---
 	drawActors(m_backactors);
 	drawActors(m_actors);
-	drawActors(m_UIactors);
 
 	// 前景
 	switch (m_stageIndex) {
@@ -1181,6 +1261,8 @@ void PlayScene::Draw() {
 		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 4960.0f), 4.3f, 4.3f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
 	}
 	
+
+	drawActors(m_UIactors);
 
 	//イベントのために変更
 	if (m_eventManager->IsRunning())
@@ -1247,8 +1329,10 @@ void PlayScene::Draw() {
 
 	if (m_resultShown) {
 		const std::string& debugFont = m_game->GatDebugFont();
+
 		renderer->DrawNumberFormatW(
-			Vector2d(m_game->GetWidth() / 2.4f, m_game->GetHeight() / 2.2f),
+			Vector2d(m_game->GetWidth() / 2.4f,
+				m_game->GetHeight() / 2.2f),
 			Color(0, 0, 0),
 			debugFont,
 			32,
@@ -1258,11 +1342,58 @@ void PlayScene::Draw() {
 		);
 	}
 
-	// --- デバッグ文字 ---
+	// ←ここを追加
+	DrawFadeOverlay();
+
 #ifdef _DEBUG
 	const std::string& debugFont = m_game->GatDebugFont();
-	renderer->DrawTextL(Vector2d(m_game->GetWidth() - 150.0f, 0), "PlayScene", Color(255, 64, 0), debugFont, 24, false);
+	renderer->DrawTextL(
+		Vector2d(m_game->GetWidth() - 150.0f, 0),
+		"PlayScene",
+		Color(255, 64, 0),
+		debugFont,
+		24,
+		false
+	);
 #endif
+}
+
+void PlayScene::AddCombo() {
+	m_comboCount++;
+	std::cout << "Combo: " << m_comboCount << std::endl;
+}
+
+void PlayScene::RespawnPlayer() {
+	if (!m_player) return;
+
+	// プレイヤーの位置をリスポーン位置に戻す
+	TransformComponent* transform = m_player->GetComponent<TransformComponent>();
+	if (transform) {
+		transform->SetPosition(m_respawnPos);
+	}
+
+	// プレイヤーの速度をリセット
+	VelocityComponent* velocity = m_player->GetComponent<VelocityComponent>();
+	if (velocity) {
+		velocity->Set(Vector2d::Zero());
+	}
+
+	// HPを最大値に回復
+	HPComponent* hp = m_player->GetHP();
+	if (hp) {
+		hp->Heal(hp->GetMaxHP());
+	}
+
+	std::cout << "Player respawned at: " << m_respawnPos.x << ", " << m_respawnPos.y << std::endl;
+}
+void PlayScene::ShowGameOverMenu() {
+	m_isGameOver = true;
+	m_isPaused = true;
+
+	if (m_gameOverMenu) {
+		m_gameOverMenu->SetActive(true);
+		std::cout << "Game Over Menu displayed" << std::endl;
+	}
 }
 
 //void PlayScene::SpawnHitEffect(const Vector2d& pos) {
@@ -1290,10 +1421,102 @@ void PlayScene::RemoveMetsuEnemy(EnemyEntity* enemy)
 	m_metsuEnemies.erase(it, m_metsuEnemies.end());
 }
 
-void PlayScene::AddCombo() {
-	m_comboCount++;
-	// タイマーは廃止するため不要
-	std::cout << "Combo: " << m_comboCount << std::endl;
+// ====================================================
+// フェード遷移
+// ====================================================
+
+void PlayScene::StartFadeToStage(int idx, int spawnIndex)
+{
+	// すでに遷移中なら無視
+	if (m_fadeState != FadeState::None) return;
+
+	m_pendingStageIndex = idx;
+	m_nextSpawnIndex = spawnIndex;
+	m_fadeState = FadeState::FadeOut;
+	m_fadeTimer = 0.0f;
+
+	// プレイヤーの動きを止める（暗転中は動かないほうが自然）
+	if (m_player) {
+		if (auto vel = m_player->GetComponent<VelocityComponent>()) {
+			Vector2d v = vel->Get();
+			v.x = 0.0f;
+			vel->Set(v);
+		}
+	}
 }
 
+void PlayScene::UpdateFade(float deltaTime)
+{
+	m_fadeTimer += deltaTime;
 
+	switch (m_fadeState)
+	{
+	case FadeState::FadeOut:
+		// 徐々に真っ黒に
+		if (m_fadeTimer >= FADE_OUT_DURATION) {
+			// 真っ黒になった瞬間にステージを構築（見えないので違和感なし）
+			m_stageIndex = m_pendingStageIndex;
+			ChangeStage(m_nextStage, m_nextSpawnIndex);
+			m_pendingStageIndex = -1;
+			m_fadeState = FadeState::Hold;
+			m_fadeTimer = 0.0f;
+		}
+		break;
+
+	case FadeState::Hold:
+		// 黒画面を一定時間ホールド
+		if (m_fadeTimer >= FADE_HOLD_DURATION) {
+			m_fadeState = FadeState::FadeIn;
+			m_fadeTimer = 0.0f;
+		}
+		break;
+
+	case FadeState::FadeIn:
+		// 徐々に明るく
+		if (m_fadeTimer >= FADE_IN_DURATION) {
+			m_fadeState = FadeState::None;
+			m_fadeTimer = 0.0f;
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void PlayScene::DrawFadeOverlay()
+{
+	if (m_fadeState == FadeState::None) return;
+
+	Renderer* renderer = m_game->GetRenderer();
+
+	float t = 0.0f;
+
+	switch (m_fadeState)
+	{
+	case FadeState::FadeOut:
+		// 0 → 1
+		t = m_fadeTimer / FADE_OUT_DURATION;
+		break;
+
+	case FadeState::Hold:
+		// 完全に黒
+		t = 1.0f;
+		break;
+
+	case FadeState::FadeIn:
+		// 1 → 0
+		t = 1.0f - (m_fadeTimer / FADE_IN_DURATION);
+		break;
+
+	default:
+		return;
+	}
+
+	// クランプ
+	if (t < 0.0f) t = 0.0f;
+	if (t > 1.0f) t = 1.0f;
+
+	int alpha = static_cast<int>(t * 255.0f);
+	renderer->DrawFullScreenFill(Color(0, 0, 0), alpha);
+}

@@ -21,6 +21,7 @@ public:
 		ESCAPE,
 		SPACE,
 		ENTER,
+		NUM_4,
 		KEY_COUNT
 	};
 
