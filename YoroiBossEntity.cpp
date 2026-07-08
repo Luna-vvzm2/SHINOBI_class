@@ -24,58 +24,11 @@ YoroiBossEntity::YoroiBossEntity(Scene* scene, const Vector2d& pos, const Vector
 {
 }
 
-// ---------------------------------------------------
-// ★ 新設: 全コンポーネントの更新が終わった後に呼ばれる関数
-// ---------------------------------------------------
-void YoroiBossEntity::Update(float deltaTime)
-{
-    // 1. 親クラスの更新
-    BossEntity::Update(deltaTime);
-
-    if (m_sprite)
-    {
-        // ★画質をクッキリ元に戻す！
-        // 縦幅を「192.0f」に指定すれば、横幅は比率を保ったまま自動で綺麗に拡大されます。
-        m_sprite->SetDrawSize(192.0f, 192.0f);
-
-        // ★関数名を「SetFlipX」に変更！
-        // 変数「m_flipX」にボスの向き（m_dir）を正しく伝達します。
-        m_sprite->SetFlipX(m_dir);
-    }
-}
-
-// 引数に 「, const Vector2d& knockback」 を追加！
-void YoroiBossEntity::TakeDamage(int damage, const Vector2d& knockback)
-{
-    if (m_dead) return;
-
-    // ★ 修正：画面のHPバーが管理している「HPComponent」を呼び出す
-    auto* hpComp = GetComponent<HPComponent>();
-    if (hpComp)
-    {
-        // コンポーネント側のHPを減らす（これで画面のHPバーがリアルタイムに減ります！）
-        hpComp->Damage(damage);
-
-        // コンポーネントの残りHPが0以下になったら死亡処理へ
-        if (hpComp->GetHP() <= 0)
-        {
-            m_dead = true;
-            m_attackTimer = 0.0f;
-            SetVel({ 0.0f, 0.0f });
-            m_deadTimer = 0.0f;
-            m_bulletActive = false;
-
-            if (m_anim)
-            {
-                m_anim->Play("dead");
-            }
-        }
-    }
-}
-
 bool YoroiBossEntity::Init()
 {
     if (!BossEntity::Init()) return false;
+
+    m_hp = AddComponent<HPComponent>(GetMaxHP());
 
     if (m_sprite)
     {
@@ -83,6 +36,7 @@ bool YoroiBossEntity::Init()
     }
 
     m_anim = AddComponent<AnimationComponent>();
+
     if (m_anim && m_sprite)
     {
         m_anim->SetSprite(m_sprite);
@@ -131,6 +85,46 @@ bool YoroiBossEntity::Init()
 
     return true;
 }
+
+void YoroiBossEntity::Update(float deltaTime)
+{
+    BossEntity::Update(deltaTime);
+
+    if (m_sprite)
+    {
+        m_sprite->SetDrawSize(220.0f, 220.0f);
+
+        m_sprite->SetFlipX(m_dir);
+    }
+}
+
+void YoroiBossEntity::TakeDamage(int damage, const Vector2d& knockback)
+{
+    if (m_dead) return;
+
+    if (m_hp)
+    {
+      
+       m_hp->Damage(damage);
+
+        // コンポーネントの残りHPが0以下になったら死亡処理へ
+        if (m_hp->GetHP() <= 0)
+        {
+            m_dead = true;
+            m_attackTimer = 0.0f;
+            SetVel({ 0.0f, 0.0f });
+            m_deadTimer = 0.0f;
+            m_bulletActive = false;
+
+            if (m_anim)
+            {
+                m_anim->Play("dead");
+            }
+        }
+    }
+}
+
+
 
 void YoroiBossEntity::UpdateAI(float deltaTime)
 {
