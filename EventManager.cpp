@@ -528,7 +528,7 @@ void BattleEvent::Update(float deltaTime)
 				if (!posXStr.empty() && posXStr != "None") m_enemyPos.x = std::stof(posXStr);
 
 				std::string posYStr = LoadConfig(configPart, "posY");
-				if (!posYStr.empty() && posYStr != "None") m_enemyPos.y = std::stof(posYStr);
+				if (!posYStr.empty() && posYStr != "None") m_enemyPos.y = -std::stof(posYStr);
 
 				std::string areaMinStr = LoadConfig(configPart, "areaMin");
 				if (!areaMinStr.empty() && areaMinStr != "None") m_areaXMin = std::stof(areaMinStr);
@@ -555,7 +555,7 @@ void BattleEvent::Update(float deltaTime)
 				if (transform)
 				{
 					float posX = transform->GetPosition().x;
-					if (posX < m_areaXMin || posX > m_areaXMax)
+					if (posX <= m_areaXMin - 20.0f || posX >= m_areaXMax + 20.0f) //壁際の敵が範囲から外れるため少し探索範囲を増加
 					{
 						continue;
 					}
@@ -585,8 +585,11 @@ void BattleEvent::Update(float deltaTime)
 				Vector2d pos = transform->GetPosition();
 
 				// 左右の壁で押し戻す
-				if (pos.x < m_areaXMin) pos.x = m_areaXMin;
-				if (pos.x > m_areaXMax) pos.x = m_areaXMax;
+				if (pos.x > m_areaXMin - 25.0f && pos.x < m_areaXMax + 25.0f) //飛燕によるすり抜け防止で25.0fの猶予
+				{
+					if (pos.x < m_areaXMin) pos.x = m_areaXMin;
+					if (pos.x > m_areaXMax) pos.x = m_areaXMax;
+				}
 
 				transform->SetPosition(pos);
 			}
@@ -613,7 +616,6 @@ void BattleEvent::EnemySpawn()
 		triggerPos = m_eventManager->GetTriggerPosition();
 	}
 	m_enemyPos += triggerPos;
-	m_enemyPos.y += 64.0f;
 	
 
 	switch (m_enemyType)
@@ -902,16 +904,49 @@ void EventTrigger::Update(float deltaTime)
 			}
 
 			m_eventManager->RegisterEvent(m_eventId); //重複を避ける
-			m_eventManager->SetTriggerPosition(myPos);
+
+			//地面をイベント開始地点とする処理
+			float groundY = playerPos.y;  
+			float minDistance = 99999.0f; 
+
+			for (auto actor : m_scene->GetActors())
+			{
+				if (actor->GetType() == ActorType::Block && actor != this)
+				{
+					if (dynamic_cast<EventTrigger*>(actor) != nullptr)//イベントトリガーのBlockを見ない
+					{
+						continue;
+					}
+
+					auto transform = actor->GetComponent<TransformComponent>();
+					if (transform)
+					{
+						Vector2d blockPos = transform->GetPosition();
+
+						if (playerPos.x >= blockPos.x && playerPos.x <= blockPos.x + 64.0f)
+						{
+							if (blockPos.y >= playerPos.y)
+							{
+								float distance = blockPos.y - playerPos.y;
+								if (distance < minDistance)
+								{
+									minDistance = distance;
+									groundY = blockPos.y;
+								}
+							}
+						}
+					}
+				}
+			}
+			Vector2d adjustedPos = { myPos.x, groundY - 100.0f};
+			m_eventManager->SetTriggerPosition(adjustedPos);
 
 			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".txt";
-			m_eventManager->LoadEventTimeLine(filePath, myPos);
+			m_eventManager->LoadEventTimeLine(filePath, adjustedPos);
 		}
 
 		SetState(Actor::State::Dead);
 	}
-
-	
 }
 
 BlockType EventTrigger::GetBlockType() const
