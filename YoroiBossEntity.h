@@ -1,5 +1,6 @@
 #pragma once
 #include "BossEntity.h"
+#include "EnemyEntity.h"
 
 class YoroiBossEntity : public BossEntity
 {
@@ -10,7 +11,10 @@ public:
     bool Init() override;
     int GetMaxHP() const override { return 1000; }
 
-    void TakeDamage(int damage);
+    void TakeDamage(int damage, const Vector2d& knockback) override;
+
+    virtual void Update(float deltaTime) override;
+    //void Draw() override;
 
 protected:
 
@@ -24,12 +28,15 @@ private:
     int   m_attackStep;
     int   m_darkAttackCount;
     int   m_maxDarkAttacks;
-    int   m_hp ;
     bool  m_dead ;
+    float m_deadTimer;
+    bool m_dir;
 
     // íeÅiéaåÇÅjä÷òA
     bool     m_bulletActive;
     Vector2d m_bulletPos;
     Vector2d m_bulletVel;
-};
 
+    void CheckCollision();
+    class AnimationComponent* m_anim;
+};
