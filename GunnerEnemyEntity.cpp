@@ -12,7 +12,7 @@
 #include "Vector2d.h"
 #include <cmath>
 
-class GunnerBullet : public EnemyEntity
+class GunnerBullet : public EntityActor
 {
 public:
 	GunnerBullet(
@@ -23,7 +23,7 @@ public:
 		const std::string& texturePath,
 		int damage
 	)
-		: EnemyEntity(scene, pos, Vector2d(12.0f, 12.0f))
+		: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
 		, m_startPos(pos)
 		, m_bulletVelocity(velocity)
 		, m_deleteRange(deleteRange)
@@ -34,8 +34,7 @@ public:
 
 	bool Init() override
 	{
-		m_hpMax = 200;
-		if (!EnemyEntity::Init()) return false;
+		if (!EntityActor::Init()) return false;
 		m_velocity->SetVelocity(m_bulletVelocity);
 		m_collision->SetCircle(6.0f);
 		return true;
@@ -112,6 +111,7 @@ GunnerEnemyEntity::GunnerEnemyEntity(Scene* scene, const Vector2d& pos)
 
 bool GunnerEnemyEntity::Init()
 {
+	m_hpMax = 200;
 	if (!EnemyEntity::Init()) return false;
 
 	m_anim = AddComponent<AnimationComponent>();
