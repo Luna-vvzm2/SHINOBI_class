@@ -32,7 +32,9 @@ void Input::Init() {
     m_actionPadMap[static_cast<size_t>(Action::KUNAI)] = { Joypad::B };
     m_actionPadMap[static_cast<size_t>(Action::KAMAE)] = { Joypad::LB };
     m_actionPadMap[static_cast<size_t>(Action::JUMP)] = { Joypad::A };
+    m_actionPadMap[static_cast<size_t>(Action::ESCAPE)] = { Joypad::START };
     m_actionPadMap[static_cast<size_t>(Action::ENTER)] = { Joypad::B };
+    m_actionPadMap[static_cast<size_t>(Action::MENU)] = { Joypad::BACK };
     m_key.Init();
     m_pad.Init();
 }

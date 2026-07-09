@@ -1,4 +1,5 @@
 #include "StageBackActor.h"
+#include "CollisionComponent.h"
 
 StageBackActor::StageBackActor(
     Scene* scene,
@@ -13,5 +14,7 @@ StageBackActor::StageBackActor(
 
 bool StageBackActor::Init()
 {
-    return BlockActor::Init();
+    if (!BlockActor::Init()) return false;
+    m_collision->SetRect(104.0f, 520.0f);
+    return true;
 }

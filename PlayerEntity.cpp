@@ -1311,7 +1311,6 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
             m_hit = true;
             m_combo++;
 
-            printf("ItemDroped coin: %d\n", m_coin);
             /*SpawnEffect(
                 new EffectActor( m_scene, enemy->GetPos(), EffectType::WeakAttack1, !m_dir )
             );*/

@@ -709,6 +709,7 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 2:
 			{
+				pos += Vector2d(0.0f, -tileSize * 2.0f);
 				AddActor(new StageExitActor(this, pos, m_stageIndex + 1));
 			} break;
 
@@ -725,6 +726,7 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 14:
 			{
+				pos += Vector2d(0.0f, -tileSize * 2.0f);
 				switch (m_stageIndex) {
 				case 1:
 					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 1));
@@ -1055,15 +1057,15 @@ void PlayScene::ClearStageActors()
 	}
 
 	m_enemyToHPBarMap.clear();
-#ifdef _DEBUG
-	for (Actor* actor : m_actors)
-	{
-		if (actor->GetType() == ActorType::Block)
-			continue;
-
-		printf("%s\n", typeid(*actor).name());
-	}
-#endif
+//#ifdef _DEBUG
+//	for (Actor* actor : m_actors)
+//	{
+//		if (actor->GetType() == ActorType::Block)
+//			continue;
+//
+//		printf("%s\n", typeid(*actor).name());
+//	}
+//#endif
 	m_metsuEnemies.clear();
 }
 
