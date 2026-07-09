@@ -513,7 +513,7 @@ PlayScene::PlayScene(Game* game)
 bool PlayScene::Init() {
 	m_isRunning = true;
 	m_type = Type::Play;
-	m_stageIndex = 1;
+	m_stageIndex = 2;
 	//m_lockedSkillIcon = LoadGraph("assets/images/skills/locked.png");
 
 	//スキルデータ

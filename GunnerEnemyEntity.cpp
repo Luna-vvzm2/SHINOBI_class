@@ -8,7 +8,9 @@
 #include "TransformComponent.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
+#include "HPComponent.h"
 #include "Vector2d.h"
+#include <cmath>
 
 class GunnerBullet : public EntityActor
 {
@@ -88,13 +90,22 @@ private:
 	int m_damage;
 };
 
+static const char* GUNNER_TEXTURE_SHEET = "assets/images/enemy/gunner/gunner_sheet.png";
+static const int GUNNER_SHEET_X_NUM = 10;
+static const int GUNNER_SHEET_Y_NUM = 4;
+
 GunnerEnemyEntity::GunnerEnemyEntity(Scene* scene, const Vector2d& pos)
 	: EnemyEntity(scene, pos, Vector2d(96, 190))
 	, m_bulletCount(0)
 	, m_attackOnce{}
 	, m_attackDir(1)
 	, m_gunnerState(0)
-	, m_currentTexturePath("")
+	, m_damageType(0)
+	, m_damageDead(false)
+	, m_damageTimer(0.0f)
+	, m_turning(false)
+	, m_turnTimer(0.0f)
+	, m_currentMotionName("")
 {
 }
 
@@ -104,6 +115,13 @@ bool GunnerEnemyEntity::Init()
 
 	m_anim = AddComponent<AnimationComponent>();
 	m_anim->SetSprite(m_sprite);
+	if (m_sprite != nullptr)
+	{
+		m_sprite->LoadTextureDiv(GUNNER_TEXTURE_SHEET, GUNNER_SHEET_X_NUM, GUNNER_SHEET_Y_NUM);
+		m_sprite->SetDrawSize(96.0f, 190.0f);
+	}
+	DefineAnimationClips();
+	PlayMotion("idle", true);
 
 	return true;
 }
@@ -121,19 +139,147 @@ static const float GUNNER_COOLDOWN = 0.4f;              // attack cooldown
 static const float GUNNER_RECHECK_TIME = 0.2f;          // state recheck time
 
 static const int GUNNER_SHOT_COUNT = 3;                 // shot count
-static const float GUNNER_SHOT_TIME[GUNNER_SHOT_COUNT] = { 0.8f, 1.3f, 1.8f };
-static const float GUNNER_ATTACK_END_TIME = 3.2f;       // attack end time
+static const float GUNNER_SHOT_TIME[GUNNER_SHOT_COUNT] = { 21.0f / 60.0f, 41.0f / 60.0f, 61.0f / 60.0f };
+static const float GUNNER_RELOAD_START_TIME = 70.0f / 60.0f;
+static const float GUNNER_ATTACK_END_TIME = 113.0f / 60.0f;
 static const int GUNNER_BULLET_DAMAGE = 6;              // bullet damage
+static const int GUNNER_BLOW_MIN_DAMAGE = 10;
+static const int GUNNER_BLOW_LARGE_MIN_DAMAGE = 25;
+static const int GUNNER_DAMAGE_NONE = 0;
+static const int GUNNER_DAMAGE_SHORT = 1;
+static const int GUNNER_DAMAGE_BLOW = 2;
+static const int GUNNER_DAMAGE_BLOW_LARGE = 3;
+static const float GUNNER_HIT_TOTAL_TIME = 9.0f / 60.0f;
+static const float GUNNER_DAMAGE1_DEAD_TIME = 16.0f / 60.0f;
+static const float GUNNER_DAMAGE1_TOTAL_TIME = 22.0f / 60.0f;
+static const float GUNNER_DAMAGE2_DEAD_TIME = 25.0f / 60.0f;
+static const float GUNNER_DAMAGE2_TOTAL_TIME = 31.0f / 60.0f;
+static const float GUNNER_TURN_TIME = 4.0f / 60.0f;
 
-static const char* GUNNER_TEXTURE_IDLE = "assets/images/enemy/gunner/idle.png";
-static const char* GUNNER_TEXTURE_WALK = "assets/images/enemy/gunner/walk.png";
-static const char* GUNNER_TEXTURE_AIM = "assets/images/enemy/gunner/aim.png";
-static const char* GUNNER_TEXTURE_SHOT = "assets/images/enemy/gunner/shot.png";
-static const char* GUNNER_TEXTURE_RELOAD = "assets/images/enemy/gunner/reload.png";
 
 float GunnerEnemyEntity::GetDirSign() const
 {
 	return m_dir ? 1.0f : -1.0f;
+}
+
+void GunnerEnemyEntity::SetFacing()
+{
+	if (m_sprite == nullptr)
+	{
+		return;
+	}
+
+	m_sprite->SetFlipX(m_dir);
+}
+
+void GunnerEnemyEntity::SetReverseFacing()
+{
+	if (m_sprite == nullptr)
+	{
+		return;
+	}
+
+	m_sprite->SetFlipX(!m_dir);
+}
+
+void GunnerEnemyEntity::StartTurnMotion()
+{
+	m_turning = true;
+	m_turnTimer = 0.0f;
+	m_actionLock = true;
+	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+	SetFacing();
+	PlayMotion("turn", true);
+}
+
+void GunnerEnemyEntity::UpdateTurnMotion(float deltaTime)
+{
+	if (!m_turning)
+	{
+		return;
+	}
+
+	m_turnTimer += deltaTime;
+	if (m_turnTimer >= GUNNER_TURN_TIME)
+	{
+		m_turning = false;
+		m_turnTimer = 0.0f;
+		m_actionLock = false;
+	}
+}
+
+void GunnerEnemyEntity::StartDamageMotion(const Vector2d& knockback, int damage, bool dead)
+{
+	m_attackType = 0;
+	m_attackActive = false;
+	m_actionLock = true;
+	m_turning = false;
+	m_damageDead = dead;
+	m_damageTimer = 0.0f;
+
+	Vector2d damageKnockback = knockback;
+	Vector2d playerPos = Vector2d::Zero();
+	if (TryGetPlayerInfo(playerPos))
+	{
+		Vector2d myPos = GetPos();
+		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
+		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
+	}
+	m_velocity->SetVelocity(damageKnockback);
+	SetFacing();
+
+	if (damage >= GUNNER_BLOW_LARGE_MIN_DAMAGE)
+	{
+		m_damageType = GUNNER_DAMAGE_BLOW_LARGE;
+		PlayMotion("damage2", true);
+	}
+	else if (damage >= GUNNER_BLOW_MIN_DAMAGE)
+	{
+		m_damageType = GUNNER_DAMAGE_BLOW;
+		PlayMotion("damage1", true);
+	}
+	else
+	{
+		m_damageType = GUNNER_DAMAGE_SHORT;
+		PlayMotion("hit", true);
+	}
+}
+
+void GunnerEnemyEntity::UpdateDamageMotion(float deltaTime)
+{
+	if (m_damageType == GUNNER_DAMAGE_NONE)
+	{
+		return;
+	}
+
+	m_damageTimer += deltaTime;
+
+	float deadTime = GUNNER_HIT_TOTAL_TIME;
+	float totalTime = GUNNER_HIT_TOTAL_TIME;
+	if (m_damageType == GUNNER_DAMAGE_BLOW)
+	{
+		deadTime = GUNNER_DAMAGE1_DEAD_TIME;
+		totalTime = GUNNER_DAMAGE1_TOTAL_TIME;
+	}
+	else if (m_damageType == GUNNER_DAMAGE_BLOW_LARGE)
+	{
+		deadTime = GUNNER_DAMAGE2_DEAD_TIME;
+		totalTime = GUNNER_DAMAGE2_TOTAL_TIME;
+	}
+
+	if (m_damageDead && m_damageTimer >= deadTime)
+	{
+		OnDead();
+		return;
+	}
+
+	if (!m_damageDead && m_damageTimer >= totalTime)
+	{
+		SetFacing();
+		m_damageType = GUNNER_DAMAGE_NONE;
+		m_damageTimer = 0.0f;
+		m_actionLock = false;
+	}
 }
 
 bool GunnerEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos) const
@@ -163,40 +309,125 @@ bool GunnerEnemyEntity::TryGetPlayerInfo(Vector2d& playerPos) const
 	return false;
 }
 
-void GunnerEnemyEntity::PlayMotion(
-	const std::string& motionName,
-	const std::string& texturePath,
-	int frameCount,
-	float frameSpeed,
-	bool loop
-)
+void GunnerEnemyEntity::PlayMotion(const std::string& motionName, bool reset)
 {
-	if (m_currentTexturePath == texturePath)
+	if (m_anim == nullptr)
 	{
 		return;
 	}
 
-	if (m_sprite == nullptr || m_anim == nullptr || frameCount <= 0)
+	if (!reset && m_currentMotionName == motionName)
 	{
 		return;
 	}
 
-	if (!m_sprite->LoadTextureDiv(texturePath, frameCount, 1))
+	m_anim->Play(motionName, reset);
+	m_currentMotionName = motionName;
+}
+
+void GunnerEnemyEntity::DefineAnimationClips()
+{
+	if (m_anim == nullptr)
 	{
 		return;
 	}
 
-	AnimationClip clip;
-	for (int i = 0; i < frameCount; i++)
-	{
-		clip.frames.push_back(i);
-	}
-	clip.speed = frameSpeed;
-	clip.loop = loop;
+	AnimationClip idle;
+	idle.frames = { 0 };
+	idle.frameDurations = { 10.0f / 60.0f };
+	idle.loop = true;
+	m_anim->AddClip("idle", idle);
 
-	m_anim->AddClip(motionName, clip);
-	m_anim->Play(motionName, true);
-	m_currentTexturePath = texturePath;
+	AnimationClip walk;
+	walk.frames = { 1, 1, 1, 1, 2, 2 };
+	walk.frameDurations = {
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f
+	};
+	walk.loop = true;
+	m_anim->AddClip("walk", walk);
+
+	AnimationClip turn;
+	turn.frames = { 3, 3, 4, 4 };
+	turn.frameDurations = {
+		1.0f / 60.0f,
+		1.0f / 60.0f,
+		1.0f / 60.0f,
+		1.0f / 60.0f
+	};
+	turn.loop = false;
+	m_anim->AddClip("turn", turn);
+
+	AnimationClip attack;
+	attack.frames = {
+		5, 5, 5, 5, 6, 7, 7, 8, 8, 8,
+		8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+		9, 10, 10, 9, 9, 9, 9, 9, 9, 9,
+		9, 9, 9, 9, 9, 9, 9, 9, 9, 8,
+		9, 10, 10, 9, 9, 9, 9, 9, 9, 9,
+		9, 9, 9, 9, 9, 9, 9, 9, 9, 8,
+		9, 10, 10, 7, 7, 6, 5, 5, 5, 5,
+		11, 11, 12, 12, 12, 12, 12, 12, 13, 13,
+		14, 14, 15, 15, 15, 15, 15, 15, 15, 15,
+		16, 16, 16, 17, 17, 17, 17, 17, 17, 17,
+		17, 17, 17, 17, 17, 18, 17, 17, 17, 17,
+		11, 11, 11
+	};
+	attack.speed = 1.0f / 60.0f;
+	attack.loop = false;
+	m_anim->AddClip("attack", attack);
+
+	AnimationClip hit;
+	hit.frames = { 19, 20, 21 };
+	hit.frameDurations = {
+		3.0f / 60.0f,
+		5.0f / 60.0f,
+		1.0f / 60.0f
+	};
+	hit.loop = false;
+	m_anim->AddClip("hit", hit);
+
+	AnimationClip damage1;
+	damage1.frames = { 19, 23, 26, 27, 28, 30, 31, 32, 33, 34 };
+	damage1.frameDurations = {
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		4.0f / 60.0f,
+		1.0f / 60.0f,
+		10.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		1.0f / 60.0f,
+		2.0f / 60.0f,
+		4.0f / 60.0f
+	};
+	damage1.loop = false;
+	m_anim->AddClip("damage1", damage1);
+
+	AnimationClip damage2;
+	damage2.frames = { 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 };
+	damage2.frameDurations = {
+		1.0f / 60.0f,
+		5.0f / 60.0f,
+		1.0f / 60.0f,
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		10.0f / 60.0f,
+		2.0f / 60.0f,
+		2.0f / 60.0f,
+		1.0f / 60.0f,
+		2.0f / 60.0f,
+		4.0f / 60.0f
+	};
+	damage2.loop = false;
+	m_anim->AddClip("damage2", damage2);
 }
 
 // Start gun attack.
@@ -214,12 +445,13 @@ void GunnerEnemyEntity::StartGunAttack(const Vector2d& playerPos)
 		m_attackDir = -1;
 		m_dir = false;
 	}
+	SetFacing();
 
 	m_attackType = 1;
 	m_attackTimer = 0.0f;
 
 	m_attackActive = false;
-	PlayMotion("aim", GUNNER_TEXTURE_AIM, 3, 0.12f, false);
+	PlayMotion("attack", true);
 
 	for (int shot = 0; shot < GUNNER_SHOT_COUNT; shot++)
 	{
@@ -229,6 +461,17 @@ void GunnerEnemyEntity::StartGunAttack(const Vector2d& playerPos)
 	m_actionLock = true;
 }
 
+void GunnerEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
+{
+	if (damage <= 0 || m_hp == nullptr)
+	{
+		return;
+	}
+
+	m_hp->Damage(damage);
+	StartDamageMotion(knockback, damage, m_hp->GetHP() <= 0);
+}
+
 void GunnerEnemyEntity::Update(float deltaTime)
 {
 	if (deltaTime > 0.05f)
@@ -236,10 +479,18 @@ void GunnerEnemyEntity::Update(float deltaTime)
 		deltaTime = 0.05f;
 	}
 
+	if (m_damageType != GUNNER_DAMAGE_NONE)
+	{
+		UpdateDamageMotion(deltaTime);
+		EnemyEntity::Update(deltaTime);
+		return;
+	}
+
 	Vector2d playerPos = Vector2d::Zero();
 
 	if (!TryGetPlayerInfo(playerPos))
 	{
+		PlayMotion("idle");
 		m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 		EnemyEntity::Update(deltaTime);
 		return;
@@ -276,7 +527,7 @@ void GunnerEnemyEntity::Update(float deltaTime)
 		else
 		{
 			m_gunnerState = 0;
-			PlayMotion("idle", GUNNER_TEXTURE_IDLE, 4, 0.16f, true);
+			PlayMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			EnemyEntity::Update(deltaTime);
 			return;
@@ -289,11 +540,23 @@ void GunnerEnemyEntity::Update(float deltaTime)
 		{
 			if (distanceX >= 0.0f)
 			{
-				m_dir = true;
+				if (!m_dir)
+				{
+					m_dir = true;
+					StartTurnMotion();
+					EnemyEntity::Update(deltaTime);
+					return;
+				}
 			}
 			else
 			{
-				m_dir = false;
+				if (m_dir)
+				{
+					m_dir = false;
+					StartTurnMotion();
+					EnemyEntity::Update(deltaTime);
+					return;
+				}
 			}
 
 			/*----------------
@@ -313,11 +576,7 @@ void GunnerEnemyEntity::Update(float deltaTime)
 
 			---------------*/
 
-			if (distance < GUNNER_BACK_RANGE)
-			{
-				m_gunnerState = 2;
-			}
-			else if (distance < GUNNER_STOP_RANGE)
+			if (distance < GUNNER_STOP_RANGE)
 			{
 				m_gunnerState = 3;
 			}
@@ -334,6 +593,13 @@ void GunnerEnemyEntity::Update(float deltaTime)
 			m_actionLock = true;
 		}
 
+		if (m_turning)
+		{
+			UpdateTurnMotion(deltaTime);
+			EnemyEntity::Update(deltaTime);
+			return;
+		}
+
 		m_actionTimer += deltaTime;
 
 		float dir = GetDirSign();
@@ -341,13 +607,15 @@ void GunnerEnemyEntity::Update(float deltaTime)
 		switch (m_gunnerState)
 		{
 		case 0:
-			PlayMotion("idle", GUNNER_TEXTURE_IDLE, 4, 0.16f, true);
+			SetFacing();
+			PlayMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 			m_actionLock = false;
 			break;
 
 		case 1:
-			PlayMotion("walk", GUNNER_TEXTURE_WALK, 4, 0.12f, true);
+			SetFacing();
+			PlayMotion("walk");
 			m_velocity->SetVelocity(Vector2d(GUNNER_APPROACH_SPEED * dir, 0.0f));
 
 			if (distance < GUNNER_STOP_RANGE)
@@ -366,8 +634,9 @@ void GunnerEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 2:
-			PlayMotion("walk", GUNNER_TEXTURE_WALK, 4, 0.12f, true);
-			m_velocity->SetVelocity(Vector2d(-GUNNER_BACK_SPEED * dir, 0.0f));
+			SetFacing();
+			PlayMotion("idle");
+			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (distance >= GUNNER_BACK_RANGE)
 			{
@@ -385,7 +654,8 @@ void GunnerEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 3:
-			PlayMotion("idle", GUNNER_TEXTURE_IDLE, 4, 0.16f, true);
+			SetFacing();
+			PlayMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
 			if (distance < GUNNER_BACK_RANGE || distance >= GUNNER_STOP_RANGE)
@@ -404,7 +674,7 @@ void GunnerEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			SetState(Actor::State::Dead);
+			OnDead();
 			break;
 		}
 	}
@@ -416,7 +686,15 @@ void GunnerEnemyEntity::Update(float deltaTime)
 		float attackTime = m_attackTimer;
 
 		m_attackActive = false;
-		PlayMotion("aim", GUNNER_TEXTURE_AIM, 3, 0.12f, false);
+		PlayMotion("attack");
+		if (attackTime >= GUNNER_RELOAD_START_TIME)
+		{
+			SetFacing();
+		}
+		else
+		{
+			SetFacing();
+		}
 
 		for (int shot = 0; shot < GUNNER_SHOT_COUNT; shot++)
 		{
@@ -446,17 +724,12 @@ void GunnerEnemyEntity::Update(float deltaTime)
 				m_bulletCount++;
 				m_attackOnce[shot] = true;
 				m_attackActive = true;
-				PlayMotion("shot", GUNNER_TEXTURE_SHOT, 3, 0.06f, false);
 			}
-		}
-
-		if (attackTime >= GUNNER_SHOT_TIME[2])
-		{
-			PlayMotion("reload", GUNNER_TEXTURE_RELOAD, 4, 0.14f, true);
 		}
 
 		if (attackTime >= GUNNER_ATTACK_END_TIME)
 		{
+			SetFacing();
 			m_attackType = 0;
 
 			m_cooldownTimer = GUNNER_COOLDOWN;
@@ -477,5 +750,5 @@ void GunnerEnemyEntity::Update(float deltaTime)
 
 std::string GunnerEnemyEntity::GetTexturePath() const
 {
-	return GUNNER_TEXTURE_IDLE;
+	return "";
 }
