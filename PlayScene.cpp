@@ -697,8 +697,8 @@ bool PlayScene::StageInit(int stageNo) {
 				AddActor(new StoneSBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize)));
 				break;
 			case 19:
-				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
-				AddActor(new StoneLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.75f)));
+				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize - tileSize);
+				AddActor(new StoneLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.0f)));
 				break;
 			case 24:
 				pos = Vector2d(x * tileSize + tileSize * 3.5f, y * tileSize - tileSize * 0.5f);

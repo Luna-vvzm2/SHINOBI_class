@@ -10,7 +10,7 @@ bool StoneLBlock::Init()
 {
 	if (!BlockActor::Init()) return false;
 
-	m_sprite->SetDrawOffset(0.0f, -40.0f);
+	m_sprite->SetDrawOffset(0.0f, 0.0f);
 
 	return true;
 }
