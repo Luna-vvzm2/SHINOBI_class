@@ -43,12 +43,15 @@ void Menu::Update(float deltaTime)
 			input.IsTrigger(Action::ENTER))
 		{
 			if (m_tabCursor == 0)
+			{
 				m_currentTab = Tab::Skill;
-			else
-				m_currentTab = Tab::Skill;//–{—ˆ‚ÍEquipment
-
-			m_cursorArea = MenuCursorArea::SkillList;
-
+				m_cursorArea = MenuCursorArea::SkillList;
+			}
+			else 
+			{
+				m_currentTab = Tab::Equipment;//–{—ˆ‚ÍEquipment
+				m_cursorArea = MenuCursorArea::EquipmentList;
+			}
 			return;   
 		}
 	}

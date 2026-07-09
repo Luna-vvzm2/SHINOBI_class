@@ -153,122 +153,103 @@ void SkillMenu::Draw()
     //----------------------------------
     if (m_owner->GetCursorArea() == Menu::MenuCursorArea::SkillList)
     {
-    if (cursor.GetCategory() < 0 ||
-        cursor.GetCategory() >= static_cast<int>(m_categories.size()))
-    {
-        return;
-    }
+        if (cursor.GetCategory() < 0 ||
+            cursor.GetCategory() >= static_cast<int>(m_categories.size()))
+        {
+            return;
+        }
 
-    auto& category =
-        m_categories[cursor.GetCategory()];
+        auto& category =
+            m_categories[cursor.GetCategory()];
 
-    if (cursor.GetIndex() < 0 ||
-        cursor.GetIndex() >= static_cast<int>(category.skills->size()))
-    {
-        return;
-    }
+        if (cursor.GetIndex() < 0 ||
+            cursor.GetIndex() >= static_cast<int>(category.skills->size()))
+        {
+            return;
+        }
 
-    Vector2d pos =
-        GetSkillPosition(
-            category,
-            cursor.GetIndex()
+        Vector2d pos =
+            GetSkillPosition(
+                category,
+                cursor.GetIndex()
+            );
+
+        DrawBox(
+            static_cast<int>(pos.x) - 5,
+            static_cast<int>(pos.y) - 5,
+            static_cast<int>(pos.x) + size + 5,
+            static_cast<int>(pos.y) + size + 5,
+            GetColor(255, 0, 0),
+            FALSE
         );
 
-    DrawBox(
-        static_cast<int>(pos.x) - 5,
-        static_cast<int>(pos.y) - 5,
-        static_cast<int>(pos.x) + size + 5,
-        static_cast<int>(pos.y) + size + 5,
-        GetColor(255, 0, 0),
-        FALSE
-    );
+        //----------------------------------
+        // à–¾—“
+        //----------------------------------
 
-    //----------------------------------
-    // à–¾—“
-    //----------------------------------
-
-    DrawBox(
-        800,
-        150,
-        1200,
-        400,
-        GetColor(80, 80, 80),
-        TRUE
-    );
-
-    SkillData* skill =
-        GetSelectedSkill();
-
-    if (skill)
-    {
-        DrawString(
-            975,
-            430,
-            skill->name.c_str(),
-            GetColor(255, 255, 255)
+        DrawBox(
+            800,
+            150,
+            1200,
+            400,
+            GetColor(80, 80, 80),
+            TRUE
         );
 
-        DrawString(
-            975,
-            600,
-            skill->description.c_str(),
-            GetColor(255, 255, 255)
-        );
+        SkillData* skill =
+            GetSelectedSkill();
+
+        if (skill)
+        {
+            DrawString(
+                975,
+                430,
+                skill->name.c_str(),
+                GetColor(255, 255, 255)
+            );
+
+            DrawString(
+                975,
+                600,
+                skill->description.c_str(),
+                GetColor(255, 255, 255)
+            );
+        }
     }
-}
 }
 
 void SkillMenu::Update(float deltaTime)
 {
+    if (m_owner->GetCursorArea() != Menu::MenuCursorArea::SkillList)
+        return;
+
     auto& cursor = m_owner->GetCursor();
 
     const Input& input =
         m_owner->GetGame()->GetInput();
 
-    cursor.Update(input, deltaTime);
-
     //----------------------------------
     // ‰‰ñ“ü—Í
     //----------------------------------
 
-    if (input.IsTrigger(Action::DOWN))
+    if (cursor.IsRepeat(Action::LEFT, input, deltaTime))
     {
-        MoveDown();
+        cursor.SetIndex(cursor.GetIndex() - 1);
     }
 
-    if (input.IsTrigger(Action::UP))
+    if (cursor.IsRepeat(Action::RIGHT, input, deltaTime))
+    {
+        cursor.SetIndex(cursor.GetIndex() + 1);
+    }
+
+    if (cursor.IsRepeat(Action::UP, input, deltaTime))
     {
         MoveUp();
     }
 
-    //----------------------------------
-    // ’·‰Ÿ‚µ
-    //----------------------------------
-
-    if (input.IsDown(Action::DOWN) ||
-        input.IsDown(Action::UP))
+    if (cursor.IsRepeat(Action::DOWN, input, deltaTime))
     {
-        m_verticalRepeatTimer += deltaTime;
-
-        if (m_verticalRepeatTimer >= VerticalRepeatDelay)
-        {
-            while (m_verticalRepeatTimer >=
-                VerticalRepeatDelay + VerticalRepeatInterval)
-            {
-                m_verticalRepeatTimer -=
-                    VerticalRepeatInterval;
-
-                if (input.IsDown(Action::DOWN))
-                    MoveDown();
-
-                if (input.IsDown(Action::UP))
-                    MoveUp();
-            }
-        }
-    }
-    else
-    {
-        m_verticalRepeatTimer = 0.0f;
+        MoveDown();
     }
 
     cursor.ClampCategory(
@@ -315,6 +296,7 @@ void SkillMenu::MoveUp()
         if (cursor.GetCategory() == 0)
         {
             m_owner->SetCursorArea(Menu::MenuCursorArea::Tab);
+            m_verticalRepeatTimer = 0.0f;
         }
         else
         {

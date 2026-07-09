@@ -21,7 +21,8 @@ public:
     enum class MenuCursorArea
     {
         Tab,
-        SkillList
+        SkillList,
+        EquipmentList
     };
 
     Game* GetGame() const;

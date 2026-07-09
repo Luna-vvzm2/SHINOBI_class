@@ -10,6 +10,7 @@ public:
 
     void Initialize() override;
     void Draw() override;
+    void Update(float deltaTime) override;
 
 protected:
     void ClampCursor() override;
@@ -21,4 +22,11 @@ private:
     void DrawKatanaSlot();
     void DrawEquipmentInventory();
     void DrawEquipmentDescription();
+
+    bool m_inventoryMode = false;
+
+    int m_prevCategory = 0;
+    int m_prevIndex = 0;
+
+    Vector2d GetCursorPosition() const;
 };

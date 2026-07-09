@@ -38,53 +38,6 @@ void MenuCursor::ClampCategory(int maxCategory)
         m_category = maxCategory;
 }
 
-void MenuCursor::Update(
-    const Input& input,
-    float deltaTime
-)
-{
-    //---------------------------------
-    // ‰‰ñ“ü—Í
-    //---------------------------------
-
-    if (input.IsTrigger(Action::RIGHT))
-        ++m_index;
-
-    if (input.IsTrigger(Action::LEFT))
-        --m_index;
-
-    //---------------------------------
-    // ’·‰Ÿ‚µ
-    //---------------------------------
-
-    if (
-        input.IsDown(Action::RIGHT) ||
-        input.IsDown(Action::LEFT) ||
-        input.IsDown(Action::DOWN) ||
-        input.IsDown(Action::UP)
-        )
-    {
-        m_repeatTimer += deltaTime;
-
-        if (m_repeatTimer >= RepeatDelay)
-        {
-            while (m_repeatTimer >= RepeatDelay + RepeatInterval)
-            {
-                m_repeatTimer -= RepeatInterval;
-
-                if (input.IsDown(Action::RIGHT))
-                    ++m_index;
-
-                if (input.IsDown(Action::LEFT))
-                    --m_index;
-            }
-        }
-    }
-    else
-    {
-        m_repeatTimer = 0.0f;
-    }
-}
 void MenuCursor::ClampIndex(int maxIndex)
 {
     if (m_index < 0)
@@ -92,4 +45,57 @@ void MenuCursor::ClampIndex(int maxIndex)
 
     if (m_index > maxIndex)
         m_index = maxIndex;
+}
+
+bool MenuCursor::IsRepeat(
+    Action action,
+    const Input& input,
+    float deltaTime)
+{
+    float* timer = nullptr;
+
+    switch (action)
+    {
+    case Action::LEFT:
+        timer = &m_leftTimer;
+        break;
+
+    case Action::RIGHT:
+        timer = &m_rightTimer;
+        break;
+
+    case Action::UP:
+        timer = &m_upTimer;
+        break;
+
+    case Action::DOWN:
+        timer = &m_downTimer;
+        break;
+
+    default:
+        return false;
+    }
+
+    if (input.IsTrigger(action))
+    {
+        *timer = 0.0f;
+        return true;
+    }
+
+    if (input.IsDown(action))
+    {
+        *timer += deltaTime;
+
+        if (*timer >= RepeatDelay)
+        {
+            *timer -= RepeatInterval;
+            return true;
+        }
+    }
+    else
+    {
+        *timer = 0.0f;
+    }
+
+    return false;
 }
