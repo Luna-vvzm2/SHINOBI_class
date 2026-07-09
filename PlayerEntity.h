@@ -125,6 +125,7 @@ public:
 
 private:
     HPComponent* m_hp;
+    int m_hpMax;
     GravityComponent* m_gravity;
     //SpriteComponent* m_sprite;
     AnimationComponent* m_anim;

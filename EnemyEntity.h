@@ -38,7 +38,7 @@ public:
     void SetCanMove(bool canMove) { m_canMove = canMove; }
 
     HPComponent* GetHP() const { return m_hp; }
-    virtual int GetMaxHP() const { return 100;  }
+    virtual int GetMaxHP() const { return m_hpMax;  }
     virtual void TakeDamage(int damage, const Vector2d& knockback);
     virtual void TakeMetsu(int metsu);
     void MetsuAttacked();
@@ -50,6 +50,7 @@ protected:
     virtual void OnDeadFromDamage(int damage, const Vector2d& knockback);
 
     HPComponent* m_hp;
+    int m_hpMax;
     GravityComponent* m_gravity;
     //SpriteComponent* m_sprite;
     AnimationComponent* m_anim;

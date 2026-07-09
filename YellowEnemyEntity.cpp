@@ -21,7 +21,8 @@ YellowEnemyEntity::YellowEnemyEntity(Scene* scene, const Vector2d& pos) : EnemyE
 bool YellowEnemyEntity::Init() {
     if (!EnemyEntity::Init()) return false;
 
-    m_hp = AddComponent<HPComponent>(100);
+    m_hp = AddComponent<HPComponent>(600);
+    m_metsuMax = 100;
 
     // çUåÇîªíË
     m_attackCollision = AddComponent<CollisionComponent>();
@@ -335,11 +336,11 @@ void YellowEnemyEntity::Update(float deltaTime) {
         {
             if (m_state == Attack1)
             {
-                player->GetComponent<HPComponent>()->Damage(10);
+                player->TakeDamage(15, Vector2d{ 0.0f, 0.0f });
             }
             else
             {
-                player->GetComponent<HPComponent>()->Damage(20);
+                player->TakeDamage(20, Vector2d{ 0.0f, 0.0f });
             }
 
             m_attackHit = true;

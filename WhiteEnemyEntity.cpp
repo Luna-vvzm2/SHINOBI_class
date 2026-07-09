@@ -153,7 +153,7 @@ private:
 };
 
 WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
-	: EnemyEntity(scene, pos, Vector2d(96, 190))
+	: EnemyEntity(scene, pos, Vector2d(96, 150))
 	, m_bulletCount(0)
 	, m_attackOnce(false)
 	, m_whiteState(0)
@@ -209,7 +209,7 @@ static const float WHITE_RECHECK_TIME = 0.3f;
 
 // éËó†åïçUåÇ
 static const float WHITE_SHURIKEN_COOLDOWN = 0.675f;
-static const int WHITE_SHURIKEN_DAMAGE = 5;
+static const int WHITE_SHURIKEN_DAMAGE = 15;
 static const float WHITE_SHURIKEN_SHOT_TIME = 40.0f / 60.0f;
 static const float WHITE_SHURIKEN_END_TIME = 60.0f / 60.0f;
 static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(48.0f, 48.0f);

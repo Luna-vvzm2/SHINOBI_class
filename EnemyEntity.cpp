@@ -16,6 +16,7 @@
 EnemyEntity::EnemyEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
     : EntityActor(scene, pos, size)
     , m_hp(nullptr)
+    , m_hpMax(100)
     , m_gravity(nullptr)
     , m_anim(nullptr)
 
@@ -27,7 +28,7 @@ EnemyEntity::EnemyEntity(Scene* scene, const Vector2d& pos, const Vector2d& size
     , m_guardMax(100)
 
     , m_metsuGauge(0)
-    , m_metsuMax(100)
+    , m_metsuMax(75)
     , m_metsu(0)
 
     , m_damageCancel(0)
@@ -58,6 +59,7 @@ bool EnemyEntity::Init() {
     m_dropTable.clear();
     m_dropTable.push_back({ ItemType::Coin, 1.0f });
     m_dropTable.push_back({ ItemType::Kunai,0.9f });
+    m_dropTable.push_back({ ItemType::Heal,0.9f });
     return true;
 }
 

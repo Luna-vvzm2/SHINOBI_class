@@ -18,22 +18,23 @@
 #include <Windows.h>
 
 //                       offset, width, height, damage, metsu
-AttackHitbox weak1{ Vector2d(100,0), 300, 200, 10, 30 };
-AttackHitbox weak2{ Vector2d(100,0), 300, 200, 10, 30 };
-AttackHitbox weak3{ Vector2d(100,0), 300, 200, 10, 30 };
-AttackHitbox weak4{ Vector2d(100,0), 300, 200, 10, 30 };
-AttackHitbox strong1{ Vector2d(100,-50), 400, 300, 30, 30 };
-AttackHitbox strong2{ Vector2d(100,-50), 400, 300, 30, 30 };
-AttackHitbox airWeak1{ Vector2d(100,50), 300, 200, 10, 30 };
-AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 10, 30 };
-AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 10, 30 };
-AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 30, 30 };
-AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 10, 30 };
+AttackHitbox weak1{ Vector2d(100,0), 300, 200, 70, 15 };
+AttackHitbox weak2{ Vector2d(100,0), 300, 200, 70, 15 };
+AttackHitbox weak3{ Vector2d(100,0), 300, 200, 70, 15 };
+AttackHitbox weak4{ Vector2d(100,0), 300, 200, 70, 15 };
+AttackHitbox strong1{ Vector2d(100,-50), 400, 300, 150, 60 };
+AttackHitbox strong2{ Vector2d(100,-50), 400, 300, 170, 60 };
+AttackHitbox airWeak1{ Vector2d(100,50), 300, 200, 70, 15 };
+AttackHitbox airWeak2{ Vector2d(100,50), 300, 200, 70, 15 };
+AttackHitbox airWeak3{ Vector2d(100,50), 300, 200, 70, 15 };
+AttackHitbox Hayabusa{ Vector2d(50,100), 100, 100, 150, 60 };
+AttackHitbox squatAttack{ Vector2d(0,0), 450, 100, 70, 15 };
 
 
 PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& size)
     : EntityActor(scene, pos, size)
     , m_hp(nullptr)
+    , m_hpMax(100)
     , m_gravity(nullptr)
     , m_anim(nullptr)
 
@@ -93,7 +94,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
 bool PlayerEntity::Init() {
     if (!EntityActor::Init()) return false;
 
-    m_hp = AddComponent<HPComponent>(100);
+    m_hp = AddComponent<HPComponent>(m_hpMax);
     m_transform->SetScale({ 1.0f, 1.0f });
     m_gravity = AddComponent<GravityComponent>(2800.0f);
     m_attackCol = AddComponent<CollisionComponent>();
@@ -2095,7 +2096,6 @@ void PlayerEntity::AddHaku(int value)
 void PlayerEntity::HealHP(int value)
 {
     if (!m_hp) return;
-
-  
+    m_hp->Heal(value);
 }
 

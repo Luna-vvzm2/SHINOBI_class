@@ -21,6 +21,7 @@ bool YoroiBossEntity::Init()
 {
     if (!BossEntity::Init()) return false;
     // •K—v‚È‚ç‚±‚±‚Å‰Šú‰»ˆ—‚ğ’Ç‰Á
+    m_metsuMax = 500;
     return true;
 }
 

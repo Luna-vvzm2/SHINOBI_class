@@ -12,7 +12,7 @@
 #include "Vector2d.h"
 #include <cmath>
 
-class GunnerBullet : public EntityActor
+class GunnerBullet : public EnemyEntity
 {
 public:
 	GunnerBullet(
@@ -23,7 +23,7 @@ public:
 		const std::string& texturePath,
 		int damage
 	)
-		: EntityActor(scene, pos, Vector2d(12.0f, 12.0f))
+		: EnemyEntity(scene, pos, Vector2d(12.0f, 12.0f))
 		, m_startPos(pos)
 		, m_bulletVelocity(velocity)
 		, m_deleteRange(deleteRange)
@@ -34,7 +34,8 @@ public:
 
 	bool Init() override
 	{
-		if (!EntityActor::Init()) return false;
+		m_hpMax = 200;
+		if (!EnemyEntity::Init()) return false;
 		m_velocity->SetVelocity(m_bulletVelocity);
 		m_collision->SetCircle(6.0f);
 		return true;
@@ -142,7 +143,7 @@ static const int GUNNER_SHOT_COUNT = 3;                 // shot count
 static const float GUNNER_SHOT_TIME[GUNNER_SHOT_COUNT] = { 21.0f / 60.0f, 41.0f / 60.0f, 61.0f / 60.0f };
 static const float GUNNER_RELOAD_START_TIME = 70.0f / 60.0f;
 static const float GUNNER_ATTACK_END_TIME = 113.0f / 60.0f;
-static const int GUNNER_BULLET_DAMAGE = 6;              // bullet damage
+static const int GUNNER_BULLET_DAMAGE = 15;              // bullet damage
 static const int GUNNER_BLOW_MIN_DAMAGE = 10;
 static const int GUNNER_BLOW_LARGE_MIN_DAMAGE = 25;
 static const int GUNNER_DAMAGE_NONE = 0;

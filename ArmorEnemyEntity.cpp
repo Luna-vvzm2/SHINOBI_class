@@ -33,9 +33,10 @@ static const int ARMOR_SHEET_Y_NUM = 6;
 
 bool ArmorEnemyEntity::Init()
 {
+	m_hpMax = 400;
 	if (!EnemyEntity::Init()) return false;
 
-	m_guardMax = 100;
+	m_guardMax = 350;
 	m_guard = m_guardMax;
 	m_hp->OnHPChanged = [this](int newHP, int oldHP) {
 		OnHPChanged(newHP, oldHP);
