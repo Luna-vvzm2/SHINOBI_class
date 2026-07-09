@@ -1,6 +1,8 @@
 #pragma once
 #include "EnemyEntity.h"
 
+class AnimationComponent;
+
 class ArrowEnemyEntity : public EnemyEntity
 {
 public:
@@ -10,8 +12,12 @@ public:
     void Update(float deltaTime) override;
     void Draw() override;
     std::string GetTexturePath() const override;
+    void TakeDamage(int damage, const Vector2d& knockback) override;
 
 private:
+    void CancelAttackForDamage();
+    void StartHit(const Vector2d& knockback);
+    void StartDeadHit();
 
 
     enum class AttackState
@@ -35,6 +41,8 @@ private:
     float m_damageTimer = 0.0f;
     int m_damagePerSecond = 10;
     bool m_isHit = false;
+    bool m_isDying = false;
+    AnimationComponent* m_animation = nullptr;
 };
 
 
