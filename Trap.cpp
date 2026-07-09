@@ -5,7 +5,7 @@
 #include "HPComponent.h"
 
 Trap::Trap(Scene* scene, const Vector2d& pos, const Vector2d& size)
-    : EntityActor(scene, pos, Vector2d(64, 64)),
+    : EntityActor(scene, pos, Vector2d(208, 104)),
     m_damage(1000),            // 例: 1000ダメージ
     m_currentCooldown(0.0f)
 {
@@ -14,8 +14,13 @@ Trap::Trap(Scene* scene, const Vector2d& pos, const Vector2d& size)
 bool Trap::Init() {
     if (!EntityActor::Init()) return false;
 
+    //親クラスが保持している初期サイズを使う
+    if (m_sprite) {
+        m_sprite->SetDrawOffset(-20.0f, -80.0f);
+    }
+
     if (m_collision) {
-        m_collision->SetRect(64, 64); // 当たり判定のサイズ
+        m_collision->SetRect(m_initialSize.x, m_initialSize.y); // 当たり判定のサイズ
     }
 
     return true;

@@ -1262,7 +1262,7 @@ void PlayScene::Draw() {
 		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1760.0f), 1.45f, 1.45f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
 	case 2:
-		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130.0f), 1.0f, 1.0f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1600.0f), 1.5f, 1.5f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
 	}
 	
