@@ -1019,7 +1019,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 		if (attackTime >= WHITE_SHURIKEN_SHOT_TIME && m_attackOnce == false)
 		{
 			float dir = GetDirSign();
-			Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 16.0f);
+			Vector2d bulletPos(myPos.x + 48.0f * dir, myPos.y - 30.0f);
 			Vector2d bulletVel(WHITE_BULLET_SPEED * dir, 0.0f);
 
 			m_scene->SpawnActor(

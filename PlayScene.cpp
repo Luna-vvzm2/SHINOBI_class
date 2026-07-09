@@ -852,6 +852,10 @@ void PlayScene::Draw() {
 		m_menu.Draw();
 	}
 
+	if (m_eventManager->IsRunning()) {
+		m_eventManager->Draw();
+	}
+
 
 	// UŒ‚”ÍˆÍ•`‰æ --------------------------
 	/*Vector2d Pos = m_player->GetPos();
