@@ -154,6 +154,7 @@
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyEntity.cpp" />
     <ClCompile Include="EnemyHPBar.cpp" />
+    <ClCompile Include="EquipmentMenu.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="EventTexture.cpp" />
     <ClCompile Include="GameOverMenuUI.cpp" />
@@ -161,6 +162,9 @@
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="HouseBlock.cpp" />
     <ClCompile Include="KunaiActor.cpp" />
+    <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="MenuCursor.cpp" />
+    <ClCompile Include="MenuPage.cpp" />
     <ClCompile Include="MoneyUI.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PlatformBlock.cpp" />
@@ -170,6 +174,7 @@
     <ClCompile Include="ScarecrowEnemyEntity.cpp" />
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="ShurikenUI.cpp" />
+    <ClCompile Include="SkillMenu.cpp" />
     <ClCompile Include="StageBackActor.cpp" />
     <ClCompile Include="StageExitActor.cpp" />
     <ClCompile Include="StoneLBlock.cpp" />
@@ -237,6 +242,7 @@
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyEntity.h" />
     <ClInclude Include="EnemyHPBar.h" />
+    <ClInclude Include="EquipmentMenu.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventTexture.h" />
     <ClInclude Include="GameOverMenuUI.h" />
@@ -244,6 +250,9 @@
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="HouseBlock.h" />
     <ClInclude Include="KunaiActor.h" />
+    <ClInclude Include="Menu.h" />
+    <ClInclude Include="MenuCursor.h" />
+    <ClInclude Include="MenuPage.h" />
     <ClInclude Include="MoneyUI.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PlatformBlock.h" />
@@ -253,6 +262,8 @@
     <ClInclude Include="ScarecrowEnemyEntity.h" />
     <ClInclude Include="SekienkiBossEntity.h" />
     <ClInclude Include="ShurikenUI.h" />
+    <ClInclude Include="SkillData.h" />
+    <ClInclude Include="SkillMenu.h" />
     <ClInclude Include="StageBackActor.h" />
     <ClInclude Include="StageExitActor.h" />
     <ClInclude Include="StoneLBlock.h" />

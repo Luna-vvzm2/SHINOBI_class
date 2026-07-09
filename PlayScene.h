@@ -6,6 +6,9 @@
 #include "MapData.h"
 #include "ShurikenUI.h"
 #include "MoneyUI.h"
+
+#include "Menu.h"
+
 #include <unordered_map>
 
 class PlayerEntity;
@@ -57,6 +60,7 @@ public:
 	bool IsResult() const { return m_resultShown; }
 	Camera& GetCamera() { return m_camera; }
 	const Camera& GetCamera() const { return m_camera; }
+	Game* GetGame() const { return m_game; }
 
 	// 最初の地面のY座標を取得
 	float GetInitialGroundY() const { return m_initialGroundY; }
@@ -78,6 +82,8 @@ private:
 	int m_nextStage = 0;
 	int m_nextSpawnIndex = 0;
 
+	Menu m_menu;
+
 	Camera m_camera;
 
 	int m_stageIndex;
@@ -92,96 +98,6 @@ private:
 	MoneyUI* m_moneyUI = nullptr;
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
-
-	enum class MenuState
-	{
-		None,
-		Skill,
-		Equipment,
-		Item
-	};
-
-	enum class MenuTab
-	{
-		Equipment,
-		Skill
-	};
-
-
-	MenuTab m_menuTab = MenuTab::Skill;
-	void DrawMenuTabs();
-
-	void DrawEquipmentMenu();
-	void DrawNinjutsuSlots();
-	void DrawGofuSlots();
-	void DrawKatanaSlot();
-	void DrawEquipmentInventory();
-	void DrawEquipmentDescription();
-
-	int m_tabCursor = 0;   // 0=スキル 1=装備
-
-	MenuState m_menuState = MenuState::None;
-
-	enum class MenuCursorArea
-	{
-		Tab,
-		SkillList
-	};
-	MenuCursorArea m_cursorArea = MenuCursorArea::Tab;
-
-
-	// スキルデータ
-	struct SkillData
-	{
-		std::string name;
-		std::string description;
-
-		int iconHandle = -1; 
-
-		bool unlocked = true;
-	};
-
-	int m_lockedSkillIcon = -1;
-
-	std::vector<SkillData> m_ninjutsu;
-	std::vector<SkillData> m_ninpou;
-	std::vector<SkillData> m_ningi;
-	std::vector<SkillData> m_combat;
-
-
-	// スキルメニュー
-	void DrawSkillMenu();
-	void UpdateSkillMenu(float deltaTime);
-	int GetSkillMaxX(int y);
-	void ClampSkillCursor();
-	SkillData* GetSelectedSkill();
-
-	void DrawSkillRow(
-		const std::vector<SkillData>& skills,
-		int startX,
-		int startY
-	);
-
-	void DrawSkillSlot(
-		int x,
-		int y,
-		const SkillData& skill
-	) const;
-
-	void DrawSkillGrid(
-		const std::vector<SkillData>& skills,
-		int startX,
-		int startY,
-		int columns
-	);
-
-	int m_skillCursorX = 0;
-	int m_skillCursorY = 0;
-
-	float m_cursorRepeatTimer = 0.0f;
-
-	const float m_cursorRepeatDelay = 0.3f; // 最初の待ち時間
-	const float m_cursorRepeatInterval = 0.08f; // 連続移動間隔
 	
 	//イベントのため変更
 	std::unique_ptr<EventTexture> m_eventTexture;
