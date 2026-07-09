@@ -101,7 +101,33 @@ private:
 		Item
 	};
 
+	enum class MenuTab
+	{
+		Equipment,
+		Skill
+	};
+
+
+	MenuTab m_menuTab = MenuTab::Skill;
+	void DrawMenuTabs();
+
+	void DrawEquipmentMenu();
+	void DrawNinjutsuSlots();
+	void DrawGofuSlots();
+	void DrawKatanaSlot();
+	void DrawEquipmentInventory();
+	void DrawEquipmentDescription();
+
+	int m_tabCursor = 0;   // 0=スキル 1=装備
+
 	MenuState m_menuState = MenuState::None;
+
+	enum class MenuCursorArea
+	{
+		Tab,
+		SkillList
+	};
+	MenuCursorArea m_cursorArea = MenuCursorArea::Tab;
 
 
 	// スキルデータ

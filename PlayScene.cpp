@@ -55,6 +55,10 @@
 #include <DxLib.h>
 #include <algorithm>
 
+//====================
+// スキル画面
+//====================
+
 PlayScene::SkillData* PlayScene::GetSelectedSkill()
 {
 	switch (m_skillCursorY)
@@ -254,80 +258,107 @@ void PlayScene::UpdateSkillMenu(float deltaTime)
 {
 	const Input& input = m_game->GetInput();
 
-
-	bool move = false;
-
-
-	// 押した瞬間
-	if (input.IsTrigger(Action::RIGHT))
+	//=========================
+	// タブ選択中
+	//=========================
+	if (m_cursorArea == MenuCursorArea::Tab)
 	{
-		m_skillCursorX++;
-		move = true;
-	}
-
-	if (input.IsTrigger(Action::LEFT))
-	{
-		m_skillCursorX--;
-		move = true;
-	}
-
-	if (input.IsTrigger(Action::DOWN))
-	{
-		m_skillCursorY++;
-		move = true;
-	}
-
-	if (input.IsTrigger(Action::UP))
-	{
-		m_skillCursorY--;
-		move = true;
-	}
-
-
-
-	// 長押し中
-	if (input.IsDown(Action::RIGHT) ||
-		input.IsDown(Action::LEFT) ||
-		input.IsDown(Action::DOWN) ||
-		input.IsDown(Action::UP))
-	{
-
-		m_cursorRepeatTimer += deltaTime;
-
-
-		if (m_cursorRepeatTimer >= m_cursorRepeatDelay)
+		if (input.IsTrigger(Action::RIGHT))
 		{
-			if (m_cursorRepeatTimer >= m_cursorRepeatDelay + m_cursorRepeatInterval)
+			m_tabCursor = 0;
+		}
+
+		if (input.IsTrigger(Action::LEFT))
+		{
+			m_tabCursor = 1;
+		}
+
+		if (input.IsTrigger(Action::ENTER))
+		{
+			if (m_tabCursor == 0)
 			{
-				m_cursorRepeatTimer -= m_cursorRepeatInterval;
+				m_menuTab = MenuTab::Skill;
+			}
+			else
+			{
+				m_menuTab = MenuTab::Equipment;
+			}
 
+			m_cursorArea = MenuCursorArea::SkillList;
+		}
 
-				if (input.IsDown(Action::RIGHT))
-					m_skillCursorX++;
+		if (input.IsTrigger(Action::DOWN))
+		{
+			m_cursorArea = MenuCursorArea::SkillList;
+			return;
+		}
 
-				if (input.IsDown(Action::LEFT))
-					m_skillCursorX--;
+	}
+		//=========================
+		// スキル一覧選択中
+		//=========================
 
-				if (input.IsDown(Action::DOWN))
-					m_skillCursorY++;
+		// 一番上ならタブへ戻る
+		if (m_skillCursorY == 0 &&
+			input.IsTrigger(Action::UP))
+		{
+			m_cursorArea = MenuCursorArea::Tab;
+			return;
+		}
 
-				if (input.IsDown(Action::UP))
-					m_skillCursorY--;
+		// 押した瞬間
+		if (input.IsTrigger(Action::RIGHT))
+			m_skillCursorX++;
+
+		if (input.IsTrigger(Action::LEFT))
+			m_skillCursorX--;
+
+		if (input.IsTrigger(Action::DOWN))
+			m_skillCursorY++;
+
+		if (input.IsTrigger(Action::UP))
+			m_skillCursorY--;
+
+		// 長押し
+		if (input.IsDown(Action::RIGHT) ||
+			input.IsDown(Action::LEFT) ||
+			input.IsDown(Action::DOWN) ||
+			input.IsDown(Action::UP))
+		{
+			m_cursorRepeatTimer += deltaTime;
+
+			if (m_cursorRepeatTimer >= m_cursorRepeatDelay)
+			{
+				if (m_cursorRepeatTimer >=
+					m_cursorRepeatDelay + m_cursorRepeatInterval)
+				{
+					m_cursorRepeatTimer -= m_cursorRepeatInterval;
+
+					if (input.IsDown(Action::RIGHT))
+						m_skillCursorX++;
+
+					if (input.IsDown(Action::LEFT))
+						m_skillCursorX--;
+
+					if (input.IsDown(Action::DOWN))
+						m_skillCursorY++;
+
+					if (input.IsDown(Action::UP))
+						m_skillCursorY--;
+				}
 			}
 		}
-	}
-	else
-	{
-		// 離したらリセット
-		m_cursorRepeatTimer = 0.0f;
-	}
+		else
+		{
+			m_cursorRepeatTimer = 0.0f;
+		}
 
-
-	ClampSkillCursor();
-}
+		ClampSkillCursor();
+	}
 
 void PlayScene::DrawSkillMenu()
 {
+
 	// 背景
 	DrawBox(
 		0,
@@ -337,19 +368,11 @@ void PlayScene::DrawSkillMenu()
 		GetColor(20, 20, 20),
 		TRUE
 	);
+	DrawMenuTabs();
 
 	const int startX = 50;
 	const int size = 60;
 	const int gap = 15;
-
-
-	// タイトル
-	DrawString(
-		800,
-		50,
-		"スキル",
-		GetColor(255, 255, 255)
-	);
 
 
 	// カテゴリ名
@@ -450,14 +473,17 @@ void PlayScene::DrawSkillMenu()
 	}
 
 
-	DrawBox(
-		cursorX - 5,
-		cursorY - 5,
-		cursorX + size + 5,
-		cursorY + size + 5,
-		GetColor(255, 0, 0),
-		FALSE
-	);
+	if (m_cursorArea == MenuCursorArea::SkillList)
+	{
+		DrawBox(
+			cursorX - 5,
+			cursorY - 5,
+			cursorX + size + 5,
+			cursorY + size + 5,
+			GetColor(255, 0, 0),
+			FALSE
+		);
+	}
 
 	const int demoX = 800;
 	const int demoY = 150;
@@ -496,7 +522,268 @@ void PlayScene::DrawSkillMenu()
 	}
 }
 
+//====================
+// 装備画面
+//====================
 
+void PlayScene::DrawEquipmentMenu()
+{
+	// 背景
+	DrawBox(
+		0,
+		0,
+		m_game->GetWidth(),
+		m_game->GetHeight(),
+		GetColor(20, 20, 20),
+		TRUE
+	);
+
+	DrawMenuTabs();
+
+	DrawNinjutsuSlots();
+
+	DrawGofuSlots();
+
+	DrawKatanaSlot();
+
+	DrawEquipmentInventory();
+
+	DrawEquipmentDescription();
+}
+
+void PlayScene::DrawNinjutsuSlots()
+{
+	const int x = 50;
+	const int y = 120;
+	const int size = 70;
+	const int gap = 20;
+
+	DrawString(
+		x,
+		y - 40,
+		"忍法",
+		GetColor(255, 255, 255)
+	);
+
+	for (int i = 0; i < 4; i++)
+	{
+		DrawBox(
+			x,
+			y + i * (size + gap),
+			x + size,
+			y + i * (size + gap) + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+}
+
+void PlayScene::DrawGofuSlots()
+{
+	const int x = 350;
+	const int y = 120;
+	const int size = 70;
+	const int gap = 30;
+
+	DrawString(
+		x,
+		y - 40,
+		"護符",
+		GetColor(255, 255, 255)
+	);
+
+	// 自動発動
+	DrawString(
+		x,
+		y + 20,
+		"自動発動",
+		GetColor(255, 255, 255)
+	);
+
+	DrawBox(
+		x + 120,
+		y,
+		x + 120 + size,
+		y + size,
+		GetColor(255, 255, 255),
+		FALSE
+	);
+
+	// 連撃発動
+	DrawString(
+		x,
+		y + size + gap + 20,
+		"連撃発動",
+		GetColor(255, 255, 255)
+	);
+
+	DrawBox(
+		x + 120,
+		y + size + gap,
+		x + 120 + size,
+		y + size * 2 + gap,
+		GetColor(255, 255, 255),
+		FALSE
+	);
+}
+
+void PlayScene::DrawKatanaSlot()
+{
+	const int x = 350;
+	const int y = 390;
+	const int size = 70;
+
+	DrawString(
+		x,
+		y - 40,
+		"刀",
+		GetColor(255, 255, 255)
+	);
+
+	// 刀名
+	DrawString(
+		x,
+		y + 20,
+		"朧月",
+		GetColor(255, 255, 255)
+	);
+
+	// 装備枠
+	DrawBox(
+		x + 120,
+		y,
+		x + 120 + size,
+		y + size,
+		GetColor(255, 255, 255),
+		FALSE
+	);
+}
+
+void PlayScene::DrawEquipmentInventory()
+{
+	const int startX = 50;
+	const int startY = 560;
+
+	const int size = 60;
+	const int gap = 15;
+
+	DrawString(
+		startX,
+		startY - 40,
+		"所持装備",
+		GetColor(255, 255, 255)
+	);
+
+	for (int i = 0; i < 16; i++)
+	{
+		int x = startX + (i % 8) * (size + gap);
+		int y = startY + (i / 8) * (size + gap);
+
+		DrawBox(
+			x,
+			y,
+			x + size,
+			y + size,
+			GetColor(255, 255, 255),
+			FALSE
+		);
+	}
+}
+
+void PlayScene::DrawEquipmentDescription()
+{
+	DrawBox(
+		650,
+		120,
+		1220,
+		680,
+		GetColor(255, 255, 255),
+		FALSE
+	);
+
+	DrawString(
+		680,
+		150,
+		"説明",
+		GetColor(255, 255, 255)
+	);
+}
+
+
+
+//====================
+// タブ
+//====================
+
+void PlayScene::DrawMenuTabs()
+{
+	const int tabY = 20;
+	const int tabW = 180;
+	const int tabH = 50;
+	const int tabGap = 10;
+
+	// タブ全体の幅
+	const int totalWidth = tabW * 2 + tabGap;
+
+	// 画面中央
+	const int equipX = (m_game->GetWidth() - totalWidth) / 2;
+	const int skillX = equipX + tabW + tabGap;
+
+	//====================
+	// 装備
+	//====================
+	DrawBox(
+		equipX,
+		tabY,
+		equipX + tabW,
+		tabY + tabH,
+		GetColor(80, 80, 80),
+		TRUE
+	);
+
+	DrawString(
+		equipX + 70,
+		tabY + 15,
+		"装備",
+		GetColor(255, 255, 255)
+	);
+
+	//====================
+	// スキル
+	//====================
+	DrawBox(
+		skillX,
+		tabY,
+		skillX + tabW,
+		tabY + tabH,
+		GetColor(80, 80, 80),
+		TRUE
+	);
+
+	DrawString(
+		skillX + 60,
+		tabY + 15,
+		"スキル",
+		GetColor(255, 255, 255)
+	);
+
+	//====================
+	// タブカーソル
+	//====================
+	if (m_cursorArea == MenuCursorArea::Tab)
+	{
+		int x = (m_tabCursor == 0) ? skillX : equipX;
+
+		DrawBox(
+			x - 4,
+			tabY - 4,
+			x + tabW + 4,
+			tabY + tabH + 4,
+			GetColor(255, 0, 0),
+			FALSE
+		);
+	}
+}
 
 
 PlayScene::PlayScene(Game* game)
@@ -1189,11 +1476,14 @@ void PlayScene::Update(float deltaTime) {
 		if (m_menuState == MenuState::None)
 		{
 			m_menuState = MenuState::Skill;
+			m_cursorArea = MenuCursorArea::Tab;
 		}
 		else
 		{
 			m_menuState = MenuState::None;
 		}
+
+		return;
 	}
 
 	if (m_menuState == MenuState::Skill)
@@ -1374,19 +1664,14 @@ void PlayScene::Draw() {
 
 	if (m_menuState == MenuState::Skill)
 	{
-		DrawSkillMenu();
-	}
-
-
-	if (m_menuState == MenuState::Equipment)
-	{
-		//DrawEquipmentMenu();
-	}
-
-
-	if (m_menuState == MenuState::Item)
-	{
-		//DrawItemMenu();
+		if (m_menuTab == MenuTab::Skill)
+		{
+			DrawSkillMenu();
+		}
+		else
+		{
+			DrawEquipmentMenu();
+		}
 	}
 
 
