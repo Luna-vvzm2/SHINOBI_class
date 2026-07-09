@@ -231,7 +231,17 @@ void YellowEnemyEntity::Update(float deltaTime) {
             m_state = Attack1;
             m_attackTimer = 0.3f;
             m_attackHit = false;
+            Vector2d pos = GetPos();
+
+            if (m_faceRight)
+                pos.x += 100.0f;
+            else
+                pos.x -= 100.0f;
+
+            m_transform->SetPosition(pos);
         }
+        
+
         break;
 
     case Attack1:

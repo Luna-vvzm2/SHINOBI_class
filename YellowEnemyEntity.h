@@ -35,8 +35,8 @@ private:
 	State m_state = Idle;
 
 	float m_attackTimer = 0.0f;
-	float m_detectRange = 300.0f;
-	float m_attackRange = 50.0f;
+	float m_detectRange =400.0f;
+	float m_attackRange = 200.0f;
 	float m_deadTimer = 0.0f;
 	CollisionComponent* m_attackCollision = nullptr;
 
