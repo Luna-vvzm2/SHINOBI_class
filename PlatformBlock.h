@@ -9,6 +9,6 @@ public:
 	BlockType GetBlockType() const override { return BlockType::Platform; }
 protected:
 	std::string GetTexturePath() const override {
-		return "";
+		return "assets/images/blocks/platformTikurin.png";
 	}
 };
