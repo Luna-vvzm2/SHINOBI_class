@@ -11,7 +11,7 @@ public:
 
     bool Init() override;
   void Update(float deltaTime) override;
-    ActorType GetType() const override { return ActorType::Enemy; }
+    ActorType GetType() const override { return ActorType::Trap; }
     std::string GetTexturePath() const override { return ""; }
 private:
     int m_damage;             // プレイヤーに与えるダメージ量
