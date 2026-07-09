@@ -75,7 +75,6 @@ void EntityActor::MoveAndCollide(float deltaTime) {
 
     // === Y•ûŒüÕ“Ëˆ— ===
     for (auto actor : m_scene->GetActors()) {
-       
         Vector2d actorPos;
         CollisionComponent* actorCol = nullptr;
         BlockActor* block = nullptr;

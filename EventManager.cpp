@@ -6,7 +6,15 @@
 #include "PlayScene.h"
 #include "PlayerEntity.h"
 #include "Game.h"
-
+#include "Actor.h"
+#include "WhiteEnemyEntity.h"
+#include "YellowEnemyEntity.h"
+#include "ArrowEnemyEntity.h"
+#include "HealerEnemyEntity.h"
+#include "ArmorEnemyEntity.h"
+#include "GunnerEnemyEntity.h"
+#include "YoroiBossEntity.h"
+#include "SekienkiBossEntity.h"
 
 
 EventManager::EventManager(Scene* scene, EventTexture* eventTexture)
@@ -19,35 +27,64 @@ EventManager::~EventManager() = default;
 
 void EventManager::Init(std::unique_ptr<EventBase> event)
 {
-
+	
 	if (!event) return;
-	m_currentEvent = std::move(event);
-	m_currentEvent->Init();
+	m_eventQueue.clear();
+	m_eventQueue.push_back(std::move(event));
+	m_currentEventIndex = 0;
+
+	m_eventQueue[m_currentEventIndex]->Init();
 }
 
 void EventManager::Update(float deltaTime)
 {
-	if (!m_currentEvent) return;
-	m_currentEvent->Update(deltaTime);
-	if (m_currentEvent->IsEnd())
+	if (m_currentEventIndex >= m_eventQueue.size()) return;
+	m_eventQueue[m_currentEventIndex]->Update(deltaTime);
+
+	if (m_eventQueue[m_currentEventIndex]->IsEnd())
 	{
-		m_currentEvent->End();
-		m_currentEvent.reset();
+		m_eventQueue[m_currentEventIndex]->End();
+		m_currentEventIndex++;
+
+		if(m_currentEventIndex < m_eventQueue.size())
+		{
+			m_eventQueue[m_currentEventIndex]->Init();
+		}
+		else
+		{
+			m_eventQueue.clear();
+			m_currentEventIndex = 0;
+		}
 	}
 }
 
 void EventManager::End()
 {
-	if (m_currentEvent)
+	if (m_currentEventIndex < m_eventQueue.size())
 	{
-		m_currentEvent->End();
-		m_currentEvent.reset();
+		m_eventQueue[m_currentEventIndex]->End();
 	}
+
+	m_eventQueue.clear();
+	m_currentEventIndex = 0;
 }
 
 bool EventManager::IsRunning() const
 {
-	return m_currentEvent != nullptr;
+	return m_currentEventIndex < m_eventQueue.size();
+}
+
+bool EventManager::IsBattleEvent() const
+{
+	if (m_currentEventIndex >= m_eventQueue.size()) return false;
+
+	if (m_eventQueue[m_currentEventIndex]->GetType() == EventType::Battle)
+	{
+		auto battleEvent = static_cast<BattleEvent*>(m_eventQueue[m_currentEventIndex].get());
+		return true;
+	}
+
+	return false;
 }
 
 bool EventManager::IsEventTriggered(int eventId) const
@@ -60,9 +97,69 @@ void EventManager::RegisterEvent(int eventId)
 	m_triggeredEvents.insert(eventId);
 }
 
+void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d& triggerPos)
+{
+	m_eventQueue.clear();
+	m_currentEventIndex = 0;
+
+	std::ifstream ifs(filePath);
+	if (!ifs.is_open()) return;
+
+	std::string text;
+	std::string eventType = "TALK"; //デフォルトのイベントタイプ
+	std::vector<std::string> eventTexts;
+
+	auto pushEvent = [&]()
+		{
+			if (eventTexts.empty()) return;
+
+			if (eventType == "TALK")
+			{
+				m_eventQueue.push_back(std::make_unique<TalkEvent>(m_scene, eventTexts, this));
+			}
+			else if (eventType == "BATTLE")
+			{
+				auto battleEvent = std::make_unique<BattleEvent>(m_scene, eventTexts, this);
+				battleEvent->SetTrigger(triggerPos);
+				m_eventQueue.push_back(std::move(battleEvent));
+			}
+			else if (eventType == "CUTIN")
+			{
+				m_eventQueue.push_back(std::make_unique<CutInEvent>(m_scene, eventTexts, this));
+			}
+			eventTexts.clear();
+		};
+
+	while (std::getline(ifs, text))
+	{
+		if (text.empty() || text.rfind("//", 0) == 0)continue;
+
+		if (text.find("[TYPE=") != std::string::npos)
+		{
+			pushEvent();
+
+			if (text.find("TALK") != std::string::npos) eventType = "TALK";
+			else if (text.find("BATTLE") != std::string::npos) eventType = "BATTLE";
+			else if (text.find("CUTIN") != std::string::npos) eventType = "CUTIN";
+			continue;
+		}
+		eventTexts.push_back(text);
+	}
+	pushEvent();
+	ifs.close();
+
+	if(!m_eventQueue.empty())
+	{
+		m_eventQueue[0]->Init();
+	}
+}
+
 void EventManager::Draw()
 {
-	m_currentEvent->Draw();
+	if (m_currentEventIndex < m_eventQueue.size())
+	{
+		m_eventQueue[m_currentEventIndex]->Draw();
+	}
 }
 
 EventTexture* EventManager::GetEventTexture() const
@@ -83,11 +180,47 @@ std::string EventBase::LoadConfig(const std::string& text, const std::string& co
 	return text.substr(start, end - start);
 }
 
+void EventBase::LoadTexts(const std::string& filePath)
+{
+	DeleteTexts();
+
+	std::ifstream ifs(filePath);
+
+	if (!ifs.is_open())
+	{
+		std::cerr << "テキストファイルを読み込めませんでした\n";
+		return;
+	}
+
+	std::string line;
+
+	while (std::getline(ifs, line))
+	{
+		if (line.empty() || line.rfind("//", 0) == 0) continue; //空の行とコメント行を無視
+		m_texts.push_back(line);
+	}
+	ifs.close();
+}
+
+void EventBase::DeleteTexts()
+{
+	m_texts.clear();
+	m_texts.shrink_to_fit();
+}
+
+
 TalkEvent::TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
 	: m_scene(scene)
 	, m_eventManager(eventManager)
 {
 	LoadTexts(filePath);
+}
+
+TalkEvent::TalkEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
 }
 
 TalkEvent::~TalkEvent() = default;
@@ -309,9 +442,11 @@ void TalkEvent::Draw()
 
 	if (m_actorTextureId > 0 && m_talkerPosition == ActorPosition::Left)
 	{
-		textX += (m_actorW - 150);
+		textX += (m_actorW - 250);
 	}
 
+	//ChangeFont("HGP 明朝 E");
+	SetFontSize(m_fontSize);
 	DrawString(textX, textY, m_talkText.c_str(), m_textColor.ToDxColor());
 
 	if (m_talkerName.empty()) return;
@@ -328,33 +463,396 @@ void TalkEvent::Draw()
 	DrawString(m_nameX, m_nameY, m_talkerName.c_str(), m_nameColor.ToDxColor());
 }
 
-void TalkEvent::LoadTexts(const std::string& filePath)
+
+BattleEvent::BattleEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
 {
-	DeleteTexts();
+	LoadTexts(filePath);
+}
 
-	std::ifstream ifs(filePath);
+BattleEvent::BattleEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
+}
 
-	if (!ifs.is_open())
+BattleEvent::~BattleEvent() = default;
+
+void BattleEvent::Init()
+{
+	m_areaXMin = -64.0f;
+	m_areaXMax = 1016.0f;
+
+	for (auto actor : m_scene->GetActors())
 	{
-		std::cerr << "テキストファイルを読み込めませんでした\n";
+		actor->SetState(Actor::State::Active);
+		if (actor->GetType() == ActorType::Player)
+		{
+			auto p = static_cast<PlayerEntity*>(actor);
+			p->SetCanMove(true);
+
+			Vector2d playerPos = actor->GetComponent<TransformComponent>()->GetPosition();
+		}
+	}
+	if (m_eventManager)
+	{
+		Vector2d triggerPos = m_eventManager->GetTriggerPosition();
+
+		m_areaXMin += triggerPos.x;
+		m_areaXMax += m_areaXMin;
+
+		m_isAreaSet = true;
+	}
+	m_isSpawned = false;
+	m_isEnd = false;
+}
+
+void BattleEvent::Update(float deltaTime)
+{
+	if (!m_isSpawned)
+	{
+		for (const std::string& text : m_texts)
+		{
+			
+			size_t configEndPos = text.find(']');
+			if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+			{
+				std::string configPart = text.substr(1, configEndPos - 1);
+
+				std::string enemyStr = LoadConfig(configPart, "enemyType");
+				if (!enemyStr.empty() && enemyStr != "None") m_enemyType = std::stoi(enemyStr);
+
+				std::string posXStr = LoadConfig(configPart, "posX");
+				if (!posXStr.empty() && posXStr != "None") m_enemyPos.x = std::stof(posXStr);
+
+				std::string posYStr = LoadConfig(configPart, "posY");
+				if (!posYStr.empty() && posYStr != "None") m_enemyPos.y = -std::stof(posYStr);
+
+				std::string areaMinStr = LoadConfig(configPart, "areaMin");
+				if (!areaMinStr.empty() && areaMinStr != "None") m_areaXMin = std::stof(areaMinStr);
+
+				std::string areaMaxStr = LoadConfig(configPart, "areaMax");
+				if (!areaMaxStr.empty() && areaMaxStr != "None") m_areaXMax = std::stof(areaMaxStr);
+
+				EnemySpawn();
+			}
+		}
+		m_isSpawned = true;
 		return;
 	}
 
-	std::string line;
-
-	while (std::getline(ifs, line))
+	bool enemyAlive = false;
+	for (auto actor : m_scene->GetActors())
 	{
-		if (line.empty() || line.rfind("//", 0) == 0 ) continue; //空の行とコメント行を無視
-		m_texts.push_back(line);
+		if (actor->GetType() == ActorType::Enemy && actor->GetState() == Actor::State::Active)
+		{
+
+			if (m_isAreaSet)
+			{
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (transform)
+				{
+					float posX = transform->GetPosition().x;
+					if (posX <= m_areaXMin - 20.0f || posX >= m_areaXMax + 20.0f) //壁際の敵が範囲から外れるため少し探索範囲を増加
+					{
+						continue;
+					}
+				}
+			}
+			enemyAlive = true;
+			break;
+		}
 	}
-	ifs.close();
+
+
+	if (!enemyAlive)
+	{
+		m_isEnd = true; 
+		return;
+	}
+
+	if (m_isAreaSet)
+	{
+		for (auto actor : m_scene->GetActors())
+		{
+			if (actor->GetState() == Actor::State::Active && (actor->GetType() == ActorType::Player || actor->GetType() == ActorType::Enemy))
+			{
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (!transform) continue;
+
+				Vector2d pos = transform->GetPosition();
+
+				// 左右の壁で押し戻す
+				if (pos.x > m_areaXMin - 25.0f && pos.x < m_areaXMax + 25.0f) //飛燕によるすり抜け防止で25.0fの猶予
+				{
+					if (pos.x < m_areaXMin) pos.x = m_areaXMin;
+					if (pos.x > m_areaXMax) pos.x = m_areaXMax;
+				}
+
+				transform->SetPosition(pos);
+			}
+		}
+	}
 }
 
-void TalkEvent::DeleteTexts()
+
+void BattleEvent::End()
 {
-	m_texts.clear();
-	//m_texts.shrink_to_fit();
+	DeleteTexts();
 }
+
+bool BattleEvent::IsEnd() const
+{
+	return m_isEnd;
+}
+
+void BattleEvent::EnemySpawn()
+{
+	Vector2d triggerPos{ 0.0f, 0.0f };
+	if (m_eventManager)
+	{
+		triggerPos = m_eventManager->GetTriggerPosition();
+	}
+	m_enemyPos += triggerPos;
+	
+
+	switch (m_enemyType)
+	{
+	case 1:
+	{
+		WhiteEnemyEntity* enemy = new WhiteEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 2:
+	{
+		YellowEnemyEntity* enemy = new YellowEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 3:
+	{
+		ArrowEnemyEntity* enemy = new ArrowEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 4:
+	{
+		HealerEnemyEntity* enemy = new HealerEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 5:
+	{
+		ArmorEnemyEntity* enemy = new ArmorEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 6:
+	{
+		GunnerEnemyEntity* enemy = new GunnerEnemyEntity(m_scene, m_enemyPos);
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 7:
+	{
+		YoroiBossEntity* enemy = new YoroiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	case 8:
+	{
+		SekienkiBossEntity* enemy = new SekienkiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
+		m_scene->SpawnActor(enemy);
+	}break;
+
+	default:
+		std::cerr << "無効な値のため敵を生成できません。\n";
+		break;
+	}
+
+}
+
+void BattleEvent::Draw()
+{
+	return;
+}
+
+
+CutInEvent::CutInEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	LoadTexts(filePath);
+}
+
+CutInEvent::CutInEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
+}
+
+CutInEvent::~CutInEvent() = default;
+
+void CutInEvent::Init()
+{
+	for (auto actor : m_scene->GetActors())
+	{
+		if (actor->GetType() == ActorType::Player)
+		{
+			auto p = static_cast<PlayerEntity*>(actor);
+			p->SetCanMove(false);
+		}
+		actor->SetState(Actor::State::Paused);
+	}
+
+	if (m_eventManager)
+	{
+		EventTexture* texManager = m_eventManager->GetEventTexture();
+
+		if (texManager)
+		{
+			for (const std::string& text : m_texts)
+			{
+				size_t configEndPos = text.find(']');
+				if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+				{
+					std::string configPart = text.substr(1, configEndPos - 1);
+
+					std::string uImgPath = LoadConfig(configPart, "bandPath");
+					if (!uImgPath.empty() && uImgPath != "None")
+					{
+						if (m_eventManager && m_eventManager->GetEventTexture())
+						{
+							m_bandTextureId = m_eventManager->GetEventTexture()->LoadTexture(uImgPath);
+						}
+					}
+
+					std::string bImgPath = LoadConfig(configPart, "bossPath");
+					if (!bImgPath.empty() && bImgPath != "None")
+					{
+						if (m_eventManager && m_eventManager->GetEventTexture())
+						{
+							m_bossTextureId = m_eventManager->GetEventTexture()->LoadTexture(bImgPath);
+						}
+					}
+
+					std::string mImgPath = LoadConfig(configPart, "musashiPath");
+					if (!mImgPath.empty() && mImgPath != "None")
+					{
+						if (m_eventManager && m_eventManager->GetEventTexture())
+						{
+							m_musashiTextureId = m_eventManager->GetEventTexture()->LoadTexture(mImgPath);
+						}
+					}
+
+
+					m_jBossName = LoadConfig(configPart, "jName");
+					m_rBossName = LoadConfig(configPart, "rName");
+
+					m_displayTime = std::stof(LoadConfig(configPart, "time"));
+				}
+			}
+		}
+
+		m_isEnd = false;
+	}
+}
+
+void CutInEvent::Update(float deltaTime)
+{
+	if(m_timer <= m_displayTime)
+	{
+		if ((m_timer < m_displayTime * 0.1f))
+		{
+			m_graphSpeed = 100;
+		}
+		else if ((m_timer >= m_displayTime * 0.1f) && (m_timer <= m_displayTime * 0.75f))
+		{
+			m_graphSpeed = 1;
+			if (m_rBossNameX > 200)
+			{
+				m_nameSpeed = 100;
+			}
+			else
+			{
+				m_nameSpeed = 1;
+			}
+		}
+		else if (m_timer > m_displayTime * 0.7f)
+		{
+			m_graphSpeed = 100;
+			m_nameSpeed = 100;
+		}
+
+
+		m_bossX -= m_graphSpeed;
+		m_musashiX += m_graphSpeed;
+
+		m_rBossNameX -= m_nameSpeed;
+		m_jBossNameX -= m_nameSpeed;
+
+		m_timer++;
+	}
+	else
+	{
+		m_isEnd = true;
+		return;
+	}
+}
+
+void CutInEvent::End()
+{
+	for (auto actor : m_scene->GetActors())
+	{
+		actor->SetState(Actor::State::Active);
+		if (actor->GetType() == ActorType::Player)
+		{
+			auto p = static_cast<PlayerEntity*>(actor);
+			p->SetCanMove(true);
+		}
+	}
+
+	if (m_eventManager)
+	{
+		EventTexture* texManager = m_eventManager->GetEventTexture();
+		if (texManager)
+		{
+			texManager->Clear();
+		}
+	}
+	DeleteTexts();
+}
+
+bool CutInEvent::IsEnd() const
+{
+	return m_isEnd;
+}
+
+
+void CutInEvent::Draw()
+{
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+	if((m_bossTextureId != -1) && (m_musashiTextureId != -1))
+	{
+		DrawExtendGraph(m_bandX, m_bandY, m_bandX + m_bandW, m_bandY + m_bandH, m_bandTextureId, TRUE);
+		DrawExtendGraph(m_bossX, m_bossY, m_bossX + m_bossW, m_bossY + m_bossH, m_bossTextureId, TRUE);
+		DrawExtendGraph(m_musashiX, m_musashiY, m_musashiX + m_musashiW, m_musashiY + m_musashiH, m_musashiTextureId, TRUE);
+	}
+
+	//ChangeFont("Nexus Sans");
+	SetFontSize(m_rFontSize);
+	DrawString(m_rBossNameX, m_rBossNameY, m_rBossName.c_str(), m_rBossNameColor.ToDxColor());
+
+	//ChangeFont("HGP 明朝 E");
+	SetFontSize(m_jFontSize);
+	DrawString(m_jBossNameX, m_jBossNameY, m_jBossName.c_str(), m_jBossNameColor.ToDxColor());
+}
+
 
 EventTrigger::EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager)
 	:BlockActor(scene)
@@ -407,19 +905,51 @@ void EventTrigger::Update(float deltaTime)
 
 			m_eventManager->RegisterEvent(m_eventId); //重複を避ける
 
-			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".txt";
-			auto talkEvent = std::make_unique<TalkEvent>(m_scene, filePath, m_eventManager);
+			//地面をイベント開始地点とする処理
+			float groundY = playerPos.y;  
+			float minDistance = 99999.0f; 
 
-			m_eventManager->Init(std::move(talkEvent));
+			for (auto actor : m_scene->GetActors())
+			{
+				if (actor->GetType() == ActorType::Block && actor != this)
+				{
+					if (dynamic_cast<EventTrigger*>(actor) != nullptr)//イベントトリガーのBlockを見ない
+					{
+						continue;
+					}
+
+					auto transform = actor->GetComponent<TransformComponent>();
+					if (transform)
+					{
+						Vector2d blockPos = transform->GetPosition();
+
+						if (playerPos.x >= blockPos.x && playerPos.x <= blockPos.x + 64.0f)
+						{
+							if (blockPos.y >= playerPos.y)
+							{
+								float distance = blockPos.y - playerPos.y;
+								if (distance < minDistance)
+								{
+									minDistance = distance;
+									groundY = blockPos.y;
+								}
+							}
+						}
+					}
+				}
+			}
+			Vector2d adjustedPos = { myPos.x, groundY - 100.0f};
+			m_eventManager->SetTriggerPosition(adjustedPos);
+
+			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".txt";
+			m_eventManager->LoadEventTimeLine(filePath, adjustedPos);
 		}
 
 		SetState(Actor::State::Dead);
 	}
-
-	
 }
 
-ActorType EventTrigger::GetType() const
+BlockType EventTrigger::GetBlockType() const
 {
-	return ActorType::Block;
+	return BlockType::Solid;
 }

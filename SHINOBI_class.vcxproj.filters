@@ -168,6 +168,51 @@
     <ClCompile Include="YoroiBossEntity.cpp">
       <Filter>ソース ファイル\Actor\Entity\EnemyEntity\BossEntity</Filter>
     </ClCompile>
+    <ClCompile Include="KunaiActor.cpp">
+      <Filter>ソース ファイル\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyHPBar.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraSBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="ClearBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraMBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="HouseBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraLBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="YaguraLLBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformBlock.cpp">
+      <Filter>ソース ファイル\Actor\Block</Filter>
+    </ClCompile>
+    <ClCompile Include="EventManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="EventTexture.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="WhiteShurikenBullet.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="BackGroundUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MoneyUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ShurikenUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">

@@ -1,0 +1,8 @@
+[TYPE="TALK"]
+[name="店主" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]よう、シノビ！<br>俺の妖怪ショップにようこそ！<br>何か買っていくかい？
+[name="ジョー・ムサシ" time="None" pos="L" path="assets\images\events\stand\musashi\musashi.png"]……
+[name="店主" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ず、ずいぶんノリの悪いやつだな……<br>まあいいや……とにかく…… 
+[name="店主" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]ここ朧の里に現れた男。<br>えっと、ルーズとか言ったか。
+[name="店主" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]あいつは暴れ過ぎだ。<br>ここだけじゃねえ。妖怪の世界でもだ。
+[name="店主" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]好き放題暴れた上に、<br>俺たち妖怪を配下にして利用してやがる。<br>正直……許せねえ。
+[name="店主" time="None" pos="R" path="assets\images\events\stand\shop\shopkeeper.png"]だからよ、俺はあんたに協力する。<br>ルーズを止めてくれ。 

@@ -52,7 +52,6 @@ public:
 
     Vector2d GetDrawOffset() { return m_drawOffset; }
     void SetDrawOffset(float x, float y) { m_drawOffset = Vector2d{ x, y }; }
-
 private:
     int m_handle;
     float m_width;

@@ -1,0 +1,7 @@
+[TYPE="TALK"]
+[name="悪霊の鎧武士" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]まだ朧の忍者が残っていたか……
+[name="悪霊の鎧武士" time="None" pos="R" path="assets\images\events\stand\enemy\ghost.png"]覚悟しろ……我に倒され、<br>石となった仲間たちと同じ運命をたどるのだ。 
+
+//ここで戦闘イベント
+[TYPE="BATTLE"]
+[enemyType="7" posX="720.0f" posY="0.0f"]

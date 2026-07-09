@@ -23,8 +23,13 @@ public:
 	void End(); //イベント終了
 
 	bool IsRunning() const; //イベントが実行中か
+	bool IsBattleEvent() const; //戦闘専用
 	bool IsEventTriggered(int eventId) const;
 	void RegisterEvent(int eventId);
+
+	void LoadEventTimeLine(const std::string& filePath, const Vector2d& triggerPos); //複数の連続するイベントを読み込む
+	void SetTriggerPosition(const Vector2d& pos) { m_triggerPos = pos; }
+	const Vector2d& GetTriggerPosition() const { return m_triggerPos; }
 
 	void Draw();
 
@@ -33,16 +38,29 @@ public:
 private:
 	Scene* m_scene; //イベントを管理するシーン
 	EventTexture* m_eventTexture{ nullptr }; //イベントの画像を管理
-	std::unique_ptr<EventBase> m_currentEvent{ nullptr }; //実行中のイベント
+	//std::unique_ptr<EventBase> m_currentEvent{ nullptr }; //実行中のイベント
+	std::vector<std::unique_ptr<EventBase>> m_eventQueue; //イベントのキュー
+	size_t m_currentEventIndex{ 0 };
 	std::set<int> m_triggeredEvents;
+
+	Vector2d m_triggerPos{ 0.0f, 0.0f };
 };
 
+enum class EventType
+{
+	Talk,
+	CutIn,
+	Battle
+};
 
 class EventBase
 {
 public:
+
 	EventBase(); //コンストラクタ
 	virtual ~EventBase(); //デストラクタ
+
+	virtual EventType GetType() const = 0;
 
 	virtual void Init() = 0; //イベント開始時の処理
 	virtual void Update(float deltaTime) = 0; //更新
@@ -54,13 +72,19 @@ public:
 
 protected:
 	std::string LoadConfig(const std::string& text, const std::string& configName) const; //テキストから設定を読み取る
+	void LoadTexts(const std::string& filePath); //テキストファイルの読み込み
+	void DeleteTexts(); //テキストデータの解放
+	std::vector<std::string> m_texts; //表示テキスト
 };
 
 class TalkEvent : public EventBase
 {
 public:
 	TalkEvent(Scene* scene, const std::string& filePath, EventManager* eventManager); //コンストラクタ
+	TalkEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
 	~TalkEvent() override; //デストラクタ
+
+	EventType GetType() const override { return EventType::Talk; }
 
 	void Init() override;
 	void Update(float deltaTime) override;
@@ -78,7 +102,6 @@ public:
 private:
 	Scene* m_scene{ nullptr };
 	EventManager* m_eventManager{ nullptr };
-	std::vector<std::string> m_texts; //表示テキスト
 	int m_currentLine{ 0 }; //表示中のテキストインデックス
 	int m_skipTimer{ 90 }; //スキップの長押しタイマー
 	bool m_isEnd{ false }; //イベント終了確認
@@ -95,6 +118,7 @@ private:
 	int m_boxW{ 720 };
 	int m_boxH{ 160 };
 
+	int m_fontSize{ 20 };
 	int m_nameX{ 0 };
 	int m_nameY{ m_boxY - 30 };
 	int m_nameX2{ m_boxW + 230 };
@@ -110,10 +134,109 @@ private:
 	
 	//void PlayVoice();
 
-	void LoadTexts(const std::string& filePath); //テキストファイルの読み込み
-	void DeleteTexts(); //テキストデータの解放
-
 }; 
+
+
+class BattleEvent : public EventBase
+{
+public:
+	BattleEvent(Scene* scene, const std::string& filePath, EventManager* eventManager);
+	BattleEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
+	~BattleEvent() override;
+
+	EventType GetType() const override { return EventType::Battle; }
+
+	void Init() override;
+	void Update(float deltaTime) override;
+	void End() override;
+
+	bool IsEnd() const override;
+
+	void SetTrigger(const Vector2d& pos) { m_triggerPos = pos; }
+
+private:
+	Scene* m_scene{ nullptr };
+	EventManager* m_eventManager{ nullptr };
+
+    bool m_isEnd{ false };
+	bool m_isSpawned{ false };
+	bool m_isAreaSet{ false };
+
+	int m_enemyType{ 0 };
+	Vector2d m_enemyPos{ 0.0f, -88.0f };
+	Vector2d m_triggerPos{ 0.0f, 0.0f };
+
+	float m_areaXMin{ -64.0f };
+	float m_areaXMax{ 1016.0f };
+
+	void EnemySpawn();
+	void Draw() override;
+};
+
+
+class CutInEvent : public EventBase
+{
+public:
+	CutInEvent(Scene* scene, const std::string& filePath, EventManager* eventManager);
+	CutInEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
+	~CutInEvent() override;
+
+	EventType GetType() const override { return EventType::CutIn; }
+
+	void Init() override;
+	void Update(float deltaTime) override;
+	void End() override;
+
+	bool IsEnd() const override;
+
+
+private:
+	Scene* m_scene{ nullptr };
+	EventManager* m_eventManager{ nullptr };
+
+	float m_timer{ 0.0f };
+	float m_displayTime{ 180.0f }; //カットインの表示時間
+	bool m_isEnd{ false };
+
+	int m_graphSpeed{ 10 }; //画像の移動速度
+	int m_nameSpeed{ 0 }; //テキストの移動速度
+
+	std::string m_rBossName{ "" }; //ローマ字名
+	std::string m_jBossName{ "" }; //日本語名
+
+	int m_bandTextureId{ -1 };
+	int m_bossTextureId{ -1 };
+	int m_musashiTextureId{ -1 };
+
+	int m_bandX{ 0 };
+	int m_bandY{ 0 };
+	int m_bandW{ 1280 };
+	int m_bandH{ 720 };
+
+	int m_bossX{ 2300 };
+	int m_bossY{ 0 };
+	int m_bossW{ 362 };
+	int m_bossH{ 720 };
+
+	int m_musashiX{ -1400 };
+	int m_musashiY{ 385 };
+	int m_musashiW{ 378 };
+	int m_musashiH{ 335 };
+
+	int m_rBossNameX{ 1280 };
+	int m_rBossNameY{ 320 };
+
+	int m_jBossNameX{ 1430 };
+	int m_jBossNameY{ 380 };
+
+	int m_rFontSize{ 96 };
+	int m_jFontSize{ 60 };
+
+	Color m_rBossNameColor{ 255, 255, 255, 255 };
+	Color m_jBossNameColor{ 230, 7, 7, 255 };
+
+	void Draw() override;
+};
 
 
 class EventTrigger : public BlockActor
@@ -124,7 +247,7 @@ public:
 	void Update(float deltaTime) override;
 	void Draw() override {}
 
-	ActorType GetType() const override;
+	BlockType GetBlockType() const override;
 
 private:
 	int m_eventId;
