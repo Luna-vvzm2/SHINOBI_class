@@ -679,7 +679,7 @@ bool PlayScene::StageInit(int stageNo) {
 				AddActor(new YaguraLLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.25f)));
 				break;
 			case 14:
-				pos = Vector2d(x * tileSize, y * tileSize - tileSize * 0.5f);
+				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize - tileSize * 0.5f);
 				AddActor(new PlatformBlock(this, pos));
 				break;
 			}
@@ -714,6 +714,7 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 4:
 			{
+				pos += Vector2d(-tileSize * 0.5f, 20.0f);
 				AddActor(new TreasureBoxEntity(this, pos));
 				break;
 			}
@@ -1033,6 +1034,7 @@ void PlayScene::ClearStageActors()
 		case ActorType::Effect:
 		case ActorType::StageExit:
 		case ActorType::StageBack:
+		case ActorType::TreasureBox:
 			actor->SetState(Actor::State::Dead);
 			break;
 

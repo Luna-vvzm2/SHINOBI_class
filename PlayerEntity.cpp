@@ -1279,7 +1279,7 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
 
     for (Actor* actor : m_scene->GetActors())
     {
-        if (actor->GetType() != ActorType::Enemy)
+        if (actor->GetType() != ActorType::Enemy && actor->GetType() != ActorType::TreasureBox)
         {
             continue;
         }
@@ -1311,6 +1311,7 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
             m_hit = true;
             m_combo++;
 
+            printf("ItemDroped coin: %d\n", m_coin);
             /*SpawnEffect(
                 new EffectActor( m_scene, enemy->GetPos(), EffectType::WeakAttack1, !m_dir )
             );*/

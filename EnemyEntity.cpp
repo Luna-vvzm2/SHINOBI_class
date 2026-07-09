@@ -183,12 +183,12 @@ void EnemyEntity::MetsuAttacked()
 
     // Ž€–S
     m_hp->Damage((int)m_hp->GetHP());
-    SetState(State::Dead);
+    OnDead();
 }
 
 void EnemyEntity::OnDeadFromDamage(int damage, const Vector2d& knockback)
 {
-    SetState(Actor::State::Dead);
+    OnDead();
 }
 
 std::string EnemyEntity::GetTexturePath() const {
