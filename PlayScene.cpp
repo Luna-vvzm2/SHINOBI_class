@@ -1100,7 +1100,11 @@ void PlayScene::Update(float deltaTime) {
 	if (m_eventManager->IsRunning())
 	{
 		m_eventManager->Update(deltaTime);
-		return;
+
+		if (!m_eventManager->IsBattleEvent())
+		{
+			return;
+		}
 	}
 	updateActors(m_backactors, deltaTime);
 
