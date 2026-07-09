@@ -430,7 +430,7 @@ void TalkEvent::Draw()
 		}
 		else if (m_talkerPosition == ActorPosition::Right) 
 		{
-			int actorX = (m_boxX + m_boxW) - m_actorW + 250;
+			int actorX = (m_boxX + m_boxW) - m_actorW + 280;
 			int actorY = (m_boxY + m_boxH) - m_actorH + 50;
 			DrawExtendGraph(actorX, actorY, actorX + m_actorW, actorY + m_actorH, m_actorTextureId, TRUE);
 		}
