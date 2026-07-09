@@ -1,5 +1,6 @@
 #pragma once
 #include "BossEntity.h"
+#include "EnemyEntity.h"
 
 class SekienkiBossEntity : public BossEntity
 {
@@ -11,6 +12,9 @@ public:
     int GetMaxHP() const override { return 1000; }
     void StartJumpAttack();
     void PhaseChange();
+    void TakeDamage(int damage, const Vector2d& knockback) override;
+    void Update(float deltaTime) override;
+
 protected:
 
     void UpdateAI(float deltaTime) override;
@@ -31,6 +35,7 @@ private:
     float m_hoverY;
     bool m_secondJump;
     float m_tornadoDistanceLeft;
+    bool  m_dead;
 
     Vector2d m_bulletPos;
     Vector2d m_bulletVel;

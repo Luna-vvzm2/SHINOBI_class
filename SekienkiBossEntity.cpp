@@ -1,11 +1,13 @@
 #include "SekienkiBossEntity.h"
-
+#include "TransformComponent.h"
+#include "VelocityComponent.h"
+#include "HPComponent.h"
 #include "PlayScene.h"
 #include "PlayerEntity.h"
-
-#include "HPComponent.h"
-#include <DxLib.h>
-
+#include "SpriteComponent.h"
+#include "AnimationComponent.h"
+#include "Game.h"
+#include "Renderer.h"
 #include <cmath>
 
 SekienkiBossEntity::SekienkiBossEntity(
@@ -24,7 +26,8 @@ SekienkiBossEntity::SekienkiBossEntity(
     , m_hoverY(0.0f)
     , m_secondJump(false)
     , m_tornadoDistanceLeft(0.0f)
-{   
+    , m_dead(false)
+{
 }
 
 bool SekienkiBossEntity::Init()
@@ -32,7 +35,111 @@ bool SekienkiBossEntity::Init()
     if (!BossEntity::Init())
         return false;
 
+    m_hp = AddComponent<HPComponent>(GetMaxHP());
+
+    // コンポーネントの取得
+    m_anim = GetComponent<AnimationComponent>();
+
+    if (m_sprite)
+    {
+        m_sprite->LoadTextureDiv("assets/images/enemy/sekienki/Sekienki01.png", 4, 8);
+    }
+
+    if (m_anim && m_sprite)
+    {
+        m_anim->SetSprite(m_sprite);
+
+        //-----------------------------------------
+        // 1. 立ち（待機） 
+        //-----------------------------------------
+        AnimationClip idleClip;
+        idleClip.frames = { 1, 2, 3, 4, 5, 6 };
+        idleClip.frameDurations = {
+            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f,
+            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f
+        };
+        idleClip.loop = true;
+        m_anim->AddClip("idle", idleClip);
+
+        //-----------------------------------------
+        // 2. 振り向き 2枚 
+        //-----------------------------------------
+        AnimationClip turnClip;
+        turnClip.frames = { 7, 7 };
+        turnClip.frameDurations = {
+            2.0f / 24.0f, // 07 を 2フレーム分
+            3.0f / 24.0f  // 07 を 3フレーム分
+        };
+        turnClip.loop = false;
+        m_anim->AddClip("turn", turnClip);
+
+        //-----------------------------------------
+        // 3. 近接攻撃(火炎) 
+        //-----------------------------------------
+        AnimationClip attackClip;
+        attackClip.frames = { 8, 22, 23, 24, 25, 26, 27, 28, 29, 28, 8 };
+        attackClip.frameDurations = {
+            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f,
+            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f,
+            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f
+        };
+        attackClip.loop = false;
+        m_anim->AddClip("attack", attackClip);
+
+        //-----------------------------------------
+        // 4. ローリング 
+        //-----------------------------------------
+        AnimationClip rollClip;
+        rollClip.frames = {
+            8, 9, 10, 11, 12, 13, 14,          // 08~14
+            9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 // 09~21
+        };
+        rollClip.frameDurations.assign(rollClip.frames.size(), 1.0f / 24.0f); // 全て 1/24秒
+        rollClip.loop = true; // 突進中ループさせる場合は true
+        m_anim->AddClip("roll", rollClip);
+
+        //-----------------------------------------
+        // 5. ドラミング(形態変化) 
+        //-----------------------------------------
+        AnimationClip drummingClip;
+        drummingClip.frames = {
+            14,                                 // 14
+            9, 10, 11, 12, 13, 14,             // 09~14
+            9, 10, 11, 12, 13, 14,             // 09~14
+            8, 9, 10, 11, 12, 13, 14,          // 08~14
+            9, 10, 11, 12, 13                  // 09~13
+        };
+        drummingClip.frameDurations.assign(drummingClip.frames.size(), 1.0f / 24.0f); // 全て 1/24秒
+        drummingClip.loop = false;
+        m_anim->AddClip("drumming", drummingClip);
+
+        // 最初は待機モーションを再生
+        m_anim->Play("idle");
+    }
+
     return true;
+}
+
+void SekienkiBossEntity::Update(float deltaTime)
+{
+    BossEntity::Update(deltaTime);
+
+    if (m_dead) return;
+
+    if (m_sprite)
+    {
+        float vx = GetVel().x;
+
+        // 速度が一定以上なら向いている方向を更新
+        if (vx > 0.1f)
+        {
+            m_sprite->SetFlipX(true);  // 右移動時は反転（※画像素材が左向きベースの場合）
+        }
+        else if (vx < -0.1f)
+        {
+            m_sprite->SetFlipX(false); // 左移動時はそのまま
+        }
+    }
 }
 
 //---------------------------------
@@ -64,7 +171,7 @@ void SekienkiBossEntity::PhaseChange()
     float hpRate =
         (float)m_hp->GetHP() / GetMaxHP();
 
-    if (m_phase < 2 &&hpRate <= 0.5f)
+    if (m_phase < 2 && hpRate <= 0.5f)
     {
         m_phase = 2;
 
@@ -76,7 +183,7 @@ void SekienkiBossEntity::PhaseChange()
 
         m_hp->SetInvincible(999.0f);
     }
-    else if (m_phase < 1 &&hpRate <= 0.7f)
+    else if (m_phase < 1 && hpRate <= 0.7f)
     {
         m_phase = 1;
 
@@ -94,8 +201,10 @@ void SekienkiBossEntity::PhaseChange()
 
 void SekienkiBossEntity::UpdateAI(float deltaTime)
 {
+    if (m_dead) return;
+
     PhaseChange();
-    if (m_attackStep == 11 ||m_attackStep == 12)
+    if (m_attackStep == 11 || m_attackStep == 12)
     {
         return;
     }
@@ -253,18 +362,19 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
 
 void SekienkiBossEntity::UpdateAttack(float deltaTime)
 {
+    if (m_dead) return;
+
     //---------------------------------
     // デバッグ用(attackStep確認)
     //---------------------------------
-    
-    static int prevStep = -1;
+
+    /*static int prevStep = -1;
 
     if (prevStep != m_attackStep)
     {
-        printf("[Step Change] %d -> %d\n", prevStep, m_attackStep);
         prevStep = m_attackStep;
-    }
- 
+    }*/
+
 
     //---------------------------------
     // タイマー
@@ -288,7 +398,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
                 m_bulletVel.x * deltaTime;
         }
     }
-    
+
 
     //---------------------------------
     // 火炎攻撃終了
@@ -421,7 +531,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     if (m_attackStep == 6 &&
         m_attackTimer <= 0.0f)
     {
-        if (m_phase == 2 && !m_secondJump) 
+        if (m_phase == 2 && !m_secondJump)
         {
             m_attackStep = 7;
 
@@ -568,4 +678,32 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
         return;
     }
 
+}
+
+void SekienkiBossEntity::TakeDamage(int damage, const Vector2d& knockback)
+{
+    // すでに死亡しているなら何もしない
+    if (m_dead) return;
+
+    if (m_hp)
+    {
+        // HPを減らす
+        m_hp->Damage(damage);
+
+        // HPが0以下になったら死亡処理へ
+        if (m_hp->GetHP() <= 0)
+        {
+            m_dead = true;
+            m_attackStep = 0;       // 攻撃ステートをリセット
+            m_attackTimer = 0.0f;   // タイマー停止
+            SetVel({ 0.0f, 0.0f }); // その場に停止
+            m_bulletActive = false; // 攻撃用の弾（火炎など）を強制非アクティブ化
+
+            // 死亡アニメーションを再生
+            if (m_anim)
+            {
+                m_anim->Play("dead");
+            }
+        }
+    }
 }
