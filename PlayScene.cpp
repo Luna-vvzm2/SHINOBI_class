@@ -24,6 +24,16 @@
 #include "YaguraLBlock.h"
 #include "YaguraLLBlock.h"
 #include "PlatformBlock.h"
+#include "StoneSBlock.h"
+#include "StoneLBlock.h"
+#include "PlatformOboroSBlock.h"
+#include "PlatformOboroMBlock.h"
+#include "PlatformOboroLBlock.h"
+#include "WoodSBlock.h"
+#include "WoodLBlock.h"
+#include "ClearPlatformBlock.h"
+#include "StructureABlock.h"
+#include "StructureBBlock.h"
 #include "HPBarUI.h"
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
@@ -649,7 +659,7 @@ bool PlayScene::StageInit(int stageNo) {
 				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
 				break;
 			case 2:
-				AddActor(new ClearBlock(this, pos, Vector2d(tileSize, tileSize)));
+			 	AddActor(new ClearBlock(this, pos, Vector2d(tileSize, tileSize)));
 				break;
 			case 5:
 				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
@@ -673,6 +683,69 @@ bool PlayScene::StageInit(int stageNo) {
 			case 14:
 				pos = Vector2d(x * tileSize, y * tileSize - tileSize * 0.5f);
 				AddActor(new PlatformBlock(this, pos));
+				break;
+			case 18:
+				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
+				AddActor(new StoneSBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize)));
+				break;
+			case 19:
+				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
+				AddActor(new StoneLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 3.75f)));
+				break;
+			case 24:
+				pos = Vector2d(x * tileSize + tileSize * 3.5f, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroLBlock(this, pos, Vector2d(tileSize * 8.0f, tileSize * 0.20f)));
+				break;
+			case 27:
+				pos = Vector2d(x * tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroSBlock(this, pos, Vector2d(tileSize, tileSize * 0.20f)));
+				pos = Vector2d(x * tileSize + tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroSBlock(this, pos, Vector2d(tileSize, tileSize * 0.20f)));
+				break;
+			case 28:
+				pos = Vector2d(x * tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroSBlock(this, pos, Vector2d(tileSize, tileSize * 0.20f)));
+				pos = Vector2d(x * tileSize + tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroSBlock(this, pos, Vector2d(tileSize, tileSize * 0.20f)));
+				break;
+			case 29:
+				pos = Vector2d(x * tileSize + tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroMBlock(this, pos, Vector2d(tileSize * 3.0f, tileSize * 0.20f)));
+				break;
+			case 31:
+				AddActor(new WoodSBlock(this, pos, Vector2d(tileSize, tileSize)));
+				break;
+			case 32:
+				pos = Vector2d(x * tileSize + tileSize * 0.5f, y * tileSize);
+				AddActor(new WoodLBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize)));
+				break;
+			case 38:
+				pos = Vector2d(x * tileSize + tileSize * 1.0f, y * tileSize - tileSize * 1.5f);
+				AddActor(new StructureABlock(this, pos, Vector2d(tileSize * 5.0f, tileSize * 4.0f)));
+				pos = Vector2d(x * tileSize + tileSize * 1.0f, y * tileSize - tileSize * 4.5f);
+				AddActor(new ClearBlock(this, pos, Vector2d(tileSize * 5.0f, tileSize * 2.0f)));
+				break;
+			case 39:
+				pos = Vector2d(x * tileSize + tileSize * 1.0f, y * tileSize - tileSize * 1.5f);
+				AddActor(new StructureBBlock(this, pos, Vector2d(tileSize * 5.0f, tileSize * 4.0f)));
+				pos = Vector2d(x * tileSize + tileSize * 1.0f, y * tileSize - tileSize * 4.5f);
+				AddActor(new ClearBlock(this, pos, Vector2d(tileSize * 5.0f, tileSize * 2.0f)));
+				break;
+			case 40:
+				pos = Vector2d(x * tileSize + tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new PlatformOboroMBlock(this, pos, Vector2d(tileSize * 3.0f, tileSize * 0.20f)));
+				break;
+			case 41:
+				pos = Vector2d(x * tileSize - tileSize * 0.5f, y * tileSize);
+				AddActor(new ClearPlatformBlock(this, pos, Vector2d(tileSize * 2.0f, tileSize * 0.25f)));
+				break;
+			case 42:
+				pos = Vector2d(x * tileSize - tileSize, y * tileSize - tileSize * 0.5f);
+				AddActor(new ClearBlock(this, pos, Vector2d(tileSize, tileSize * 2.0f)));
+				break;
+			case 44:
+				pos = Vector2d(x * tileSize, y * tileSize + tileSize * 0.625f);
+				AddActor(new ClearPlatformBlock(this, pos, Vector2d(tileSize * 3.0f, tileSize * 0.25f)));
 				break;
 			}
 		}
