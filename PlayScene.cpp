@@ -730,7 +730,7 @@ bool PlayScene::StageInit(int stageNo) {
 					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 1));
 					break;
 				case 2:
-					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 3));
+					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 4));
 					break;
 				}
 			}
