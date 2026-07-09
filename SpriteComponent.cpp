@@ -187,10 +187,6 @@ void SpriteComponent::SetFrame(int index)
 
     m_currentFrame = index;
     m_handle = m_frames[index];
-    std::cout
-        << "Frame " << index
-        << " Handle = " << m_handle
-        << std::endl;
 
 }
 
