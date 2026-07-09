@@ -56,8 +56,6 @@
 #include <DxLib.h>
 #include <algorithm>
 
-#include <algorithm>
-
 PlayScene::PlayScene(Game* game)
 	: Scene(game),
 	m_menu(this),
