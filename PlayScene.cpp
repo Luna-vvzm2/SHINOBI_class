@@ -727,7 +727,7 @@ bool PlayScene::StageInit(int stageNo) {
 			{
 				switch (m_stageIndex) {
 				case 1:
-					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 2));
+					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 1));
 					break;
 				case 2:
 					AddActor(new StageBackActor(this, pos, m_stageIndex - 1, 3));
@@ -986,6 +986,10 @@ bool PlayScene::StageInit(int stageNo) {
 	case 1:
 		m_bgHandle = LoadGraph("assets/images/uies/bg2.png");
 		m_fgHandle = LoadGraph("assets/images/uies/fg2.png");
+		break;
+	case 2:
+		m_bgHandle = LoadGraph("assets/images/uies/bg3.png");
+		m_fgHandle = LoadGraph("assets/images/uies/fg3.png");
 		break;
 	}
 
@@ -1255,6 +1259,9 @@ void PlayScene::Draw() {
 	case 1:
 		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1760.0f), 1.45f, 1.45f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
 		break;
+	case 2:
+		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130.0f), 1.0f, 1.0f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		break;
 	}
 	
 	drawActors(m_backactors);
@@ -1269,6 +1276,12 @@ void PlayScene::Draw() {
 		break;
 	case 1:
 		renderer->DrawSpriteEx(Vector2d(0 - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 4960.0f), 4.3f, 4.3f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		break;
+	case 2:
+		for (int i = 0; i < 19; i++) {
+			renderer->DrawSpriteEx(Vector2d(-1290.0f + i * 1600.0f - (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 870.0f), 0.8f, 0.8f, 0.0f, m_fgHandle, true, Vector2d(0, 0), 255, false, false, true);
+		}
+		break;
 	}
 	
 
