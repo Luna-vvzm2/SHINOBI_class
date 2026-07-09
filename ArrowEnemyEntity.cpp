@@ -10,6 +10,9 @@
 #include "BlockActor.h"
 #include "DropItemEntity.h"
 #include "EntityActor.h"
+#include "AnimationComponent.h"
+#include "SpriteComponent.h"
+#include "CollisionComponent.h"
 #include <cmath>
 
 
@@ -30,20 +33,130 @@ bool ArrowEnemyEntity::Init() {
 	m_hp = AddComponent<HPComponent>(50);
 
     // =========================
-  // ƒhƒƒbƒvÝ’èiƒeƒXƒg—pj
+  // ãƒ‰ãƒ­ãƒƒãƒ—è¨­å®šï¼ˆãƒ†ã‚¹ãƒˆç”¨ï¼‰
   // =========================
     m_dropTable.clear();
 
     m_dropTable.push_back({ ItemType::Coin, 1.0f });
     m_dropTable.push_back({ ItemType::Kunai,1.0f });
+
+    m_collision->SetRect(82.4f, 182.4f);
+    m_collision->SetOffset(Vector2d(-30.0f, 0.0f));
+
+    m_sprite->LoadTextureDiv(GetTexturePath(), 4, 7);
+    m_sprite->SetDrawSize(0.0f, 324.0f);
+    m_sprite->SetDrawOffset(15.0f, -50.0f);
+
+    m_animation = AddComponent<AnimationComponent>();
+    m_animation->SetSprite(m_sprite);
+
+    AnimationClip stay;
+    stay.frames = { 0 };
+    stay.speed = 1.0f / 24.0f;
+    stay.loop = true;
+
+    AnimationClip attackReady;
+    attackReady.frames = { 2,2,2,2,3,4,4,4,4,4,5,5,5,5,5,5,6,6,6,7,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,9,9,9,10 };
+    attackReady.speed = 1.0f / 24.0f;
+    attackReady.loop = false;
+
+    AnimationClip attack;
+    attack.frames = { 0 };
+    attack.speed = 1.0f / 24.0f;
+    attack.loop = false;
+
+    AnimationClip hit;
+    hit.frames = { 11,15,15,16,16,18,18,18,19,19,20,22,23,25,24 };
+    hit.speed = 1.0f / 24.0f;
+    hit.loop = false;
+
+    AnimationClip dead;
+    dead.frames = { 11,15,15,16,16,18,18,18,19,19,20,22,23,25,24 };
+    dead.speed = 1.0f / 24.0f;
+    dead.loop = false;
+
+    m_animation->AddClip("Stay", stay);
+    m_animation->AddClip("AttackReady", attackReady);
+    m_animation->AddClip("Attack", attack);
+    m_animation->AddClip("Hit", hit);
+    m_animation->AddClip("Dead", dead);
+    m_animation->Play("Stay");
+
 	return true;
+}
+
+void ArrowEnemyEntity::CancelAttackForDamage()
+{
+    m_attackExecuted = false;
+    m_attackTimer = 0.0f;
+}
+
+void ArrowEnemyEntity::StartHit(const Vector2d& knockback)
+{
+    constexpr float ARROW_HIT_KNOCKBACK_SCALE = 0.35f;
+
+    CancelAttackForDamage();
+    m_velocity->Set(knockback * ARROW_HIT_KNOCKBACK_SCALE);
+    m_attackState = AttackState::Hit;
+
+    if (m_animation != nullptr)
+    {
+        m_animation->Play("Hit", true);
+    }
+}
+
+void ArrowEnemyEntity::StartDeadHit()
+{
+    CancelAttackForDamage();
+    m_isDying = true;
+    m_attackState = AttackState::Dead;
+    m_deathTimer = 0.0f;
+    m_velocity->Set(Vector2d::Zero());
+
+    if (m_animation != nullptr)
+    {
+        m_animation->Play("Dead", true);
+    }
+}
+
+void ArrowEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
+{
+    if (m_hp == nullptr || m_isDying)
+    {
+        return;
+    }
+
+    m_hp->Damage(damage);
+
+    if (m_hp->GetHP() <= 0)
+    {
+        StartDeadHit();
+
+        PlayScene* play = static_cast<PlayScene*>(m_scene);
+        if (play != nullptr)
+        {
+            play->RemoveMetsuEnemy(this);
+        }
+        return;
+    }
+
+    Vector2d damageKnockback = knockback;
+    PlayScene* play = static_cast<PlayScene*>(m_scene);
+    PlayerEntity* player = play != nullptr ? play->GetPlayer() : nullptr;
+    if (player != nullptr)
+    {
+        float awaySign = GetPos().x < player->GetPos().x ? -1.0f : 1.0f;
+        damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
+    }
+
+    StartHit(damageKnockback);
 }
 
 void ArrowEnemyEntity::Update(float deltaTime)
 {
    
     m_isHit = false;
-    // æ‚ÉŽ€–SÏ‚Ý‚È‚ç‰½‚à‚µ‚È‚¢
+    // å…ˆã«æ­»äº¡æ¸ˆã¿ãªã‚‰ä½•ã‚‚ã—ãªã„
     if (GetState() == Actor::State::Dead)
         return;
 
@@ -58,11 +171,9 @@ void ArrowEnemyEntity::Update(float deltaTime)
         }
     }*/
 
-    if (m_hp && m_hp->GetHP() <= 0)
+    if (m_hp && m_hp->GetHP() <= 0 && !m_isDying)
     {
-        std::cout << "ArrowEnemy Dead" << std::endl;
-        OnDead();
-        return;
+        StartDeadHit();
     }
 
     auto player =
@@ -71,6 +182,10 @@ void ArrowEnemyEntity::Update(float deltaTime)
     switch (m_attackState)
     {
     case AttackState::Idle:
+        if (m_animation->GetCurrentName() != "Stay")
+        {
+            m_animation->Play("Stay");
+        }
 
         m_attackTimer += deltaTime;
 
@@ -94,6 +209,10 @@ void ArrowEnemyEntity::Update(float deltaTime)
         break;
 
     case AttackState::Warning:
+        if (m_animation->GetCurrentName() != "AttackReady")
+        {
+            m_animation->Play("AttackReady");
+        }
 
         m_attackTimer -= deltaTime;
 
@@ -107,6 +226,10 @@ void ArrowEnemyEntity::Update(float deltaTime)
         break;
 
     case AttackState::Attack:
+        if (m_animation->GetCurrentName() != "Attack")
+        {
+            m_animation->Play("Attack");
+        }
 
         if (!m_attackExecuted)
         {
@@ -150,6 +273,10 @@ void ArrowEnemyEntity::Update(float deltaTime)
         break;
 
     case AttackState::Cooldown:
+        if (m_animation->GetCurrentName() != "Stay")
+        {
+            m_animation->Play("Stay");
+        }
 
         m_attackTimer -= deltaTime;
 
@@ -160,13 +287,33 @@ void ArrowEnemyEntity::Update(float deltaTime)
 
         break;
 
+    case AttackState::Hit:
+        if (m_animation->GetCurrentName() != "Hit")
+        {
+            m_animation->Play("Hit");
+        }
+
+        if (m_animation->IsFinished())
+        {
+            m_attackState = AttackState::Idle;
+            m_attackTimer = 0.0f;
+        }
+        break;
+
     case AttackState::Dead:
+        if (m_animation->GetCurrentName() != "Dead")
+        {
+            m_animation->Play("Dead");
+        }
 
         SetVel(Vector2d::Zero());
+        m_deathTimer += deltaTime;
 
-        m_deathTimer -= deltaTime;
-
-       
+        if (m_deathTimer >= 1.0f)
+        {
+            OnDead();
+            return;
+        }
         break;
     }
 
@@ -252,6 +399,6 @@ float ArrowEnemyEntity::GetGroundY(float x)
 
 std::string ArrowEnemyEntity::GetTexturePath() const {
     
-    return "assets/images/enemy/arrowEnemy.png";
+    return "assets/images/enemy/arrow/arrow.png";
 
 }
