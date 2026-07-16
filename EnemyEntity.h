@@ -41,6 +41,7 @@ public:
     virtual int GetMaxHP() const { return m_hpMax;  }
     virtual void TakeDamage(int damage, const Vector2d& knockback);
     virtual void TakeMetsu(int metsu);
+    bool IsMetsu() { return m_metsu; }
     void MetsuAttacked();
     int GetMetsuGauge() const { return m_metsuGauge; }
     int GetMetsuMax() const { return m_metsuMax; }

@@ -47,6 +47,7 @@ public:
     void UpdateKamae(float deltaTime);
     void UpdateExecution(float deltaTime);
     void CollectExecutionTargets();
+    std::vector<EnemyEntity*> CollectEnemiesInScreen();
 
     void UpdateMove(float deltaTime);
     void UpdateJump(float deltaTime);

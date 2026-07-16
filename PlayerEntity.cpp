@@ -628,9 +628,6 @@ void PlayerEntity::UpdateExecution(float deltaTime)
 
     if (input.IsTrigger(Action::DASH))
     {
-        PlayScene* play = static_cast<PlayScene*>(m_scene);
-        if (play->GetMetsuEnemies().empty()) return;
-
         CollectExecutionTargets();
         if (m_executionTargets.empty()) return;
         m_isExecution = true;
@@ -674,22 +671,36 @@ void PlayerEntity::UpdateExecution(float deltaTime)
 }
 
 void PlayerEntity::CollectExecutionTargets() {
+
     m_executionTargets.clear();
+    auto enemies = CollectEnemiesInScreen();
 
-    PlayScene* play = static_cast<PlayScene*>(m_scene);
-
-    for (EnemyEntity* enemy : play->GetMetsuEnemies())
+    for (EnemyEntity* enemy : enemies)
     {
-        if (enemy == nullptr) continue;
+        if (enemy->IsMetsu())
+            m_executionTargets.push_back(enemy);
+    }
+}
 
-        // ‰æ–Ê“à”»’è
+std::vector<EnemyEntity*> PlayerEntity::CollectEnemiesInScreen()
+{
+    std::vector<EnemyEntity*> enemies;
+
+    for (Actor* actor : m_scene->GetActors())
+    {
+        if (actor->GetType() != ActorType::Enemy)
+            continue;
+
+        EnemyEntity* enemy = static_cast<EnemyEntity*>(actor);
+
         Vector2d playerPos = m_transform->GetPosition();
         Vector2d enemyPos = enemy->GetPos();
         if (std::abs(playerPos.x - enemyPos.x) > 700) continue;
         if (std::abs(playerPos.y - enemyPos.y) > 500) continue;
-
-        m_executionTargets.push_back(enemy);
+        enemies.push_back(enemy);
     }
+
+    return enemies;
 }
 
 void PlayerEntity::UpdateMove(float deltaTime) {

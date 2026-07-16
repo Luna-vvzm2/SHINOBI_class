@@ -972,23 +972,6 @@ void PlayScene::ShowGameOverMenu() {
 //	
 //}
 
-void PlayScene::AddMetsuEnemy(EnemyEntity* enemy)
-{
-	if (enemy == nullptr) return;
-
-	auto it = std::find(m_metsuEnemies.begin(), m_metsuEnemies.end(), enemy);
-	if (it == m_metsuEnemies.end())
-	{
-		m_metsuEnemies.push_back(enemy);
-	}
-	printf("–Å“G”: %zd\n", m_metsuEnemies.size());
-}
-
-void PlayScene::RemoveMetsuEnemy(EnemyEntity* enemy)
-{
-	auto it = std::remove(m_metsuEnemies.begin(), m_metsuEnemies.end(), enemy);
-	m_metsuEnemies.erase(it, m_metsuEnemies.end());
-}
 
 // ====================================================
 // ƒtƒF[ƒh‘JˆÚ

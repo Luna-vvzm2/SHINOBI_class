@@ -49,8 +49,6 @@ public:
 	// Õ“ËƒCƒxƒ“ƒg‚ÉŒÄ‚Ô
 	//void SpawnHitEffect(const Vector2d& pos);
 
-	void AddMetsuEnemy(EnemyEntity* enemy);
-	void RemoveMetsuEnemy(EnemyEntity* enemy);
 	std::vector<EnemyEntity*> GetMetsuEnemies(){ return m_metsuEnemies; }
 
 	void AddCombo();

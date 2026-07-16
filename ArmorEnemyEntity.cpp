@@ -313,9 +313,6 @@ void ArmorEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 		OnDead();
 		StartDeadMotion();
 
-		PlayScene* play = static_cast<PlayScene*>(m_scene);
-		printf("Remove %p\n", this);
-		play->RemoveMetsuEnemy(this);
 		return;
 	}
 

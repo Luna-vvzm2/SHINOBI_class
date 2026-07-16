@@ -132,11 +132,6 @@ void ArrowEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
     {
         StartDeadHit();
 
-        PlayScene* play = static_cast<PlayScene*>(m_scene);
-        if (play != nullptr)
-        {
-            play->RemoveMetsuEnemy(this);
-        }
         return;
     }
 

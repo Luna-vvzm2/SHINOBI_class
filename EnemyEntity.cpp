@@ -147,9 +147,6 @@ void EnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
     {
         OnDeadFromDamage(damage, knockback);
 
-        PlayScene* play = static_cast<PlayScene*>(m_scene);
-        printf("Remove %p\n", this);
-        play->RemoveMetsuEnemy(this);
         return;
     }
 
@@ -170,7 +167,6 @@ void EnemyEntity::TakeMetsu(int metsu)
         m_metsu = true;
 
         PlayScene* play = static_cast<PlayScene*>(m_scene);
-        play->AddMetsuEnemy(this);
     }
 }
 
@@ -180,8 +176,6 @@ void EnemyEntity::MetsuAttacked()
 
     // エフェクト
 
-    // PlaySceneの滅リストから削除
-    static_cast<PlayScene*>(m_scene)->RemoveMetsuEnemy(this);
 
     // 死亡
     m_hp->Damage((int)m_hp->GetHP());
