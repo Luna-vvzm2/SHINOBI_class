@@ -15,6 +15,26 @@
 #include <DxLib.h>
 #include <cmath>
 
+static int GetFadeAlpha(float elapsed, float duration)
+{
+	if (duration <= 0.0f)
+	{
+		return 0;
+	}
+
+	float ratio = elapsed / duration;
+	if (ratio < 0.0f)
+	{
+		ratio = 0.0f;
+	}
+	if (ratio > 1.0f)
+	{
+		ratio = 1.0f;
+	}
+
+	return static_cast<int>(255.0f * (1.0f - ratio));
+}
+
 class WhiteShurikenBullet : public EnemyEntity
 {
 public:
@@ -167,6 +187,7 @@ WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
 	, m_damageState(0)
 	, m_damageFrameTimer(0.0f)
 	, m_damageHoldGroundFrame(false)
+	, m_deadPendingMotion(false)
 {
 }
 
@@ -176,6 +197,10 @@ bool WhiteEnemyEntity::Init()
 
 	m_anim = AddComponent<AnimationComponent>();
 	m_anim->SetSprite(m_sprite);
+	if (m_sprite != nullptr)
+	{
+		m_sprite->SetAlpha(255);
+	}
 	DefineAnimationClips();
 
 	return true;
@@ -257,7 +282,7 @@ static const float WHITE_WEAK_HIT_TOTAL_TIME = 25.0f / 60.0f;
 static const float WHITE_BLOW_TOTAL_TIME = 55.0f / 60.0f;
 static const float WHITE_BLOW_LARGE_HOLD_TIME = 52.5f / 60.0f;
 static const float WHITE_BLOW_LARGE_TOTAL_TIME = 67.5f / 60.0f;
-static const float WHITE_DEAD_SHOW_TIME = 15.0f / 60.0f;
+static const float WHITE_DEAD_SHOW_TIME = 45.0f / 60.0f;
 
 void WhiteEnemyEntity::DefineAnimationClips()
 {
@@ -394,7 +419,7 @@ void WhiteEnemyEntity::DefineAnimationClips()
 
 	AnimationClip hitDead;
 	hitDead.frames = { 37 };
-	hitDead.frameDurations = { 15.0f / 60.0f };
+	hitDead.frameDurations = { 45.0f / 60.0f };
 	hitDead.loop = false;
 	m_anim->AddClip("hit_dead", hitDead);
 }
@@ -609,6 +634,7 @@ void WhiteEnemyEntity::StartDeadHit()
 		WHITE_SHEET_X_NUM,
 		WHITE_SHEET_Y_NUM
 	);
+	m_deadPendingMotion = false;
 	m_damageState = WHITE_DAMAGE_DEAD;
 	m_damageFrameTimer = 0.0f;
 	m_damageHoldGroundFrame = false;
@@ -621,16 +647,12 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 		return;
 	}
 
-	m_hp->Damage(damage);
-
-	if (m_hp->GetHP() <= 0)
+	if (m_deadPendingMotion || m_damageState == WHITE_DAMAGE_DEAD)
 	{
-		StartDeadHit();
-		PlayScene* play = static_cast<PlayScene*>(m_scene);
-		printf("Remove %p\n", this);
-		play->RemoveMetsuEnemy(this);
 		return;
 	}
+
+	m_hp->Damage(damage);
 
 	Vector2d damageKnockback = knockback;
 	Vector2d playerPos = Vector2d::Zero();
@@ -641,6 +663,24 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 		Vector2d myPos = GetPos();
 		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
 		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
+	}
+
+	if (m_hp->GetHP() <= 0)
+	{
+		if (damage >= WHITE_BLOW_LARGE_MIN_DAMAGE)
+		{
+			StartLargeBlowHit(damageKnockback);
+		}
+		else
+		{
+			StartBlowHit(damageKnockback);
+		}
+		m_deadPendingMotion = true;
+
+		PlayScene* play = static_cast<PlayScene*>(m_scene);
+		printf("Remove %p\n", this);
+		play->RemoveMetsuEnemy(this);
+		return;
 	}
 
 	if (damage >= WHITE_BLOW_LARGE_MIN_DAMAGE)
@@ -683,6 +723,10 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 	else if (m_damageState == WHITE_DAMAGE_DEAD)
 	{
 		m_damageFrameTimer += deltaTime;
+		if (m_sprite != nullptr)
+		{
+			m_sprite->SetAlpha(GetFadeAlpha(m_damageFrameTimer, WHITE_DEAD_SHOW_TIME));
+		}
 		if (m_damageFrameTimer >= WHITE_DEAD_SHOW_TIME)
 		{
 			SetState(Actor::State::Dead);
@@ -723,6 +767,12 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 
 	if (m_damageFrameTimer >= totalTime)
 	{
+		if (m_deadPendingMotion)
+		{
+			StartDeadHit();
+			return;
+		}
+
 		m_damageState = WHITE_DAMAGE_NONE;
 		m_actionLock = false;
 		m_currentMotionName = "";

@@ -10,6 +10,26 @@
 #include "Vector2d.h"
 #include <cmath>
 
+static int GetFadeAlpha(float elapsed, float duration)
+{
+	if (duration <= 0.0f)
+	{
+		return 0;
+	}
+
+	float ratio = elapsed / duration;
+	if (ratio < 0.0f)
+	{
+		ratio = 0.0f;
+	}
+	if (ratio > 1.0f)
+	{
+		ratio = 1.0f;
+	}
+
+	return static_cast<int>(255.0f * (1.0f - ratio));
+}
+
 ArmorEnemyEntity::ArmorEnemyEntity(Scene* scene, const Vector2d& pos)
 	: EnemyEntity(scene, pos, Vector2d(96, 190))
 	, m_attackOnce(false)
@@ -48,6 +68,7 @@ bool ArmorEnemyEntity::Init()
 	{
 		m_sprite->LoadTextureDiv(ARMOR_TEXTURE_SHEET, ARMOR_SHEET_X_NUM, ARMOR_SHEET_Y_NUM);
 		m_sprite->SetDrawSize(96.0f, 190.0f);
+		m_sprite->SetAlpha(255);
 	}
 	DefineAnimationClips();
 	PlayMotion("idle", true);
@@ -68,12 +89,15 @@ static const float ARMOR_GUARD_RECOVER_MOTION_TIME = 10.0f / 60.0f;
 static const float ARMOR_DAMAGE_KNOCKBACK_X = 420.0f;
 static const float ARMOR_DAMAGE_KNOCKBACK_Y = -260.0f;
 static const float ARMOR_DAMAGE_KNOCKBACK_TIME = 0.25f;
+static const float ARMOR_RECEIVED_KNOCKBACK_SCALE = 0.5f;
 
 static const float ARMOR_PRE_TIME = 23.0f / 60.0f;     // frame 1
 static const float ARMOR_ATTACK_TIME = 10.0f / 60.0f;  // frame 2
 static const float ARMOR_AFTER_TIME = 2.0f / 60.0f;    // frame 3
 static const float ARMOR_RECHECK_TIME = 0.2f;          // state recheck time
 static const float ARMOR_DAMAGE_MOTION_TIME = 35.0f / 60.0f;
+static const float ARMOR_DEAD_FADE_START_TIME = 21.0f / 60.0f;
+static const float ARMOR_DEAD_TOTAL_TIME = 57.0f / 60.0f;
 static const float ARMOR_TURN_MOTION_TIME = 5.0f / 60.0f;
 
 float ArmorEnemyEntity::GetDirSign() const
@@ -216,6 +240,18 @@ void ArmorEnemyEntity::DefineAnimationClips()
 	damage.loop = false;
 	m_anim->AddClip("damage", damage);
 
+	AnimationClip dead;
+	dead.frames = { 9, 3, 4, 5, 6 };
+	dead.frameDurations = {
+		1.0f / 60.0f,
+		15.0f / 60.0f,
+		5.0f / 60.0f,
+		18.0f / 60.0f,
+		18.0f / 60.0f
+	};
+	dead.loop = false;
+	m_anim->AddClip("dead", dead);
+
 	AnimationClip turn;
 	turn.frames = { 9, 7, 8 };
 	turn.frameDurations = {
@@ -283,7 +319,7 @@ void ArmorEnemyEntity::TriggerExplosion(const Vector2d& playerPos, PlayerEntity*
 
 void ArmorEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 {
-	if (damage <= 0 || m_hp == nullptr)
+	if (damage <= 0 || m_hp == nullptr || m_deadMotion)
 	{
 		return;
 	}
@@ -309,9 +345,7 @@ void ArmorEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 
 	if (m_hp->GetHP() <= 0)
 	{
-
-		OnDead();
-		StartDeadMotion();
+		StartDeadMotion(knockback);
 
 		PlayScene* play = static_cast<PlayScene*>(m_scene);
 		printf("Remove %p\n", this);
@@ -324,7 +358,7 @@ void ArmorEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 
 void ArmorEnemyEntity::OnHPChanged(int newHP, int oldHP)
 {
-	if (m_ignoreHPChange || newHP >= oldHP)
+	if (m_deadMotion || m_ignoreHPChange || newHP >= oldHP)
 	{
 		return;
 	}
@@ -350,7 +384,7 @@ void ArmorEnemyEntity::OnHPChanged(int newHP, int oldHP)
 
 	if (newHP <= 0)
 	{
-		StartDeadMotion();
+		StartDeadMotion(Vector2d(ARMOR_DAMAGE_KNOCKBACK_X, ARMOR_DAMAGE_KNOCKBACK_Y));
 		return;
 	}
 
@@ -367,10 +401,14 @@ void ArmorEnemyEntity::StartDamageMotion(const Vector2d& knockback)
 		Vector2d myPos = GetPos();
 		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
 		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
+		m_dir = playerPos.x >= myPos.x;
 	}
+	damageKnockback.x *= ARMOR_RECEIVED_KNOCKBACK_SCALE;
+	damageKnockback.y *= ARMOR_RECEIVED_KNOCKBACK_SCALE;
 
 	m_velocity->SetVelocity(damageKnockback);
 	m_knockbackTimer = ARMOR_DAMAGE_KNOCKBACK_TIME;
+	SetFacing();
 	PlayMotion("damage", true);
 
 	if (m_guard <= 0)
@@ -382,9 +420,22 @@ void ArmorEnemyEntity::StartDamageMotion(const Vector2d& knockback)
 	}
 }
 
-void ArmorEnemyEntity::StartDeadMotion()
+void ArmorEnemyEntity::StartDeadMotion(const Vector2d& knockback)
 {
-	m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
+	Vector2d deadKnockback = knockback;
+	Vector2d playerPos = Vector2d::Zero();
+	PlayerEntity* player = nullptr;
+	if (TryGetPlayerInfo(playerPos, player))
+	{
+		Vector2d myPos = GetPos();
+		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
+		deadKnockback.x = std::fabs(deadKnockback.x) * awaySign;
+		m_dir = playerPos.x >= myPos.x;
+	}
+	deadKnockback.x *= ARMOR_RECEIVED_KNOCKBACK_SCALE;
+	deadKnockback.y *= ARMOR_RECEIVED_KNOCKBACK_SCALE;
+
+	m_velocity->SetVelocity(deadKnockback);
 	m_attackType = 0;
 	m_attackActive = false;
 	m_attackOnce = false;
@@ -393,7 +444,12 @@ void ArmorEnemyEntity::StartDeadMotion()
 	m_turning = false;
 	m_deadMotion = true;
 	m_deadMotionTimer = 0.0f;
-	PlayMotion("damage", true);
+	if (m_sprite != nullptr)
+	{
+		m_sprite->SetAlpha(255);
+	}
+	SetFacing();
+	PlayMotion("dead", true);
 }
 
 void ArmorEnemyEntity::StartTurnMotion()
@@ -414,13 +470,14 @@ void ArmorEnemyEntity::UpdateDeadMotion(float deltaTime)
 	}
 
 	m_deadMotionTimer += deltaTime;
-	float ratio = ARMOR_DAMAGE_MOTION_TIME > 0.0f ? m_deadMotionTimer / ARMOR_DAMAGE_MOTION_TIME : 1.0f;
-	if (ratio > 1.0f)
+	if (m_sprite != nullptr && m_deadMotionTimer >= ARMOR_DEAD_FADE_START_TIME)
 	{
-		ratio = 1.0f;
+		m_sprite->SetAlpha(GetFadeAlpha(
+			m_deadMotionTimer - ARMOR_DEAD_FADE_START_TIME,
+			ARMOR_DEAD_TOTAL_TIME - ARMOR_DEAD_FADE_START_TIME
+		));
 	}
-
-	if (m_deadMotionTimer >= ARMOR_DAMAGE_MOTION_TIME)
+	if (m_deadMotionTimer >= ARMOR_DEAD_TOTAL_TIME)
 	{
 		OnDead();
 	}
@@ -640,7 +697,7 @@ void ArmorEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			StartDeadMotion();
+			StartDeadMotion(Vector2d(0.0f, 0.0f));
 			break;
 		}
 	}

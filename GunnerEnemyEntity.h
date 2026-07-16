@@ -18,7 +18,8 @@ private:
 	void DefineAnimationClips();
 	void StartGunAttack(const Vector2d& playerPos);
 	void StartTurnMotion();
-	void StartDamageMotion(const Vector2d& knockback, int damage, bool dead);
+	void StartDamageMotion(const Vector2d& knockback, int damage);
+	void StartDeadMotion(const Vector2d& knockback);
 	void UpdateTurnMotion(float deltaTime);
 	void UpdateDamageMotion(float deltaTime);
 	float GetDirSign() const;
