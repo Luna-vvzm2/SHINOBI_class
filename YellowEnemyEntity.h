@@ -1,3 +1,4 @@
+
 #pragma once
 #include "EnemyEntity.h"
 #include "CollisionComponent.h"
@@ -20,6 +21,7 @@ public:
 	void Update(float deltaTime) override;
 	void Draw() override;
 	std::string GetTexturePath() const override;
+	void TakeDamage(int damage, const Vector2d& knockback);
 private:
 	enum State {
 		Idle,
@@ -28,17 +30,19 @@ private:
 		AttackReady,
 		Attack1,
 		Attack2,
-		Recovery
+		Recovery,
+		BlowHit
 
 	};
 
 	State m_state = Idle;
 
 	float m_attackTimer = 0.0f;
-	float m_detectRange =400.0f;
+	float m_detectRange = 400.0f;
 	float m_attackRange = 200.0f;
 	float m_deadTimer = 0.0f;
-	CollisionComponent* m_attackCollision = nullptr;
+	float m_hitTimer = 0.0f;
+	CollisionComponent* m_attackCollision;
 
 	bool m_attackHit = false;
 

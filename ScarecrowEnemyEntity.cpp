@@ -7,6 +7,9 @@
 #include "Scene.h"
 #include "SpriteComponent.h"
 #include "AnimationComponent.h"
+#include "PlayScene.h"
+#include "PlayerEntity.h"
+
 
 ScarecrowEnemyEntity::ScarecrowEnemyEntity(
     Scene* scene,
@@ -20,7 +23,7 @@ bool ScarecrowEnemyEntity::Init()
     if (!EnemyEntity::Init())
         return false;
 
-    m_hp = GetComponent<HPComponent>();
+    m_hp = AddComponent<HPComponent>(1);
     m_velocity = GetComponent<VelocityComponent>();
 
     // AnimationComponentŽæ“¾
@@ -46,22 +49,12 @@ bool ScarecrowEnemyEntity::Init()
     m_anim->AddClip("hit", hit);
 
     AnimationClip launch;
-    launch.frames = { 1,2,3,4,5,6,7,8,9,10 };
+    launch.frames = { 1,2,3,4,5,6,7,8,9,10, 11,12,13,14,15,16 };
     launch.speed = 0.15f;
     launch.loop = false;
     m_anim->AddClip("launch", launch);
 
-    AnimationClip down;
-    down.frames = { 11,12,13 };
-    down.speed = 0.15f;
-    down.loop = false;
-    m_anim->AddClip("down", down);
 
-    AnimationClip recover;
-    recover.frames = { 14,15,16 };
-    recover.speed = 0.15f;
-    recover.loop = false;
-    m_anim->AddClip("recover", recover);
 
     m_anim->Play("idle");
 
@@ -72,7 +65,19 @@ bool ScarecrowEnemyEntity::Init()
 
 void ScarecrowEnemyEntity::Update(float deltaTime)
 {
-    EnemyEntity::Update(deltaTime);
+    if (m_isHit)
+    {
+        m_hitTimer -= deltaTime;
+
+        if (m_hitTimer <= 0.0f)
+        {
+            m_isHit = false;
+        }
+
+        EnemyEntity::Update(deltaTime);
+        return;
+    }
+    
 
     switch (m_state)
     {
@@ -80,28 +85,14 @@ void ScarecrowEnemyEntity::Update(float deltaTime)
         UpdateIdle(deltaTime);
         break;
 
-    case ScarecrowState::Hit:
-        UpdateHit(deltaTime);
+    case ScarecrowState::BlowHit:
+        UpdateBlowHit(deltaTime);
         break;
 
-    case ScarecrowState::Launch:
-        UpdateLaunch(deltaTime);
-        break;
 
-    case ScarecrowState::Down:
-        UpdateDown(deltaTime);
-        break;
-
-    case ScarecrowState::Recover:
-        UpdateRecover(deltaTime);
-        break;
+ 
     }
 
-    // í‚É‘Ì—Í‘S‰õ
-    if (m_hp)
-    {
-        m_hp->Heal(DUMMY_HP);
-    }
 
     if (m_anim)
     {
@@ -121,87 +112,57 @@ void ScarecrowEnemyEntity::UpdateIdle(float dt)
     m_anim->Play("idle");
 }
 
-void ScarecrowEnemyEntity::Hit(const Vector2d& dir)
+
+
+
+void ScarecrowEnemyEntity::UpdateBlowHit(float dt)
 {
-    m_state = ScarecrowState::Hit;
+    m_hitTimer -= dt;
 
-    m_stateTimer = 0.25f;
-
-    KnockBack(dir, 150.0f);
-
-    m_anim->Play("hit");
-}
-
-void ScarecrowEnemyEntity::UpdateHit(float dt)
-{
-    m_stateTimer -= dt;
-
-    if (m_stateTimer <= 0.0f)
+    if (m_hitTimer <= 0.0f)
     {
-        m_velocity->SetVelocity(Vector2d::Zero());
-
-        m_state = ScarecrowState::Idle;
-    }
-}
-void ScarecrowEnemyEntity::Launch(
-    const Vector2d& dir,
-    float power)
-{
-    m_state = ScarecrowState::Launch;
-
-    m_anim->Play("launch");
-
-    m_velocity->SetVelocity(
-        Vector2d(
-            dir.x * power,
-            -power * 0.6f
-        )
-    );
-}
-
-void ScarecrowEnemyEntity::UpdateLaunch(float dt)
-{
-    if (m_isGround)
-    {
-        m_velocity->SetVelocity(Vector2d::Zero());
-
-        m_state = ScarecrowState::Down;
 
         m_stateTimer = 1.0f;
 
-        m_anim->Play("down");
+        m_anim->Play("Idle");
     }
 }
-void ScarecrowEnemyEntity::UpdateDown(float dt)
+
+void ScarecrowEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 {
-    m_stateTimer -= dt;
+    PlayScene* playScene =
+        static_cast<PlayScene*>(GetScene());
 
-    if (m_stateTimer <= 0.0f)
+    PlayerEntity* player =
+        playScene ? playScene->GetPlayer() : nullptr;
+
+    Vector2d force = knockback;
+
+    if (player)
     {
-        m_state = ScarecrowState::Recover;
+        float sign =
+            GetPos().x < player->GetPos().x ? -1.0f : 1.0f;
 
-        m_anim->Play("recover");
+        force.x = std::fabs(force.x) * sign;
     }
+
+    KnockBack(force);
 }
 
-void ScarecrowEnemyEntity::UpdateRecover(float dt)
-{
-    m_stateTimer -= dt;
-
-    if (m_stateTimer <= 0.0f)
-    {
-        m_state = ScarecrowState::Idle;
-
-        m_anim->Play("idle");
-    }
-}
-
-void ScarecrowEnemyEntity::KnockBack(
-    const Vector2d& dir,
-    float power)
+void ScarecrowEnemyEntity::KnockBack(const Vector2d& velocity)
 {
     if (!m_velocity)
         return;
 
-    m_velocity->SetVelocity(dir * power);
+    m_velocity->Set(velocity);
+
+    m_hitTimer = 0.3f;
+    m_isHit = true;
+
+    m_state = ScarecrowState::BlowHit;
+
+    if (m_anim)
+    {
+        m_anim->Play("hit");
+    }
 }

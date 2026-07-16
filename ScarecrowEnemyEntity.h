@@ -15,12 +15,14 @@ public:
     void Hit(const Vector2d& dir);
     void Launch(const Vector2d& dir, float power);
     void KnockBack(const Vector2d& attackDir, float power);
+    void TakeDamage(int damage, const Vector2d& knockback);
+    void KnockBack(const Vector2d& velocity);
+
 private:
     enum class ScarecrowState
     {
         Idle,       // 待機
-        Hit,        // 弱攻撃でのけぞる
-        Launch,     // 強攻撃で吹っ飛ぶ
+        BlowHit,
         Down,       // ダウン
         Recover     // 起き上がり・待機へ戻る
     };
@@ -33,8 +35,9 @@ private:
     int m_damagePerSecond = 10;
     static constexpr int DUMMY_HP = 999999;
     void UpdateIdle(float dt);
-    void UpdateHit(float dt);
-    void UpdateLaunch(float dt);
+    void UpdateBlowHit(float dt);
     void UpdateDown(float dt);
     void UpdateRecover(float dt);
+    float m_hitTimer = 0.0f;
+    bool m_isHit = false;
 };

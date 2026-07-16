@@ -106,9 +106,16 @@ void SpriteComponent::Draw() {
     }
 
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, transform->GetAngle(), m_handle,
-        true, Vector2d((float)texW, (float)texH) * 0.5f, 255, m_flipX, false
-    );
+        pos, 
+        scale.x,
+        scale.y,
+        0.0f, 
+        m_handle,
+        true,
+        Vector2d(texW, texH) * 0.5f,
+        m_alpha,
+        m_flipX,
+        m_flipV);
 }
 
 // --------------------
