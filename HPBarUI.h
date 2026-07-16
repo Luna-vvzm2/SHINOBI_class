@@ -20,6 +20,8 @@ public:
     void SetPosition(float x, float y);
 
     float GetBarHeight() const { return m_height; }
+    void SetVisible(bool visible) { m_isVisible = visible; }
+    bool IsVisible() const { return m_isVisible; }
 private:
     HPComponent* m_hp = nullptr;
 
@@ -36,4 +38,5 @@ private:
     Vector2d m_barOffset = { 0, 0 }; // フレーム内のゲージ位置
 
     float m_displayRatio = 1.0f; // 画面表示用のHP割合（0.0 ～ 1.0）
+    bool m_isVisible = true;
 };

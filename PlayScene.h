@@ -17,7 +17,7 @@ class TransformComponent;
 class VelocityComponent;
 class HPComponent;
 class GameOverMenuUI;
-
+class ShurikenUI;
 //ƒCƒxƒ“ƒg‚Ì‚½‚ß’Ç‰Á
 class EventTexture;
 class EventManager;
@@ -69,7 +69,7 @@ public:
 	int m_bgHandle;
 	int m_fgHandle;
 private:
-
+	
 	PlayerEntity* m_player;
 	MapData m_mapData;
 	std::vector<Vector2d> m_playerSpawnPoints;
@@ -87,8 +87,8 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
+	HPBarUI* m_hpBarUI = nullptr;
 	ShurikenUI* m_shurikenUI = nullptr;
-
 	MoneyUI* m_moneyUI = nullptr;
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;

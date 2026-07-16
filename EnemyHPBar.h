@@ -38,18 +38,21 @@ public:
 
     void SetGaugeOffset(float offsetX, float offsetY);
     void SetMetsuValue(int value, int maxValue);
-
+    void SetMetsuFullImagePath(const std::string& imagePath);
+    void SetHPGaugeYOffset(float offsetY);
 private:
     HPComponent* m_hp = nullptr;
 
     TransformComponent* m_transform = nullptr;
     SpriteComponent* m_frameSprite = nullptr;
+    SpriteComponent* m_metsuFullSprite = nullptr;
 
     float m_maxWidth = 63.0f;
     float m_height = 8.0f;
 
     std::string m_barImagePath;
     std::string m_frameImagePath;
+    std::string m_metsuFullImagePath = "assets/images/uies/metu_gage.png";
 
     bool m_visible = false;
 
@@ -72,4 +75,5 @@ private:
     int m_metsuMax = 100;
     float m_metsuOffsetY = 6.0f;
     float m_metsuHeight = 6.0f;
+    float m_hpGaugeYOffset = 42.0f;
 };

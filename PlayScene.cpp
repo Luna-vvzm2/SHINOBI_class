@@ -601,10 +601,11 @@ bool PlayScene::Init() {
 		m_player->GetHP()
 	);
 	AddUIActor(hpBar);
-
+	m_hpBarUI = hpBar;
 	
 	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
 	AddUIActor(shuriken);
+	m_shurikenUI = shuriken;
 
 	// プレイヤー所持金 UI（左上に表示）
 	m_moneyUI = new MoneyUI(this, m_player, "assets/images/uies/money.png");
@@ -1135,6 +1136,10 @@ void PlayScene::Update(float deltaTime) {
 		return;
 	}
 
+	if (m_shurikenUI && m_player) {
+		m_shurikenUI->SetCount(m_player->GetKunai());
+	}
+
 	updateActors(m_backactors, deltaTime);
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
@@ -1150,6 +1155,12 @@ void PlayScene::Update(float deltaTime) {
 				m_isPaused = false;
 				m_isGameOver = false;
 				m_gameOverMenu->SetActive(false);
+				if (m_hpBarUI) {
+					m_hpBarUI->SetVisible(true);
+				}
+				if (m_shurikenUI) {
+					m_shurikenUI->SetVisible(true);
+				}
 				RespawnPlayer();
 				break;
 
@@ -1412,6 +1423,14 @@ void PlayScene::RespawnPlayer() {
 void PlayScene::ShowGameOverMenu() {
 	m_isGameOver = true;
 	m_isPaused = true;
+
+	if (m_hpBarUI) {
+		m_hpBarUI->SetVisible(false);
+	}
+
+	if (m_shurikenUI) {
+		m_shurikenUI->SetVisible(false);
+	}
 
 	if (m_gameOverMenu) {
 		m_gameOverMenu->SetActive(true);
