@@ -44,6 +44,11 @@ public:
     void UpdateInvincible(float deltaTime);
     void UpdateSensor();
 
+    void UpdateJutsuKamae(float deltaTime);
+    void UpdateKaryu(float deltaTime);
+    bool GetIsKaryu() { return m_isKaryu; }
+    float GetKaryuTimer() { return m_KaryuTimer; }
+
     void UpdateKamae(float deltaTime);
     void UpdateExecution(float deltaTime);
     void CollectExecutionTargets();
@@ -60,6 +65,16 @@ public:
     ActorType GetType() const override { return ActorType::Player; }
     CollisionComponent* GetCollision() const { return m_collision; }
     CollisionComponent* GetAttackCol() const { return m_attackCol; }
+
+    void AddJutsuGauge() {
+        m_jutsuGauge++;
+        if (m_jutsuGauge >=25) {
+            m_jutsuGauge = 25;
+            m_jutsuCharge = true;
+        }
+        printf("jutsuGauge: %d\n", m_jutsuGauge);
+    }
+    bool GetJutsuCharge() { return m_jutsuCharge; }
 
     bool OnGround() const { return m_isGround; }
     void SetCanMove(bool canMove) { m_canMove = canMove; }
@@ -175,6 +190,13 @@ private:
     bool m_squat;         // ‚µ‚á‚ª‚Ý
     bool m_canStand;      // ‚µ‚á‚ª‚Ý‰Â”Û
     bool m_canCharge;
+
+    int m_jutsuGauge;
+    bool m_jutsuCharge;
+
+    bool m_isJutsuKamae;
+    bool m_isKaryu;
+    float m_KaryuTimer;
 
     bool m_isKamae;
     bool m_isExecution;

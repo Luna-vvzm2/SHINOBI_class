@@ -16,6 +16,8 @@ void Input::Init() {
     m_actionKeyMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Key::O };
     m_actionKeyMap[static_cast<size_t>(Action::KUNAI)] = { Key::P };
     m_actionKeyMap[static_cast<size_t>(Action::KAMAE)] = { Key::Q };
+    m_actionKeyMap[static_cast<size_t>(Action::G)] = { Key::G };
+    m_actionKeyMap[static_cast<size_t>(Action::JUTSU_KAMAE)] = { Key::H };
     m_actionKeyMap[static_cast<size_t>(Action::JUMP)] = { Key::SPACE };
     m_actionKeyMap[static_cast<size_t>(Action::ESCAPE)] = { Key::ESCAPE };
     m_actionKeyMap[static_cast<size_t>(Action::ENTER)] = { Key::ENTER };

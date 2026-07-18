@@ -25,7 +25,7 @@ bool KunaiActor::Init()
     m_transform = AddComponent<TransformComponent>();
     m_velocity = AddComponent<VelocityComponent>();
     m_collision = AddComponent<CollisionComponent>();
-    m_sprite = AddComponent<SpriteComponent>("assets/images/entities/players/kunai.png");
+    m_sprite = AddComponent<SpriteComponent>("assets/images/entities/players/kunai.png", true);
 
     m_sprite->SetFlipX(!m_dir);
 

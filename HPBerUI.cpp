@@ -15,7 +15,7 @@ HPBarUI::HPBarUI(Scene* scene, HPComponent* hpComp)
     , m_height(12.0f)
 {
     m_transform = AddComponent<TransformComponent>();
-    m_backBar = AddComponent<SpriteComponent>("assets/images/uies/hpBarFrame.png");
+    m_backBar = AddComponent<SpriteComponent>("assets/images/uies/hpBarFrame.png", false);
     // m_sprite = AddComponent<SpriteComponent>("assets/images/uies/hpBar.png");
 
     SetName("HPBarUI");

@@ -17,20 +17,22 @@ SpriteComponent::s_textureCache;
 // --------------------
 // コンストラクタ
 // --------------------
-SpriteComponent::SpriteComponent(Actor* actor)
+SpriteComponent::SpriteComponent(Actor* actor, bool useCamera)
     : Component(actor)
     , m_handle(-1)
     , m_width(0.0f)
     , m_height(0.0f)
+    , m_useCamera(useCamera)
 {
 }
 
-SpriteComponent::SpriteComponent(Actor* actor, const std::string& texturePath)
+SpriteComponent::SpriteComponent(Actor* actor, const std::string& texturePath, bool useCamera)
     : Component(actor)
     , m_handle(-1)
     , m_width(0.0f)
     , m_height(0.0f)
     , m_texturePath(texturePath)
+    , m_useCamera(useCamera)
 {
 }
 // --------------------
@@ -107,7 +109,7 @@ void SpriteComponent::Draw() {
 
     renderer->DrawSpriteEx(
         pos, scale.x, scale.y, transform->GetAngle(), m_handle,
-        true, Vector2d((float)texW, (float)texH) * 0.5f, m_alpha, m_flipX, false
+        true, Vector2d((float)texW, (float)texH) * 0.5f, m_alpha, m_flipX, false, m_useCamera
     );
 }
 

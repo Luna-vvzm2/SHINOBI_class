@@ -13,8 +13,8 @@ class Renderer;
 // -------------------------------------------
 class SpriteComponent : public Component {
 public:
-    SpriteComponent(Actor* actor); // 引数なしコンストラクタ
-    SpriteComponent(Actor* actor, const std::string& texturePath);
+    SpriteComponent(Actor* actor, bool useCamera = true); // 引数なしコンストラクタ
+    SpriteComponent(Actor* actor, const std::string& texturePath, bool useCamera = true);
     ~SpriteComponent() override;
 
     bool Init() override;
@@ -71,5 +71,5 @@ private:
     std::vector<int> m_frames;   // 分割されたフレームのハンドル
     int m_currentFrame = 0;      // 現在のフレーム番号
     int m_alpha = 255;
-    
+    bool m_useCamera;
 };

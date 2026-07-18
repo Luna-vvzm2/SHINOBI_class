@@ -40,6 +40,7 @@ public:
 	const std::vector<Actor*>& GetActors() const { return m_actors; }
 
 	void SpawnActor(Actor* actor) { AddActor(actor); }
+	void SpawnUIActor(Actor* actor) { AddUIActor(actor); }
 
 
 

@@ -9,7 +9,7 @@ ShurikenUI::ShurikenUI(Scene* scene, float x, float y)
     SetPosition(x, y);
 
     // ¬‚³‚Èè— Œ•ƒAƒCƒRƒ“‚ğ“Ç‚İ‚Ş
-    m_icon = AddComponent<SpriteComponent>("assets/images/uies/kunai.png");
+    m_icon = AddComponent<SpriteComponent>("assets/images/uies/kunai.png", false);
 }
 
 void ShurikenUI::SetCount(int count)
