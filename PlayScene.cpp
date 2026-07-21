@@ -669,6 +669,7 @@ void PlayScene::Update(float deltaTime) {
 	}
 
 	//イベントのため変更
+	m_playTimer += deltaTime; //クリアシーンのために追加
 	if (m_eventManager->IsRunning())
 	{
 		m_eventManager->Update(deltaTime);

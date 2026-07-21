@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "Input.h"
 #include "PlayScene.h"
+#include "ClearScene.h"
 #include "PlayerEntity.h"
 #include "Game.h"
 #include "Actor.h"
@@ -127,6 +128,10 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 			{
 				m_eventQueue.push_back(std::make_unique<CutInEvent>(m_scene, eventTexts, this));
 			}
+			else if (eventType == "CLEAR")
+			{
+				m_eventQueue.push_back(std::make_unique<ClearEvent>(m_scene, eventTexts, this));
+			}
 			eventTexts.clear();
 		};
 
@@ -141,6 +146,7 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 			if (text.find("TALK") != std::string::npos) eventType = "TALK";
 			else if (text.find("BATTLE") != std::string::npos) eventType = "BATTLE";
 			else if (text.find("CUTIN") != std::string::npos) eventType = "CUTIN";
+			else if (text.find("CLEAR") != std::string::npos) eventType = "CLEAR";
 			continue;
 		}
 		eventTexts.push_back(text);
@@ -152,6 +158,12 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 	{
 		m_eventQueue[0]->Init();
 	}
+}
+
+Game* EventManager::GetGame() const
+{
+	if (!m_scene) return nullptr;
+	return m_scene->GetGame();
 }
 
 void EventManager::Draw()
@@ -229,11 +241,6 @@ void TalkEvent::Init()
 {
 	for (auto actor : m_scene->GetActors())
 	{
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(false);
-		}
 		actor->SetState(Actor::State::Paused);
 	}
 
@@ -287,11 +294,6 @@ void TalkEvent::End()
 	for (auto actor : m_scene->GetActors())
 	{
 		actor->SetState(Actor::State::Active);
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(true);
-		}
 	}
 	 
 	if (m_eventManager)
@@ -487,12 +489,8 @@ void BattleEvent::Init()
 
 	for (auto actor : m_scene->GetActors())
 	{
-		actor->SetState(Actor::State::Active);
 		if (actor->GetType() == ActorType::Player)
 		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(true);
-
 			Vector2d playerPos = actor->GetComponent<TransformComponent>()->GetPosition();
 		}
 	}
@@ -546,7 +544,7 @@ void BattleEvent::Update(float deltaTime)
 	bool enemyAlive = false;
 	for (auto actor : m_scene->GetActors())
 	{
-		if (actor->GetType() == ActorType::Enemy && actor->GetState() == Actor::State::Active)
+		if (actor->GetType() == ActorType::Enemy && !(actor->GetState() == Actor::State::Dead))
 		{
 
 			if (m_isAreaSet)
@@ -577,7 +575,7 @@ void BattleEvent::Update(float deltaTime)
 	{
 		for (auto actor : m_scene->GetActors())
 		{
-			if (actor->GetState() == Actor::State::Active && (actor->GetType() == ActorType::Player || actor->GetType() == ActorType::Enemy))
+			if (!(actor->GetState() == Actor::State::Dead) && (actor->GetType() == ActorType::Player || actor->GetType() == ActorType::Enemy))
 			{
 				auto transform = actor->GetComponent<TransformComponent>();
 				if (!transform) continue;
@@ -701,11 +699,6 @@ void CutInEvent::Init()
 {
 	for (auto actor : m_scene->GetActors())
 	{
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(false);
-		}
 		actor->SetState(Actor::State::Paused);
 	}
 
@@ -809,11 +802,6 @@ void CutInEvent::End()
 	for (auto actor : m_scene->GetActors())
 	{
 		actor->SetState(Actor::State::Active);
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(true);
-		}
 	}
 
 	if (m_eventManager)
@@ -853,6 +841,60 @@ void CutInEvent::Draw()
 	DrawString(m_jBossNameX, m_jBossNameY, m_jBossName.c_str(), m_jBossNameColor.ToDxColor());
 }
 
+
+ClearEvent::ClearEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	LoadTexts(filePath);
+}
+
+ClearEvent::ClearEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
+}
+
+ClearEvent::~ClearEvent() = default;
+
+void ClearEvent::Init()
+{
+	if (m_eventManager)
+	{
+		Game* game = m_eventManager->GetGame();
+		PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
+		if (game && playScene)
+		{
+			float time = playScene->GetPlayTime();
+
+			game->ChangeScene(std::make_unique<ClearScene>(game, time));
+			m_isEnd = true;
+		}
+	}
+
+
+}
+
+void ClearEvent::Update(float deltaTime)
+{
+	
+}
+
+void ClearEvent::End()
+{
+	DeleteTexts();
+}
+
+bool ClearEvent::IsEnd() const
+{
+	return m_isEnd;
+}
+
+void ClearEvent::Draw()
+{
+
+}
 
 EventTrigger::EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager)
 	:BlockActor(scene)

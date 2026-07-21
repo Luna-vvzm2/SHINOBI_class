@@ -65,6 +65,9 @@ public:
 	// 最初の地面のY座標を取得
 	float GetInitialGroundY() const { return m_initialGroundY; }
 
+	//クリアシーンのため追加　クリアタイムのゲッター関数
+	float GetPlayTime() const { return m_playTimer; }
+
 	// プレイヤーをリスポーン位置に戻す
 	void RespawnPlayer();
 	// ゲームオーバー時の処理
@@ -102,6 +105,7 @@ private:
 	//イベントのため変更
 	std::unique_ptr<EventTexture> m_eventTexture;
 	std::unique_ptr<EventManager> m_eventManager;
+	float m_playTimer{ 0.0f }; //クリアタイムのためのカウンタ変数
 
 	// リスポーン位置（初期位置）
 	Vector2d m_respawnPos;

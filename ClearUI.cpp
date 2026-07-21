@@ -1,9 +1,9 @@
-#include "TitleUI.h"
+#include "ClearUI.h"
 #include "TransformComponent.h"
 #include "SpriteComponent.h"
 #include "Game.h"
 
-TitleUI::TitleUI(Scene* scene)
+ClearUI::ClearUI(Scene* scene)
 	: UIActor(scene)
 {
 	m_transform = AddComponent<TransformComponent>();
@@ -11,10 +11,10 @@ TitleUI::TitleUI(Scene* scene)
 	if (!m_title) {
 		std::cerr << "‰æ‘œ“Ç‚Ýž‚ÝŽ¸”s\n";
 	}
-	SetName("HPBarUI");
+	SetName("ClearUI");
 
 }
-bool TitleUI::Init() {
+bool ClearUI::Init() {
 	if (!UIActor::Init()) return false;
 
 	m_transform->SetPosition({ 0, 0 });
@@ -22,12 +22,12 @@ bool TitleUI::Init() {
 	return true;
 }
 
-void TitleUI::Update(float deltaTime) {
+void ClearUI::Update(float deltaTime) {
 	UIActor::Update(deltaTime);
 
 }
 
-void TitleUI::Draw() {
+void ClearUI::Draw() {
 	if (!m_title) return;
 
 	auto transform = GetComponent<TransformComponent>();
@@ -47,7 +47,7 @@ void TitleUI::Draw() {
 	);
 }
 
-void TitleUI::SetPosition(float x, float y)
+void ClearUI::SetPosition(float x, float y)
 {
 	if (m_transform)
 		m_transform->SetPosition({ x, y });

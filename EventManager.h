@@ -8,11 +8,12 @@
 #include "Vector2d.h"
 
 class Scene;
+class Game;
 class Input;
 class EventBase;
 class EventTexture;
-class EventManager
 
+class EventManager
 {
 public:
 	EventManager(Scene* scene, EventTexture* eventTexture); //コンストラクタ
@@ -30,13 +31,14 @@ public:
 	void LoadEventTimeLine(const std::string& filePath, const Vector2d& triggerPos); //複数の連続するイベントを読み込む
 	void SetTriggerPosition(const Vector2d& pos) { m_triggerPos = pos; }
 	const Vector2d& GetTriggerPosition() const { return m_triggerPos; }
+	Game* GetGame() const;
 
 	void Draw();
 
 	EventTexture* GetEventTexture() const;
 
 private:
-	Scene* m_scene; //イベントを管理するシーン
+	Scene* m_scene{ nullptr }; //イベントを管理するシーン
 	EventTexture* m_eventTexture{ nullptr }; //イベントの画像を管理
 	//std::unique_ptr<EventBase> m_currentEvent{ nullptr }; //実行中のイベント
 	std::vector<std::unique_ptr<EventBase>> m_eventQueue; //イベントのキュー
@@ -49,8 +51,9 @@ private:
 enum class EventType
 {
 	Talk,
+	Battle,
 	CutIn,
-	Battle
+	Clear
 };
 
 class EventBase
@@ -167,7 +170,7 @@ private:
 	Vector2d m_triggerPos{ 0.0f, 0.0f };
 
 	float m_areaXMin{ -64.0f };
-	float m_areaXMax{ 1016.0f };
+	float m_areaXMax{ 1216.0f };
 
 	void EnemySpawn();
 	void Draw() override;
@@ -188,7 +191,6 @@ public:
 	void End() override;
 
 	bool IsEnd() const override;
-
 
 private:
 	Scene* m_scene{ nullptr };
@@ -238,6 +240,28 @@ private:
 	void Draw() override;
 };
 
+class ClearEvent : public EventBase
+{
+public:
+	ClearEvent(Scene* scene, const std::string& filePath, EventManager* eventManager);
+	ClearEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager);
+	~ClearEvent() override;
+
+	EventType GetType() const override { return EventType::Clear; }
+
+	void Init() override;
+	void Update(float deltaTime) override;
+	void End() override;
+
+	bool IsEnd() const override;
+
+private:
+	Scene* m_scene{ nullptr };
+	EventManager* m_eventManager{ nullptr };
+
+	bool m_isEnd{ false };
+	void Draw() override;
+};
 
 class EventTrigger : public BlockActor
 {
