@@ -1,4 +1,4 @@
-#include "SekienkiBossEntity.h"
+ï»¿#include "SekienkiBossEntity.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "HPComponent.h"
@@ -16,15 +16,22 @@ SekienkiBossEntity::SekienkiBossEntity(
     const Vector2d& size)
     : BossEntity(scene, pos, size)
 
+    , m_attackAnimFrame(0)
+    , m_attackAnimTimer(0.0f)
     , m_attackStep(0)
     , m_phase(0)
     , m_attackTimer(1.0f)
     , m_jumpAttackCooldown(0.0f)
     , m_rollDistanceLeft(0.0f)
+    , m_rollDir(1.0f)
+    , m_rollWaitTimer(0.0f)
+    , m_fire(false)
     , m_bulletActive(false)
     , m_fallStartY(0.0f)
     , m_hoverY(0.0f)
+    , m_jumpOffsetApplied(false)
     , m_secondJump(false)
+    , m_darkAttackFire(false)
     , m_tornadoDistanceLeft(0.0f)
     , m_dead(false)
 {
@@ -37,86 +44,288 @@ bool SekienkiBossEntity::Init()
 
     m_hp = AddComponent<HPComponent>(GetMaxHP());
 
-    // ƒRƒ“ƒ|[ƒlƒ“ƒg‚Ìæ“¾
-    m_anim = GetComponent<AnimationComponent>();
+    // ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã®å–å¾—
+    m_anim = AddComponent<AnimationComponent>();
 
     if (m_sprite)
     {
-        m_sprite->LoadTextureDiv("assets/images/enemy/sekienki/Sekienki01.png", 4, 8);
+        // 3æšã®ç”»åƒã®å…¨ãƒ•ãƒ¬ãƒ¼ãƒ ã®ãƒãƒ³ãƒ‰ãƒ«ã‚’æ ¼ç´ã™ã‚‹ãƒ™ã‚¯ã‚¿ãƒ¼
+        std::vector<int> allFrames;
+
+        // DxLibã®é–¢æ•°ã‚’ç›´æ¥ä½¿ã£ã¦ã€å„ç”»åƒã‚’åˆ†å‰²èª­ã¿è¾¼ã¿ã—ã¦1ã¤ã«ã¾ã¨ã‚ã‚‹ãƒ©ãƒ ãƒ€é–¢æ•°
+        auto loadAndAppend = [&](const std::string& path, int xNum, int yNum) {
+            int total = xNum * yNum;
+            int tempHandle = LoadGraph(path.c_str());
+            if (tempHandle == -1) return false;
+
+            int texW = 0, texH = 0;
+            GetGraphSize(tempHandle, &texW, &texH);
+            DeleteGraph(tempHandle);
+
+            int frameW = texW / xNum;
+            int frameH = texH / yNum;
+
+            std::vector<int> tempBuf(total);
+            LoadDivGraph(path.c_str(), total, xNum, yNum, frameW, frameH, tempBuf.data());
+
+            // å…¨ä½“é…åˆ—ã®æœ«å°¾ã«è¿½åŠ 
+            allFrames.insert(allFrames.end(), tempBuf.begin(), tempBuf.end());
+            return true;
+            };
+
+        // 3æšã®ç”»åƒã‚’é †ç•ªã«èª­ã¿è¾¼ã‚“ã§ allFrames ã«çµåˆ
+        loadAndAppend("assets/images/enemy/sekienki/Kozaru_1.png", 4, 7); 
+        loadAndAppend("assets/images/enemy/sekienki/Kozaru_2.png", 4, 6);  
+        loadAndAppend("assets/images/enemy/sekienki/Kozaru_3.png", 4, 7);   
+
+        m_sprite->SetEffectFrames(allFrames);
+
+        // æœ€åˆã®ç”»åƒã®1ã‚³ãƒåˆ†ã®ã‚µã‚¤ã‚ºã‚’ã‚»ãƒƒãƒˆï¼ˆSetSizeã‚‚publicãªã®ã§ãƒœã‚¹ã‹ã‚‰å‘¼ã¹ã¾ã™ï¼‰
+        m_sprite->SetSize(1.0f, 1.0f);
+        GetTransform()->SetScale({ 0.3f,0.3f });
+        m_sprite->SetDrawOffset(0.0f, -130.0f);
     }
 
+    // â˜…é‡è¦ï¼šã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚¯ãƒªãƒƒãƒ—ã‚’ã“ã“ã§å®Œå…¨ã«ç™»éŒ²ã™ã‚‹
     if (m_anim && m_sprite)
     {
         m_anim->SetSprite(m_sprite);
 
-        //-----------------------------------------
-        // 1. —§‚¿i‘Ò‹@j 
-        //-----------------------------------------
+        // 1. å¾…æ©Ÿ
         AnimationClip idleClip;
-        idleClip.frames = { 1, 2, 3, 4, 5, 6 };
-        idleClip.frameDurations = {
-            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f,
-            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f
+        idleClip.frames = { 0, 1, 2, 3, 4, 5 };
+        idleClip.frameDurations = 
+        {
+          3.0f / 24.0f, 
+          5.0f / 24.0f, 
+          2.0f / 24.0f, 
+          3.0f / 24.0f, 
+          3.0f / 24.0f, 
+          5.0f / 24.0f 
         };
         idleClip.loop = true;
         m_anim->AddClip("idle", idleClip);
 
-        //-----------------------------------------
-        // 2. U‚èŒü‚« 2–‡ 
-        //-----------------------------------------
-        AnimationClip turnClip;
-        turnClip.frames = { 7, 7 };
-        turnClip.frameDurations = {
-            2.0f / 24.0f, // 07 ‚ğ 2ƒtƒŒ[ƒ€•ª
-            3.0f / 24.0f  // 07 ‚ğ 3ƒtƒŒ[ƒ€•ª
-        };
-        turnClip.loop = false;
-        m_anim->AddClip("turn", turnClip);
-
-        //-----------------------------------------
-        // 3. ‹ßÚUŒ‚(‰Î‰Š) 
-        //-----------------------------------------
+        // 2. è¿‘æ¥æ”»æ’ƒ(ç«ç‚)
         AnimationClip attackClip;
-        attackClip.frames = { 8, 22, 23, 24, 25, 26, 27, 28, 29, 28, 8 };
-        attackClip.frameDurations = {
-            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f,
-            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f,
-            1.0f / 24.0f, 1.0f / 24.0f, 1.0f / 24.0f
+        attackClip.frames = { 7, 20, 21, 22, 23, 24, 25, 26, 27, 26, 7 };
+        attackClip.frameDurations = 
+        { 
+          2.0f / 24.0f, 
+          3.0f / 24.0f, 
+          6.0f / 24.0f,
+          8.0f / 24.0f,
+          5.0f / 24.0f, 
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          1.0f / 24.0f,
+          16.0f / 24.0f,
+          1.0f / 24.0f,
+          2.0f / 24.0f,
         };
         attackClip.loop = false;
         m_anim->AddClip("attack", attackClip);
 
-        //-----------------------------------------
-        // 4. ƒ[ƒŠƒ“ƒO 
-        //-----------------------------------------
+        // 3. ãƒ­ãƒ¼ãƒªãƒ³ã‚°
         AnimationClip rollClip;
-        rollClip.frames = {
-            8, 9, 10, 11, 12, 13, 14,          // 08~14
-            9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 // 09~21
+        rollClip.frames = { 7, 8, 9, 10, 11, 12, 13, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+        rollClip.frameDurations =
+        {
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          1.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          1.0f / 24.0f,
         };
-        rollClip.frameDurations.assign(rollClip.frames.size(), 1.0f / 24.0f); // ‘S‚Ä 1/24•b
-        rollClip.loop = true; // “Ëi’†ƒ‹[ƒv‚³‚¹‚éê‡‚Í true
+        rollClip.loop = false;
         m_anim->AddClip("roll", rollClip);
 
-        //-----------------------------------------
-        // 5. ƒhƒ‰ƒ~ƒ“ƒO(Œ`‘Ô•Ï‰») 
-        //-----------------------------------------
+        // 4. ãƒ‰ãƒ©ãƒŸãƒ³ã‚°(å½¢æ…‹å¤‰åŒ–)
         AnimationClip drummingClip;
-        drummingClip.frames = {
-            14,                                 // 14
-            9, 10, 11, 12, 13, 14,             // 09~14
-            9, 10, 11, 12, 13, 14,             // 09~14
-            8, 9, 10, 11, 12, 13, 14,          // 08~14
-            9, 10, 11, 12, 13                  // 09~13
+        drummingClip.frames = { 13, 8, 9, 10, 11, 12, 13, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 8, 9, 10, 11, 12 };
+        drummingClip.frameDurations = 
+        {
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
         };
-        drummingClip.frameDurations.assign(drummingClip.frames.size(), 1.0f / 24.0f); // ‘S‚Ä 1/24•b
         drummingClip.loop = false;
         m_anim->AddClip("drumming", drummingClip);
 
-        // Å‰‚Í‘Ò‹@ƒ‚[ƒVƒ‡ƒ“‚ğÄ¶
+        // 5. è½ä¸‹æ”»æ’ƒ1
+        AnimationClip fallClip;
+        fallClip.frames = 
+        { 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 44, 42, 43, 47, 48, 49, 21, 22, 23, 22 };
+        fallClip.frameDurations =
+        {
+          3.0f / 24.0f, 
+          5.0f / 24.0f,
+          6.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          2.0f / 24.0f,
+          1.0f / 24.0f,
+          2.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          24.0f / 24.0f,
+          2.0f / 24.0f,
+          2.0f / 24.0f,
+          2.0f / 24.0f,
+          3.0f / 24.0f,
+          1.0f / 24.0f,
+          80.0f / 24.0f, //ç€åœ°ã¾ã§
+          4.0f / 24.0f,
+          4.0f / 24.0f,
+          3.0f / 24.0f,
+          3.0f / 24.0f,
+        };
+        fallClip.loop = false;
+        m_anim->AddClip("fall", fallClip);
+
+        // 6. è½ä¸‹æ”»æ’ƒ2
+        AnimationClip fall2Clip;
+        fall2Clip.frames = {
+            26, 38, 39, 40, 41, 42, 43, 44, 45, 46, 44, 42, 43, 47, 48, 49, 21, 22, 23, 22
+        };
+        fall2Clip.frameDurations = {
+            1.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            3.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            3.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            4.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            3.0f / 24.0f,
+            1.0f / 24.0f,
+            50.0f / 24.0f,
+            4.0f / 24.0f,
+            4.0f / 24.0f,
+            3.0f / 24.0f,
+            3.0f / 24.0f,
+        };
+        fall2Clip.loop = false;
+        m_anim->AddClip("fall2", fall2Clip);
+
+        // 7. ãƒ€ãƒ¼ã‚¯ã‚¢ã‚¿ãƒƒã‚¯
+        AnimationClip darkAttackClip;
+        darkAttackClip.frames = {
+            52, 53, 54, 55, 54, 56, 57, 58, 57, 56, 57, 58, 57, 56, 57, 58, 57, 56, 57,
+            58, 57, 56, 57, 58, 59, 60, 61, 62, 63
+        };
+        darkAttackClip.frameDurations ={
+            4.0f / 24.0f,
+            4.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            1.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            1.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            1.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            1.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            1.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            2.0f / 24.0f,
+            1.0f / 24.0f,
+            1.0f / 24.0f,
+            5.0f / 24.0f,
+            4.0f / 24.0f,
+        };
+        darkAttackClip.loop = false;
+        m_anim->AddClip("dark_attack", darkAttackClip);
+
+        // 8. æ­»äº¡
+        AnimationClip deadClip;
+        deadClip.frames = {
+            64, 65, 66, 67, 68, 69,70, 71, 72, 73, 74, 75, 76
+        };
+        deadClip.frameDurations = {
+            7.0f / 24.0f,
+            3.0f / 24.0f,
+            8.0f / 24.0f,
+            8.0f / 24.0f,
+            13.0f / 24.0f,
+            6.0f / 24.0f,
+            6.0f / 24.0f,
+            4.0f / 24.0f,
+            4.0f / 24.0f,
+            6.0f / 24.0f,
+            6.0f / 24.0f,
+            4.0f / 24.0f,
+            6.0f / 24.0f,
+        };
+        deadClip.loop = false;
+        m_anim->AddClip("dead", deadClip);
+
+        // åˆæœŸå†ç”Ÿ
         m_anim->Play("idle");
     }
-
     return true;
 }
 
@@ -124,78 +333,107 @@ void SekienkiBossEntity::Update(float deltaTime)
 {
     BossEntity::Update(deltaTime);
 
-    if (m_dead) return;
-
-    if (m_sprite)
+    if(m_sprite)
     {
-        float vx = GetVel().x;
-
-        // ‘¬“x‚ªˆê’èˆÈã‚È‚çŒü‚¢‚Ä‚¢‚é•ûŒü‚ğXV
-        if (vx > 0.1f)
+        if (m_attackStep == 1 || m_attackStep == 8)
         {
-            m_sprite->SetFlipX(true);  // ‰EˆÚ“®‚Í”½“]i¦‰æ‘œ‘fŞ‚ª¶Œü‚«ƒx[ƒX‚Ìê‡j
+            // ãƒ­ãƒ¼ãƒªãƒ³ã‚°ä¸­ã ã‘å‘ãã‚’å›ºå®š
+            m_sprite->SetFlipX(m_rollDir > 0.0f);
         }
-        else if (vx < -0.1f)
+        else
         {
-            m_sprite->SetFlipX(false); // ¶ˆÚ“®‚Í‚»‚Ì‚Ü‚Ü
+            auto* player =
+                static_cast<PlayScene*>(GetScene())->GetPlayer();
+
+            if (player)
+            {
+                float dir =
+                    player->GetPos().x > GetPos().x ?
+                    1.0f : -1.0f;
+
+                m_sprite->SetFlipX(dir > 0.0f);
+            }
         }
     }
 }
 
 //---------------------------------
-// ”ò‚Ñã‚ª‚èUŒ‚ŠÇ—
+// é£›ã³ä¸ŠãŒã‚Šæ”»æ’ƒç®¡ç†
 //---------------------------------
 
 void SekienkiBossEntity::StartJumpAttack()
 {
-    m_attackStep = 3;
-
-    m_attackTimer = 1.5f;
-
-    SetVel({ 0.0f,0.0f });
-
-    Vector2d pos = GetPos();
-    pos.y -= 200.0f;
-
-    SetPos(pos);
-
-    m_hoverY = pos.y;
-}
-
-//---------------------------------
-// Œ`‘ÔˆÚsŠÇ—
-//---------------------------------
-
-void SekienkiBossEntity::PhaseChange()
-{
-    float hpRate =
-        (float)m_hp->GetHP() / GetMaxHP();
-
-    if (m_phase < 2 && hpRate <= 0.5f)
+    if (m_anim)
     {
-        m_phase = 2;
+        if (m_secondJump)
+            m_anim->Play("fall2", false);
+        else
+            m_anim->Play("fall", false);
 
-        m_attackStep = 12;
+        m_attackAnimFrame = 0;
+        m_attackAnimTimer = 0.0f;
 
-        m_attackTimer = 2.0f;
+        m_attackStep = 3;
+
+        m_attackTimer = 1.5f;
 
         SetVel({ 0.0f,0.0f });
 
-        m_hp->SetInvincible(999.0f);
-    }
-    else if (m_phase < 1 && hpRate <= 0.7f)
-    {
-        m_phase = 1;
+        Vector2d pos = GetPos();
 
-        m_attackStep = 11;
+        SetPos(pos);
 
-        m_attackTimer = 2.0f;
-
-        SetVel({ 0.0f,0.0f });
-
-        m_hp->SetInvincible(999.0f);
+        m_hoverY = pos.y;
+        m_jumpOffsetApplied = false;
     }
 }
+
+    //---------------------------------
+    // å½¢æ…‹ç§»è¡Œç®¡ç†
+    //---------------------------------
+
+    void SekienkiBossEntity::PhaseChange()
+    {
+        float hpRate =
+            (float)m_hp->GetHP() / GetMaxHP();
+
+        if (m_phase < 2 && hpRate <= 0.5f && m_attackStep == 0)
+        {
+            m_phase = 2;
+
+            m_attackStep = 12;
+
+            if (m_anim)
+                m_anim->Play("drumming", false);
+
+            m_attackAnimFrame = 0;
+            m_attackAnimTimer = 0.0f;
+
+            m_attackTimer = 2.0f;
+
+            SetVel({ 0.0f,0.0f });
+
+            m_hp->SetInvincible(9999.0f);
+        }
+        else if (m_phase < 1 && hpRate <= 0.7f && m_attackStep == 0)
+        {
+            m_phase = 1;
+
+            m_attackStep = 11;
+
+            if (m_anim)
+                m_anim->Play("drumming", false);
+
+            m_attackAnimFrame = 0;
+            m_attackAnimTimer = 0.0f;
+
+            m_attackTimer = 2.0f;
+
+            SetVel({ 0.0f,0.0f });
+
+            m_hp->SetInvincible(9999.0f);
+        }
+    }
 
 
 
@@ -235,7 +473,7 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
 
 
     //---------------------------------
-    // s“®‘I‘ğ
+    // è¡Œå‹•é¸æŠ
     //---------------------------------
 
     int r = rand() % 100;
@@ -251,8 +489,22 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
         if (r < 50)
         {
             m_attackStep = 8;
-            SetVel({ -dir * 600.0f, GetVel().y });
+
+            if (m_anim)
+                m_anim->Play("roll", false);
+
+            m_attackAnimFrame = 0;
+            m_attackAnimTimer = 0.0f;
+
+            m_rollWaitTimer = 30.0f / 24.0f;
+
+            // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨åå¯¾æ–¹å‘ã¸ãƒ­ãƒ¼ãƒªãƒ³ã‚°
+            m_rollDir = -dir;
+
+            SetVel({ 0.0f, GetVel().y });
+
             m_rollDistanceLeft = 500.0f;
+
             return;
         }
         else if (r < 90)
@@ -277,7 +529,7 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
     }
 
     //---------------------------------
-    // Šî–{s“®
+    // åŸºæœ¬è¡Œå‹•
     //---------------------------------
     if (absDistance >= farDistance)
     {
@@ -289,24 +541,96 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
     }
 
     //---------------------------------
-    // ‘O“]UŒ‚
+    // å‰è»¢æ”»æ’ƒ
     //---------------------------------
 
     if (m_attackStep == 1)
     {
-        SetVel({ dir * 600.0f, GetVel().y });
+        m_anim->Play("roll", false);
+        m_attackAnimFrame = 0;
+        m_attackAnimTimer = 0.0f;
+
+        m_rollWaitTimer = 30.0f / 24.0f;    // ç´„30Få¾…ã¤
+
+        // â˜…ãƒ­ãƒ¼ãƒªãƒ³ã‚°é–‹å§‹æ™‚ã®å‘ãã‚’ä¿å­˜
+        m_rollDir = dir;
+
+        SetVel({ 0.0f, GetVel().y });
 
         m_rollDistanceLeft = 500.0f;
     }
 
     //---------------------------------
-    // ‰Î‰Š’e
+    // è¿‘æ¥æ”»æ’ƒ
     //---------------------------------
 
     else if (m_attackStep == 2)
     {
+        if (m_anim)
+            m_anim->Play("attack", false);
+        m_attackAnimFrame = 0;
+        m_attackAnimTimer = 0.0f;
+        m_fire = false;
+
+        m_attackTimer = 10.0f;
+    }
+
+    //---------------------------------
+    // é£›ã³ä¸ŠãŒã‚Š
+    //---------------------------------
+
+    if (m_jumpAttackCooldown <= 0.0f)
+    {
+
+        if (m_hp->GetHP() > hp70)
+            return;
+
+        if (rand() % 100 < 40)
+        {
+            m_secondJump = false;
+            StartJumpAttack();
+            return;
+        }
+    }
+}
+
+void SekienkiBossEntity::UpdateAttack(float deltaTime)
+{
+
+    if (m_dead) return;
+
+    int frame = m_sprite->GetCurrentFrame();
+
+    auto* player =
+        static_cast<PlayScene*>(GetScene())->GetPlayer();
+
+    if (!player)
+        return;
+
+    float dir =
+        player->GetPos().x > GetPos().x ?
+        1.0f : -1.0f;
+
+    //---------------------------------
+    // ã‚¿ã‚¤ãƒãƒ¼
+    //---------------------------------
+
+    if (m_attackTimer > 0.0f)
+    {
+        m_attackTimer -= deltaTime;
+    }
+
+    //---------------------------------
+    // è¿‘æ¥æ”»æ’ƒ
+    //---------------------------------
+
+    if (!m_fire &&
+        frame == 26)
+    {
+        m_fire = true;
         m_bulletActive = true;
 
+        // å¼¾ç”Ÿæˆ
         if (dir > 0.0f)
         {
             m_bulletPos =
@@ -335,145 +659,96 @@ void SekienkiBossEntity::UpdateAI(float deltaTime)
                 0.0f
             };
         }
-
-        m_attackTimer = 0.6f;
     }
 
     //---------------------------------
-    // ”ò‚Ñã‚ª‚è
-    //---------------------------------
-
-    if (m_jumpAttackCooldown <= 0.0f)
-    {
-        float hp70 = GetMaxHP() * 0.7f;
-        float hp50 = GetMaxHP() * 0.5f;
-
-        if (m_hp->GetHP() > hp70)
-            return;
-
-        if (rand() % 100 < 40)
-        {
-            m_secondJump = false;
-            StartJumpAttack();
-            return;
-        }
-    }
-}
-
-void SekienkiBossEntity::UpdateAttack(float deltaTime)
-{
-    if (m_dead) return;
-
-    //---------------------------------
-    // ƒfƒoƒbƒO—p(attackStepŠm”F)
-    //---------------------------------
-
-    /*static int prevStep = -1;
-
-    if (prevStep != m_attackStep)
-    {
-        prevStep = m_attackStep;
-    }*/
-
-
-    //---------------------------------
-    // ƒ^ƒCƒ}[
-    //---------------------------------
-
-    if (m_attackTimer > 0.0f)
-    {
-        m_attackTimer -= deltaTime;
-    }
-
-    //---------------------------------
-    // ‰Î‰ŠUŒ‚
+    // è¿‘æ¥æ”»æ’ƒçµ‚äº†
     //---------------------------------
 
     if (m_attackStep == 2 &&
-        m_bulletActive)
-    {
-        if (m_attackTimer > 0.45f)
-        {
-            m_bulletPos.x +=
-                m_bulletVel.x * deltaTime;
-        }
-    }
-
-
-    //---------------------------------
-    // ‰Î‰ŠUŒ‚I—¹
-    //---------------------------------
-
-    if (m_attackStep == 2 &&
-        m_attackTimer <= 0.0f)
+        m_anim->IsFinished())
     {
         m_bulletActive = false;
 
         m_attackStep = 0;
 
         m_attackTimer = 2.0f;
+
+        m_anim->Play("idle");
     }
 
     //---------------------------------
-    // ‘O“]UŒ‚
+    // å‰è»¢æ”»æ’ƒ
     //---------------------------------
 
-    if (m_attackStep == 1 &&
-        m_rollDistanceLeft > 0.0f)
+    if (m_attackStep == 1)
     {
-        float moveStep =
-            fabsf(GetVel().x) * deltaTime;
-
-        m_rollDistanceLeft -= moveStep;
-
-        if (m_rollDistanceLeft <= 0.0f)
+        // æºœã‚ãƒ¢ãƒ¼ã‚·ãƒ§ãƒ³
+        if (m_rollWaitTimer > 0.0f)
         {
-            m_rollDistanceLeft = 0.0f;
-
+            m_rollWaitTimer -= deltaTime;
             SetVel({ 0.0f, GetVel().y });
+        }
+        else
+        {
+            SetVel({ m_rollDir * 900.0f, GetVel().y });
+            TryDamagePlayer();
 
-            m_attackStep = 0;
+            float moveStep = fabsf(GetVel().x) * deltaTime;
+            m_rollDistanceLeft -= moveStep;
 
-            m_attackTimer = 3.0f;
+            if (m_rollDistanceLeft <= 0.0f)
+            {
+                m_rollDistanceLeft = 0.0f;
+
+                SetVel({ 0.0f, GetVel().y });
+
+                m_attackStep = 0;
+                m_attackTimer = 3.0f;
+
+                if (m_anim)
+                    m_anim->Play("idle");
+            }
         }
     }
 
     //---------------------------------
-    // ”ò‚Ñã‚ª‚è
+    // é£›ã³ä¸ŠãŒã‚Š
     //---------------------------------
 
     if (m_attackStep == 3)
     {
         SetVel({ 0.0f, 0.0f });
+        SetPos({ GetPos().x, m_hoverY });
 
-        SetPos(
-            {
-                GetPos().x,
-                m_hoverY
-            });
-    }
+        // 44Fã§ä¸€åº¦ã ã‘220pxä¸Šæ˜‡
+        if (frame >= 44 && !m_jumpOffsetApplied)
+        {
+            Vector2d pos = GetPos();
+            pos.y -= 250.0f;
+            SetPos(pos);
 
-    if (m_jumpAttackCooldown > 0.0f)
-    {
-        m_jumpAttackCooldown -= deltaTime;
-    }
+            // åŸºæº–åº§æ¨™ã‚‚æ›´æ–°ã™ã‚‹
+            m_hoverY = pos.y;
 
-    if (m_attackStep == 3 &&
-        m_attackTimer <= 0.0f)
-    {
-        m_attackStep = 4;
+            m_jumpOffsetApplied = true;
 
-        m_attackTimer = 3.0f;
+            m_sprite->SetDrawOffset(0.0f, 115.0f);
+        }
 
-        SetPos(
-            {
-                GetPos().x,
-                -150.0f
-            });
+        // 49Fã§ç”»é¢å¤–ã¸ãƒ¯ãƒ¼ãƒ—
+        if (frame >= 49)
+        {
+            m_attackStep = 4;
+            m_attackTimer = 3.0f;
+
+            SetPos({ GetPos().x, -150.0f });
+            m_sprite->SetDrawOffset(0.0f, -130.0f);
+        }
     }
 
     //---------------------------------
-    //‹ó’†’Ç”ö
+    //ç©ºä¸­è¿½å°¾
     //---------------------------------
 
     if (m_attackStep == 4)
@@ -510,11 +785,12 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     }
 
     //---------------------------------
-    // —‰ºUŒ‚
+    // è½ä¸‹æ”»æ’ƒ
     //---------------------------------
 
     if (m_attackStep == 5)
     {
+        TryDamagePlayer();
         SetVel({ 0.0f, 1000.0f });
 
         if (m_isGround)
@@ -525,7 +801,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     }
 
     //---------------------------------
-    // —‰ºUŒ‚I—¹•˜A‘±”ò‚Ñã‚ª‚è
+    // è½ä¸‹æ”»æ’ƒçµ‚äº†ï¼†é€£ç¶šé£›ã³ä¸ŠãŒã‚Š
     //---------------------------------
 
     if (m_attackStep == 6 &&
@@ -546,6 +822,9 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
             m_attackTimer = 1.0f;
 
+            if (m_anim)
+                m_anim->Play("idle");
+
             m_jumpAttackCooldown = 8.0f;
 
         }
@@ -556,72 +835,87 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
     {
         m_secondJump = true;
         StartJumpAttack();
-        //ƒfƒoƒbƒO—p
-        //printf("SECOND JUMP\n");
     }
 
     //---------------------------------
-    // ‘O“]UŒ‚iƒ_[ƒNƒAƒ^ƒbƒN’¼‘Oj
+    // å‰è»¢æ”»æ’ƒï¼ˆãƒ€ãƒ¼ã‚¯ã‚¢ã‚¿ãƒƒã‚¯ç›´å‰ï¼‰
     //---------------------------------
 
-    if (m_attackStep == 8 &&
-        m_rollDistanceLeft > 0.0f)
+    if (m_attackStep == 8)
     {
-        float moveStep =
-            fabsf(GetVel().x) * deltaTime;
 
-        m_rollDistanceLeft -= moveStep;
-
-        if (m_rollDistanceLeft <= 0.0f)
+        if (m_rollWaitTimer > 0.0f)
         {
-            m_rollDistanceLeft = 0.0f;
-
+            m_rollWaitTimer -= deltaTime;
             SetVel({ 0.0f, GetVel().y });
-
-            m_attackStep = 9;
-            m_attackTimer = 1.2f;
         }
+        else
+        {
+            SetVel({ m_rollDir * 900.0f, GetVel().y });
+            TryDamagePlayer();
+
+            float moveStep = fabsf(GetVel().x) * deltaTime;
+            m_rollDistanceLeft -= moveStep;
+
+            if (m_rollDistanceLeft <= 0.0f)
+            {
+                m_rollDistanceLeft = 0.0f;
+
+                SetVel({ 0.0f, GetVel().y });
+
+                m_attackStep = 9;
+                m_attackTimer = 3.0f;
+
+                m_darkAttackFire = false;
+
+                if (m_anim)
+                {
+                    m_anim->Play("dark_attack", false);
+                }
+
+                m_attackAnimFrame = 0;
+                m_attackAnimTimer = 0.0f;
+                m_darkAttackFire = false;
+            }
+        }
+    } 
+
+    //---------------------------------
+    // ãƒ€ãƒ¼ã‚¯ã‚¢ã‚¿ãƒƒã‚¯
+    //---------------------------------
+
+    if (m_attackStep == 9 && !m_darkAttackFire && frame == 63)   // å¾Œã§ç™ºå°„ä½ç½®ã‚’èª¿æ•´
+    {
+        m_darkAttackFire = true;
+
+        m_bulletActive = true;
+
+        m_bulletPos =
+        {
+            GetPos().x,
+            GetPos().y - 120.0f
+        };
+
+        if (player)
+        {
+            float dir =
+                player->GetPos().x > GetPos().x ?
+                1.0f : -1.0f;
+
+            m_bulletVel =
+            {
+                dir * 300.0f,
+                0.0f
+            };
+        }
+
+        m_tornadoDistanceLeft = 600.0f;
     }
 
-    //---------------------------------
-    // ƒ_[ƒNƒAƒ^ƒbƒN
-    //---------------------------------
-
-    if (m_attackStep == 9)
+    if (m_attackStep == 9 &&
+        m_anim->IsFinished())
     {
-        SetVel({ 0.0f, 0.0f });
-
-        if (m_attackTimer <= 0.0f)
-        {
-            m_bulletActive = true;
-
-            m_bulletPos =
-            {
-                GetPos().x,
-                GetPos().y - 120.0f
-            };
-
-            auto* player =
-                static_cast<PlayScene*>(GetScene())->GetPlayer();
-
-            if (player)
-            {
-                float dir =
-                    player->GetPos().x > GetPos().x
-                    ? 1.0f
-                    : -1.0f;
-
-                m_bulletVel =
-                {
-                    dir * 300.0f,
-                    0.0f
-                };
-            }
-
-            m_tornadoDistanceLeft = 600.0f;
-
-            m_attackStep = 10;
-        }
+        m_attackStep = 10;
     }
 
     if (m_attackStep == 10 &&
@@ -630,10 +924,10 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
         m_bulletPos.x +=
             m_bulletVel.x * deltaTime;
 
-        float moveStep =
+        float move =
             fabsf(m_bulletVel.x) * deltaTime;
 
-        m_tornadoDistanceLeft -= moveStep;
+        m_tornadoDistanceLeft -= move;
 
         if (m_tornadoDistanceLeft <= 0.0f)
         {
@@ -644,21 +938,27 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
             m_attackTimer = 1.0f;
 
             m_jumpAttackCooldown = 7.0f;
+
+            m_anim->Play("idle");
         }
     }
+
     //---------------------------------
-    // Œ`‘ÔˆÚsŠÇ—
+    // å½¢æ…‹ç§»è¡Œç®¡ç†
     //---------------------------------
 
     if (m_attackStep == 11)
     {
-        if (m_attackTimer <= 0.0f)
+        SetVel({ 0.0f, 0.0f });
+
+        if (m_anim->IsFinished())
         {
             m_hp->SetInvincible(0.0f);
 
             m_attackStep = 0;
-
             m_attackTimer = 1.0f;
+
+            m_anim->Play("idle");
         }
 
         return;
@@ -666,13 +966,30 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
     if (m_attackStep == 12)
     {
-        if (m_attackTimer <= 0.0f)
+        SetVel({ 0.0f, 0.0f });
+
+        if (m_anim->IsFinished())
         {
             m_hp->SetInvincible(0.0f);
 
             m_attackStep = 0;
-
             m_attackTimer = 1.0f;
+
+            m_anim->Play("idle");
+        }
+
+        return;
+    }   
+
+    //---------------------------------
+    // æ­»äº¡
+    //---------------------------------
+
+    if (m_attackStep == 13)
+    {
+        if (m_anim->IsFinished())
+        {
+            // æ’ƒç ´å‡¦ç†
         }
 
         return;
@@ -682,28 +999,67 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
 
 void SekienkiBossEntity::TakeDamage(int damage, const Vector2d& knockback)
 {
-    // ‚·‚Å‚É€–S‚µ‚Ä‚¢‚é‚È‚ç‰½‚à‚µ‚È‚¢
+    // ã™ã§ã«æ­»äº¡ã—ã¦ã„ã‚‹ãªã‚‰ä½•ã‚‚ã—ãªã„
     if (m_dead) return;
 
     if (m_hp)
     {
-        // HP‚ğŒ¸‚ç‚·
+        // HPã‚’æ¸›ã‚‰ã™
         m_hp->Damage(damage);
 
-        // HP‚ª0ˆÈ‰º‚É‚È‚Á‚½‚ç€–Sˆ—‚Ö
+        // HPãŒ0ä»¥ä¸‹ã«ãªã£ãŸã‚‰æ­»äº¡å‡¦ç†ã¸
         if (m_hp->GetHP() <= 0)
         {
             m_dead = true;
-            m_attackStep = 0;       // UŒ‚ƒXƒe[ƒg‚ğƒŠƒZƒbƒg
-            m_attackTimer = 0.0f;   // ƒ^ƒCƒ}[’â~
-            SetVel({ 0.0f, 0.0f }); // ‚»‚Ìê‚É’â~
-            m_bulletActive = false; // UŒ‚—p‚Ì’ei‰Î‰Š‚È‚Çj‚ğ‹­§”ñƒAƒNƒeƒBƒu‰»
+            m_attackStep = 13;       // æ”»æ’ƒã‚¹ãƒ†ãƒ¼ãƒˆã‚’ãƒªã‚»ãƒƒãƒˆ
+            m_attackTimer = 0.0f;   // ã‚¿ã‚¤ãƒãƒ¼åœæ­¢
+            SetVel({ 0.0f, 0.0f }); // ãã®å ´ã«åœæ­¢
+            m_bulletActive = false; // æ”»æ’ƒç”¨ã®å¼¾ï¼ˆç«ç‚ãªã©ï¼‰ã‚’å¼·åˆ¶éã‚¢ã‚¯ãƒ†ã‚£ãƒ–åŒ–
 
-            // €–SƒAƒjƒ[ƒVƒ‡ƒ“‚ğÄ¶
+            // æ­»äº¡ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’å†ç”Ÿ
             if (m_anim)
             {
                 m_anim->Play("dead");
             }
         }
     }
+}
+
+bool SekienkiBossEntity::TryDamagePlayer()
+{
+    for (Actor* actor : GetScene()->GetActors())
+    {
+        if (actor == nullptr ||
+            actor->GetType() != ActorType::Player ||
+            actor->IsDead())
+        {
+            continue;
+        }
+
+        auto* playerCollision =
+            actor->GetComponent<CollisionComponent>();
+
+        if (!playerCollision)
+            continue;
+
+        if (!m_collision->CheckCollision(playerCollision))
+            continue;
+
+        auto* player =
+            static_cast<PlayerEntity*>(actor);
+
+        // ãƒãƒƒã‚¯ãƒãƒƒã‚¯æ–¹å‘
+        float knockbackX =
+            GetPos().x < player->GetPos().x ?
+            500.0f : -500.0f;
+
+        player->TakeDamage(
+            20,                         // ãƒ€ãƒ¡ãƒ¼ã‚¸é‡
+            Vector2d(knockbackX, 0.0f)  // ãƒãƒƒã‚¯ãƒãƒƒã‚¯
+        );
+
+        return true;
+    }
+
+    return false;
 }
