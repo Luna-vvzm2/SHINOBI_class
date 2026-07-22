@@ -22,6 +22,7 @@ public:
 	enum class Type {
 		Title,
 		Play,
+		Clear, //クリアシーンのために追加
 
 	};
 	//addactorを移動

@@ -145,6 +145,11 @@ void Game::Update(float deltaTime) {
 			m_scene->Init();
 			break;
 
+		case Scene::Type::Clear:
+			m_scene = std::make_unique<TitleScene>(this);
+			m_scene->Init();
+			break;
+
 		case Scene::Type::Play:
 			auto playScene = static_cast<PlayScene*>(m_scene.get());
 
@@ -152,11 +157,9 @@ void Game::Update(float deltaTime) {
 			if (playScene->IsResult()) {
 				m_scene = std::make_unique<PlayScene>(this);
 				m_scene->Init();
-
 			}
 			break;
 		}
-
 	}
 
 
@@ -164,6 +167,13 @@ void Game::Update(float deltaTime) {
 	if (m_scene) { m_scene->Update(deltaTime); }
 
 	//	以後処理を書く
+
+	//クリアシーンのために追加
+	if (m_nextScene)
+	{
+		m_scene = std::move(m_nextScene);
+		m_scene->Init();
+	}
 }
 
 void Game::Draw() {
@@ -251,6 +261,14 @@ void Game::InitConsole() {
 	std::cout << "コンソール初期化完了" << std::endl;
 
 
+}
+
+//クリアシーンのために追加
+void Game::ChangeScene(std::unique_ptr<Scene>nextScene)
+{
+	if (!nextScene) return;
+
+	m_nextScene = std::move(nextScene);
 }
 
 //bool Game::tick(float& deltaTime, int targetFPS, float maxDeltaTime) {
