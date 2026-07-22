@@ -75,6 +75,7 @@ public:
         printf("jutsuGauge: %d\n", m_jutsuGauge);
     }
     bool GetJutsuCharge() { return m_jutsuCharge; }
+    int GetJutsuGaugeAmount() const { return m_jutsuGauge; }
 
     bool OnGround() const { return m_isGround; }
     void SetCanMove(bool canMove) { m_canMove = canMove; }

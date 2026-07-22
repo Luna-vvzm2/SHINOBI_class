@@ -161,6 +161,7 @@
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
     <ClCompile Include="HouseBlock.cpp" />
+    <ClCompile Include="JutsuChargeUI.cpp" />
     <ClCompile Include="KaryuTextUI.cpp" />
     <ClCompile Include="KunaiActor.cpp" />
     <ClCompile Include="Menu.cpp" />
@@ -250,6 +251,7 @@
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
     <ClInclude Include="HouseBlock.h" />
+    <ClInclude Include="JutsuChargeUI.h" />
     <ClInclude Include="KaryuTextUI.h" />
     <ClInclude Include="KunaiActor.h" />
     <ClInclude Include="Menu.h" />

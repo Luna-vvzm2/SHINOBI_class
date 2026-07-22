@@ -20,6 +20,7 @@ class TransformComponent;
 class VelocityComponent;
 class HPComponent;
 class GameOverMenuUI;
+class JutsuChargeUI;
 
 //ƒCƒxƒ“ƒg‚Ì‚½‚ß’Ç‰Á
 class EventTexture;
@@ -94,6 +95,8 @@ private:
 	ShurikenUI* m_shurikenUI = nullptr;
 
 	MoneyUI* m_moneyUI = nullptr;
+
+	JutsuChargeUI* m_jutsuChargeUI = nullptr;
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
 	
