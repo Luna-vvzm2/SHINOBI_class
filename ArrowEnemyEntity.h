@@ -10,7 +10,7 @@ public:
     void Update(float deltaTime) override;
     void Draw() override;
     std::string GetTexturePath() const override;
-
+    void TakeDamage(int damage, const Vector2d& knockback);
 private:
 
 
@@ -35,6 +35,10 @@ private:
     float m_damageTimer = 0.0f;
     int m_damagePerSecond = 10;
     bool m_isHit = false;
+    float m_hitTimer;
+    AnimationComponent* m_animation = nullptr;
+    float m_detectRange = 600.0f;   // 感知距離
+    float m_attackRange = 500.0f;   // 攻撃開始距離（必要なら）
+    bool m_targetLocked = false;
 };
-
 

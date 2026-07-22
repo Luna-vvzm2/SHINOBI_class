@@ -254,3 +254,8 @@ void SpriteComponent::ReleaseTextures()
         s_textureCache
     );
 }
+
+bool SpriteComponent::GetFlipH() const
+{
+    return m_flipX;
+}

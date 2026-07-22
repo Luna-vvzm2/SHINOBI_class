@@ -41,7 +41,7 @@ public:
     int GetHandle() const { return m_handle; }
     void SetAlpha(int alpha) { m_alpha = alpha; }
     int GetAlpha() const { return m_alpha; }
-
+    bool GetFlipH() const;
     void SetFlipV(bool flip)
     {
         m_flipV = flip;

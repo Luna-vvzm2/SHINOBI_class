@@ -29,20 +29,64 @@ bool ArrowEnemyEntity::Init() {
 
 	m_hp = AddComponent<HPComponent>(50);
 
-    // =========================
-  // ドロップ設定（テスト用）
-  // =========================
+
     m_dropTable.clear();
 
     m_dropTable.push_back({ ItemType::Coin, 1.0f });
     m_dropTable.push_back({ ItemType::Kunai,1.0f });
-	return true;
+	
+
+    m_sprite->LoadTextureDiv(
+        GetTexturePath(),
+        4,      // 列数（例）
+        7       // 行数（例）
+    );
+
+    m_animation = AddComponent<AnimationComponent>();
+    m_animation->SetSprite(m_sprite);
+
+    AnimationClip idle;
+    idle.frames = {0};
+    idle.speed = 0.18f;
+    idle.loop = true;
+
+    AnimationClip warning;
+    warning.frames = {1,2,3,4,5,6,7,8};
+    warning.speed = 0.10f;
+    warning.loop = false;
+
+    AnimationClip attack;
+    attack.frames = { 9,0 };
+    attack.speed = 0.08f;
+    attack.loop = false;
+
+    AnimationClip hit;
+    hit.frames = {10,11,12,13};
+    hit.speed = 0.08f;
+    hit.loop = false;
+
+    AnimationClip dead;
+    dead.frames = {10,11,12,13,14,15,16,17,18,19,20,21,22};
+    dead.speed = 0.10f;
+    dead.loop = false;
+
+    m_animation->AddClip("Idle", idle);
+    m_animation->AddClip("Warning", warning);
+    m_animation->AddClip("Attack", attack);
+    m_animation->AddClip("Hit", hit);
+    m_animation->AddClip("Dead", dead);
+
+    m_animation->Play("Idle");
+
+    m_transform->SetScale(Vector2d(0.4f, 0.4f));
+
+    return true;
+
 }
 
 void ArrowEnemyEntity::Update(float deltaTime)
 {
    
-    m_isHit = false;
     // 先に死亡済みなら何もしない
     if (GetState() == Actor::State::Dead)
         return;
@@ -58,72 +102,117 @@ void ArrowEnemyEntity::Update(float deltaTime)
         }
     }*/
 
-    if (m_hp && m_hp->GetHP() <= 0)
-    {
-        std::cout << "ArrowEnemy Dead" << std::endl;
-        OnDead();
-        return;
-    }
+ 
 
     auto player =
         static_cast<PlayScene*>(m_scene)->GetPlayer();
+    if (!player)
+    {
+        EnemyEntity::Update(deltaTime);
+        return;
+    }
+
+    // プレイヤーとの距離
+    float distance =
+        std::abs(player->GetPos().x - GetPos().x);
 
     switch (m_attackState)
     {
     case AttackState::Idle:
-
-        m_attackTimer += deltaTime;
-
-        if (m_attackTimer >= 3.0f)
+        m_sprite->SetDrawOffset(0.0f, -15.0f);
+        m_animation->Play("Idle");
+        if (distance <= m_detectRange)
         {
-            float groundY = GetGroundY(player->GetPos().x);
+            m_attackTimer += deltaTime;
 
-            float targetX = player->GetPos().x;
-            float targetY = GetGroundY(targetX);
-
-            m_targetPos = Vector2d(targetX, targetY);
-
-            m_attackTimer = 1.0f;
-
-            m_attackExecuted = false;
-
-            m_attackState = AttackState::Warning;
-
+            if (m_attackTimer >= 3.0f)
+            {
+                m_attackTimer = 2.0f;
+                m_attackExecuted = false;
+                m_attackState = AttackState::Warning;
+            }
         }
+        
 
+        if (player->GetPos().x > GetPos().x)
+        {
+            m_sprite->SetFlipX(true);
+        }
+        else
+        {
+            m_sprite->SetFlipX(false);
+        }
         break;
 
     case AttackState::Warning:
 
+        if (m_animation->GetCurrentName() != "Warning")
+        {
+            m_animation->Play("Warning");
+        }
+
         m_attackTimer -= deltaTime;
+
+        // 矢を撃った瞬間にプレイヤー位置を記録
+        if (!m_attackExecuted && m_attackTimer <= 1.0f)
+        {
+            m_targetPos.x = player->GetPos().x;
+            m_targetPos.y = GetGroundY(m_targetPos.x);
+
+            m_attackExecuted = true;
+        }
 
         if (m_attackTimer <= 0.0f)
         {
+            
             m_attackTimer = 0.2f;
-
             m_attackState = AttackState::Attack;
+            m_attackExecuted = false;
         }
 
         break;
 
     case AttackState::Attack:
+        if (m_animation->GetCurrentName() != "Attack")
+        {
+            m_animation->Play("Attack");
+        }
 
         if (!m_attackExecuted)
         {
             Vector2d playerPos = player->GetPos();
 
-            float radius = 120.0f;
+            float radius = 200.0f;
 
             float dx = playerPos.x - m_targetPos.x;
             float dy = playerPos.y - m_targetPos.y;
 
-            float distanceSq =
-                dx * dx +
-                dy * dy;
+            float distanceSq = dx * dx + dy * dy;
+            float groundY = GetGroundY(m_targetPos.x);
 
-            if (distanceSq <= radius * radius)
+            float lineHalfW = 32.0f;
+            float lineCenterY = groundY * 0.5f;
+            float lineHalfH = groundY * 0.5f;
+
+            bool hitLine =
+                std::abs(playerPos.x - m_targetPos.x) <= lineHalfW &&
+                std::abs(playerPos.y - lineCenterY) <= lineHalfH;
+            bool hitCircle = distanceSq <= radius * radius;
+
+            if (hitLine || hitCircle)
             {
-                // player->Damage(10);
+                Vector2d knockback;
+
+                if (playerPos.x < m_targetPos.x)
+                {
+                    knockback = Vector2d(-800.0f, -250.0f);
+                }
+                else
+                {
+                    knockback = Vector2d(800.0f, -250.0f);
+                }
+
+                player->TakeDamage(20, knockback);
             }
 
             m_attackExecuted = true;
@@ -133,24 +222,15 @@ void ArrowEnemyEntity::Update(float deltaTime)
 
         if (m_attackTimer <= 0.0f)
         {
-            m_attackTimer = 2.0f;
+            m_attackTimer = 1.0f;
             m_attackState = AttackState::Cooldown;
         }
 
         break;
 
-        m_attackTimer -= deltaTime;
-
-        if (m_attackTimer <= 0.0f)
-        {
-            m_attackTimer = 2.0f;
-            m_attackState = AttackState::Cooldown;
-        }
-
-        break;
 
     case AttackState::Cooldown:
-
+        m_animation->Play("Idle");
         m_attackTimer -= deltaTime;
 
         if (m_attackTimer <= 0.0f)
@@ -160,13 +240,48 @@ void ArrowEnemyEntity::Update(float deltaTime)
 
         break;
 
-    case AttackState::Dead:
+    case AttackState::Hit:
+        if (m_animation->GetCurrentName() != "Hit")
+        {
+            m_animation->Play("Hit");
+        }
+        m_hitTimer -= deltaTime;
 
+        if (m_hitTimer <= 0.0f)
+        {
+            SetVel(Vector2d::Zero());
+
+            m_attackState = AttackState::Idle;
+        }
+
+        break;
+
+    case AttackState::Dead:
+        m_sprite->SetDrawOffset(0.0f, -20.0f);
+        if (m_animation->GetCurrentName() != "Dead")
+        {
+            m_animation->Play("Dead");
+        }
+
+        if (m_deathTimer > 1.0f)
+        {
+            float t = (m_deathTimer - 1.0f) / 1.0f;
+
+            int alpha = (int)(255 * (1.0f - t));
+
+            m_sprite->SetAlpha(alpha);
+
+        }
         SetVel(Vector2d::Zero());
 
-        m_deathTimer -= deltaTime;
+        m_deathTimer += deltaTime;
 
-       
+        if (m_deathTimer >= 1.5f)
+        {
+            OnDead();
+            return;
+        }
+
         break;
     }
 
@@ -180,7 +295,7 @@ void ArrowEnemyEntity::Draw()
 
     EnemyEntity::Draw();
 
-#ifdef _DEBUG
+
 
     Renderer* renderer =
         m_scene->GetGame()->GetRenderer();
@@ -210,7 +325,7 @@ void ArrowEnemyEntity::Draw()
             Color(255, 0, 0),
             false);
     }
-#endif
+
 }
 
 float ArrowEnemyEntity::GetGroundY(float x)
@@ -250,8 +365,48 @@ float ArrowEnemyEntity::GetGroundY(float x)
     return groundY;
 }
 
+void ArrowEnemyEntity::TakeDamage(int damage,
+    const Vector2d& knockback)
+{
+    if (m_hp == nullptr)
+    {
+        return;
+    }
+
+    m_hp->Damage(damage);
+
+    if (m_hp->GetHP() <= 0)
+    {
+        m_attackState = AttackState::Dead;
+        m_deathTimer = 0.0f;
+        return;
+    }
+
+    m_attackState = AttackState::Hit;
+
+    Vector2d force = knockback;
+
+    PlayScene* playScene =
+        static_cast<PlayScene*>(GetScene());
+
+    PlayerEntity* player =
+        playScene ? playScene->GetPlayer() : nullptr;
+
+    if (player)
+    {
+        float sign =
+            GetPos().x < player->GetPos().x ?
+            -1.0f : 1.0f;
+
+        force.x = std::fabs(force.x) * sign;
+    }
+
+    SetVel(force);
+
+    m_hitTimer = 0.3f;
+}
 std::string ArrowEnemyEntity::GetTexturePath() const {
     
-    return "assets/images/enemy/arrowEnemy.png";
+    return "assets/images/Enemy/arrow.png";
 
 }

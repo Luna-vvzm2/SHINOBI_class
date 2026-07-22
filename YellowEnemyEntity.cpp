@@ -129,19 +129,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
         EnemyEntity::Update(deltaTime);
         return;
     }
-    // デバッグ用：毎秒ダメージ
-   /*
-    m_damageTimer += deltaTime;
-    if (m_damageTimer >= 1.0f)
-    {
-        m_damageTimer -= 1.0f;
 
-        if (m_hp)
-        {
-            m_hp->Damage(10);
-        }
-    }
-   */
 
     PlayScene* playScene = static_cast<PlayScene*>(GetScene());
     PlayerEntity* player = playScene ? playScene->GetPlayer() : nullptr;
@@ -191,15 +179,15 @@ void YellowEnemyEntity::Update(float deltaTime) {
 
         m_deadTimer += deltaTime;
         m_sprite->SetDrawOffset(0.0f, 10.0f);
-        if (m_deadTimer > 2.0f)
+        if (m_deadTimer > 1.0f)
         {
-            float t = (m_deadTimer - 2.0f) / 1.0f;
+            float t = (m_deadTimer - 1.0f) / 1.0f;
 
             int alpha = (int)(255 * (1.0f - t));
 
             m_sprite->SetAlpha(alpha);
         }
-        if (m_deadTimer >= 3.0f)
+        if (m_deadTimer >= 1.5f)
         {
             OnDead();
             return;
