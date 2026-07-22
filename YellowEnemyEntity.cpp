@@ -1,3 +1,4 @@
+
 #include "YellowEnemyEntity.h"
 #include "VelocityComponent.h"
 #include "HPComponent.h"
@@ -29,12 +30,12 @@ bool YellowEnemyEntity::Init() {
     m_attackCollision->SetNone();
     m_state = Idle;
     m_attackTimer = 0.0f;
-    
+
     m_faceRight = true;
-    
-       // =========================
-    // ドロップ設定（テスト用）
+
     // =========================
+ // ドロップ設定（テスト用）
+ // =========================
     m_dropTable.clear();
 
     // 必ずコインを落とす
@@ -47,9 +48,9 @@ bool YellowEnemyEntity::Init() {
     );
     m_animation = AddComponent<AnimationComponent>();
     m_animation->SetSprite(m_sprite);
-    
+
     AnimationClip stay;
-    stay.frames = {0,1,2,3,4};
+    stay.frames = { 0,1,2,3,4 };
     stay.speed = 0.12f;
     stay.loop = true;
 
@@ -75,7 +76,7 @@ bool YellowEnemyEntity::Init() {
     attack2.loop = false;
 
     AnimationClip hit;
-    hit.frames = {26,27,28,29,};
+    hit.frames = { 26,27,28,29, };
     hit.speed = 0.08f;
     hit.loop = false;
 
@@ -107,25 +108,29 @@ bool YellowEnemyEntity::Init() {
 }
 
 void YellowEnemyEntity::Update(float deltaTime) {
-   
+
     m_isHit = false;
     // 先に死亡済みなら何もしない
     if (GetState() == Actor::State::Dead)
         return;
 
-    // デバッグ用：毎秒ダメージ
-   /*
-    m_damageTimer += deltaTime;
-    if (m_damageTimer >= 1.0f)
+    if (m_state == BlowHit)
     {
-        m_damageTimer -= 1.0f;
-
-        if (m_hp)
+        if (m_animation->GetCurrentName() != "Hit")
         {
-            m_hp->Damage(10);
+            m_animation->Play("Hit");
         }
+        m_hitTimer -= deltaTime;
+
+        if (m_hitTimer <= 0.0f)
+        {
+            m_state = Idle;
+        }
+
+        EnemyEntity::Update(deltaTime);
+        return;
     }
-   */
+
 
     PlayScene* playScene = static_cast<PlayScene*>(GetScene());
     PlayerEntity* player = playScene ? playScene->GetPlayer() : nullptr;
@@ -140,7 +145,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
     float distance =
         player->GetPos().x - GetPos().x;
 
-    
+
     if (m_hp && m_hp->GetHP() <= 0 && !m_isDying)
     {
         m_isDying = true;
@@ -175,15 +180,15 @@ void YellowEnemyEntity::Update(float deltaTime) {
 
         m_deadTimer += deltaTime;
         m_sprite->SetDrawOffset(0.0f, 10.0f);
-        if (m_deadTimer > 2.0f)
+        if (m_deadTimer > 1.0f)
         {
-            float t = (m_deadTimer - 2.0f) / 1.0f;
+            float t = (m_deadTimer - 1.0f) / 1.0f;
 
             int alpha = (int)(255 * (1.0f - t));
 
             m_sprite->SetAlpha(alpha);
         }
-        if (m_deadTimer >= 3.0f)
+        if (m_deadTimer >= 1.5f)
         {
             OnDead();
             return;
@@ -200,13 +205,13 @@ void YellowEnemyEntity::Update(float deltaTime) {
         if (distance > 0)
         {
             m_faceRight = true;
-            m_sprite->SetFlipH(true);
+            m_sprite->SetFlipX(true);
             vel.x = m_moveSpeed;
         }
         else
         {
             m_faceRight = false;
-            m_sprite->SetFlipH(false);
+            m_sprite->SetFlipX(false);
             vel.x = -m_moveSpeed;
         }
 
@@ -241,7 +246,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
 
             m_transform->SetPosition(pos);
         }
-        
+
 
         break;
 
@@ -252,7 +257,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
             m_animation->Play("Attack1");
         }
         vel.x = 0.0f;
-        
+
         if (m_faceRight)
         {
             m_attackCollision->SetRect(150.0f, 200.0f);
@@ -262,10 +267,10 @@ void YellowEnemyEntity::Update(float deltaTime) {
         }
         else
         {
-        m_attackCollision->SetRect(150.0f, 200.0f);
-        m_attackCollision->SetOffset(
-            Vector2d(-100.0f, 0.0f));
-            
+            m_attackCollision->SetRect(150.0f, 200.0f);
+            m_attackCollision->SetOffset(
+                Vector2d(-100.0f, 0.0f));
+
         }
 
         m_attackTimer -= deltaTime;
@@ -284,7 +289,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
             m_animation->Play("Attack2");
         }
         vel.x = 0.0f;
-        
+
         if (m_faceRight)
         {
             m_attackCollision->SetRect(300.0f, 200.0f);
@@ -295,7 +300,7 @@ void YellowEnemyEntity::Update(float deltaTime) {
         {
             m_attackCollision->SetRect(300.0f, 200.0f);
             m_attackCollision->SetOffset(
-                Vector2d(0.0f,0.0f));
+                Vector2d(0.0f, 0.0f));
         }
 
         m_attackTimer -= deltaTime;
@@ -334,13 +339,24 @@ void YellowEnemyEntity::Update(float deltaTime) {
     {
         if (!m_attackHit)
         {
-            if (m_state == Attack1)
+            Vector2d knockback;
+
+            if (m_faceRight)
             {
-                player->TakeDamage(15, Vector2d{ 0.0f, 0.0f });
+                knockback = Vector2d(2000.0f,400.0f);
             }
             else
             {
-                player->TakeDamage(20, Vector2d{ 0.0f, 0.0f });
+                knockback = Vector2d(-2000.0f,-400.0f);
+            }
+
+            if (m_state == Attack1)
+            {
+                player->TakeDamage(15, knockback);
+            }
+            else
+            {
+                player->TakeDamage(20, knockback);
             }
 
             m_attackHit = true;
@@ -367,3 +383,47 @@ void YellowEnemyEntity::Draw()
 
 #endif
 }
+
+void YellowEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
+{
+    if (m_hp == nullptr)
+    {
+        return;
+    }
+
+    m_hp->Damage(damage);
+
+    if (m_hp->GetHP() <= 0)
+    {
+        m_state = Dead;
+        return;
+    }
+
+    // 吹っ飛び開始
+    m_state = BlowHit;
+
+    // プレイヤーと逆方向へ飛ばす
+    Vector2d force = knockback;
+    PlayScene* playScene =
+        static_cast<PlayScene*>(GetScene());
+
+    PlayerEntity* player =
+        playScene ? playScene->GetPlayer() : nullptr;
+
+    if (player)
+    {
+        float sign =
+            GetPos().x < player->GetPos().x ?
+            -1.0f : 1.0f;
+
+        force.x = std::fabs(force.x) * sign;
+    }
+
+    m_velocity->SetVelocity(force);
+
+    m_hitTimer = 0.3f;
+    m_attackCollision->SetNone();
+    m_attackCollision->SetOffset(Vector2d::Zero());
+}
+
+

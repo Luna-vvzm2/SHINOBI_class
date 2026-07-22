@@ -33,11 +33,11 @@ void KaryuTextUI::Update(float deltaTime) {
 	// フェードイン
 	if (m_timer < 0.3f)
 	{
-		m_fireSprite->SetAlpha(m_timer / 0.3f * 255);
+		m_fireSprite->SetAlpha((int)(m_timer / 0.3f * 255));
 	}
 	if (m_timer > 0.5f && m_timer < 0.8f)
 	{
-		m_dragonSprite->SetAlpha((m_timer - 0.5f) / 0.3f * 255);
+		m_dragonSprite->SetAlpha((int)((m_timer - 0.5f) / 0.3f * 255));
 	}
 
 
@@ -46,8 +46,8 @@ void KaryuTextUI::Update(float deltaTime) {
 	{
 		float t = (m_timer - 2.0f) / 0.5f;
 
-		m_fireSprite->SetAlpha(255 * (1 - t));
-		m_dragonSprite->SetAlpha(255 * (1 - t));
+		m_fireSprite->SetAlpha(255 * (int)(1 - t));
+		m_dragonSprite->SetAlpha(255 * (int)(1 - t));
 	}
 
 
