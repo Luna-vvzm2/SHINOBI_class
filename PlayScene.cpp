@@ -848,10 +848,10 @@ void PlayScene::Draw() {
 	if (m_player->GetIsKaryu()) {
 		float timer = m_player->GetKaryuTimer();
 		if (timer > 4.9f) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (5.0f - timer) / 0.1f * 180); // 0Å`255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)((5.0f - timer) / 0.1f * 180)); // 0Å`255
 		}
 		else if (timer < 0.5f) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, timer / 0.5f * 180); // 0Å`255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)(timer / 0.5f * 180)); // 0Å`255
 		}
 		else {
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 180); // 0Å`255

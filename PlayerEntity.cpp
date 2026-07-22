@@ -828,27 +828,29 @@ void PlayerEntity::UpdateMove(float deltaTime) {
             }
         }
 
-        if (input.IsTrigger(Action::DASH)) {
-            if (m_isGround && m_sensor.frontBottom != nullptr && m_sensor.front == nullptr) {
-                m_canMove = false;
-                m_dashTimer = 0.35f;
-                move.y = -6400.0f;
-                move.x = dir * m_dashSpeed;
-                m_isSenten = true;
-            }
-            else {
-                if (!m_HienCount) {
+        if (!m_attack) {
+            if (input.IsTrigger(Action::DASH)) {
+                if (m_isGround && m_sensor.frontBottom != nullptr && m_sensor.front == nullptr) {
                     m_canMove = false;
                     m_dashTimer = 0.35f;
-                    if (!m_isGround || (m_sensor.frontGround == nullptr)) {
-                        move.y = -300.0f;
-                        move.x = dir * m_dashAirSpeed;
-                        m_HienCount = 1;
-                        m_transform->SetAngle(0.0f);
-                    }
-                    else {
-                        move.x = dir * m_dashSpeed;
-                        m_anim->Play("roll", true);
+                    move.y = -6400.0f;
+                    move.x = dir * m_dashSpeed;
+                    m_isSenten = true;
+                }
+                else {
+                    if (!m_HienCount) {
+                        m_canMove = false;
+                        m_dashTimer = 0.35f;
+                        if (!m_isGround || (m_sensor.frontGround == nullptr)) {
+                            move.y = -300.0f;
+                            move.x = dir * m_dashAirSpeed;
+                            m_HienCount = 1;
+                            m_transform->SetAngle(0.0f);
+                        }
+                        else {
+                            move.x = dir * m_dashSpeed;
+                            m_anim->Play("roll", true);
+                        }
                     }
                 }
             }
@@ -911,6 +913,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
         return;
     }
     if (!m_canMove) return;
+    if (m_attack) return;
 
     const Input& input = m_scene->GetGame()->GetInput();
     Vector2d vel = m_velocity->Get();
