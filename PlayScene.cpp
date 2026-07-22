@@ -954,7 +954,7 @@ void PlayScene::RespawnPlayer() {
 	// プレイヤーの位置をリスポーン位置に戻す
 	TransformComponent* transform = m_player->GetComponent<TransformComponent>();
 	if (transform) {
-		transform->SetPosition(m_respawnPos);
+		transform->SetPosition(m_playerSpawnPoints[0]);
 	}
 
 	// プレイヤーの速度をリセット
@@ -969,7 +969,7 @@ void PlayScene::RespawnPlayer() {
 		hp->Heal(hp->GetMaxHP());
 	}
 
-	std::cout << "Player respawned at: " << m_respawnPos.x << ", " << m_respawnPos.y << std::endl;
+	std::cout << "Player respawned at: " << m_playerSpawnPoints[0].x << ", " << m_playerSpawnPoints[0].y << std::endl;
 }
 void PlayScene::ShowGameOverMenu() {
 	m_isGameOver = true;

@@ -623,6 +623,14 @@ void PlayerEntity::UpdateJutsuKamae(float deltaTime) {
 
     if (input.IsDown(Action::G) && input.IsDown(Action::JUTSU_KAMAE))
     {
+        if (m_squat) {
+            if (!m_canStand) {
+                return;
+            }
+            else {
+                ExitSquat();
+            }
+        }
         m_isJutsuKamae = true;
         m_canMove = false;
     }
@@ -684,6 +692,13 @@ void PlayerEntity::UpdateKamae(float deltaTime)
 
     if (input.IsDown(Action::KAMAE))
     {
+        if (m_squat) {
+            if (!m_canStand) {
+                return;
+            }else{
+                ExitSquat();
+            }
+        }
         m_isKamae = true;
         m_canMove = false;
     }
