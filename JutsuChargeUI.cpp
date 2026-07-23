@@ -48,11 +48,7 @@ void JutsuChargeUI::Update(float deltaTime)
     }
 
     int jutsuGaugeAmount = player->GetJutsuGaugeAmount();
-    m_damageCount = jutsuGaugeAmount;
-
-    if (m_damageCount == 25) {
-        printf("DEBUG: 25 damages received! Displaying nin image\n");
-    }
+    m_jutsuchage = player -> GetJutsuCharge();
 }
 
 void JutsuChargeUI::Draw()
@@ -72,7 +68,7 @@ void JutsuChargeUI::Draw()
     }
 
 #ifdef _DEBUG
-    bool shouldDisplay = (m_damageCount >= 25);
+    bool shouldDisplay = (m_jutsuchage);
 #endif
 
     if (shouldDisplay && m_ninImage != nullptr) {

@@ -19,6 +19,8 @@ public:
 private:
     SpriteComponent* m_ninImage = nullptr;
 
+	bool m_jutsuchage = false;
+
     float m_ninImageX = 10.0f;
     float m_ninImageY = 20.0f;
     float m_ninImageScale = 1.0f;
