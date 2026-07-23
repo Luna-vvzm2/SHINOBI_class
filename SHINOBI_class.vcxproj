@@ -184,6 +184,7 @@
     <ClCompile Include="SekienkiBossEntity.cpp" />
     <ClCompile Include="ShurikenUI.cpp" />
     <ClCompile Include="SkillMenu.cpp" />
+    <ClCompile Include="SoundComponent.cpp" />
     <ClCompile Include="StageBackActor.cpp" />
     <ClCompile Include="StageExitActor.cpp" />
     <ClCompile Include="StoneLBlock.cpp" />
@@ -280,6 +281,7 @@
     <ClInclude Include="ShurikenUI.h" />
     <ClInclude Include="SkillData.h" />
     <ClInclude Include="SkillMenu.h" />
+    <ClInclude Include="SoundComponent.h" />
     <ClInclude Include="StageBackActor.h" />
     <ClInclude Include="StageExitActor.h" />
     <ClInclude Include="StoneLBlock.h" />

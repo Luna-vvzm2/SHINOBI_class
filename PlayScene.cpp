@@ -2,6 +2,7 @@
 #include "PlayScene.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
+#include "SoundComponent.h"
 #include "HPComponent.h"
 #include "GameOverMenuUI.h"
 #include "Game.h"
@@ -61,6 +62,7 @@ PlayScene::PlayScene(Game* game)
 	m_menu(this),
 	m_player(nullptr),
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
+	m_stageBgm(nullptr),
 	m_stageIndex(0),
 	m_comboCount(0),
 	m_currentStage(1),
@@ -148,6 +150,15 @@ bool PlayScene::Init() {
 	// Renderer ‚É Camera ‚ðƒZƒbƒg
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
+	m_stageBgm = m_player->AddComponent<SoundComponent>(
+		_T("assets/sounds/bgm.wav")
+	);
+
+	if (m_stageBgm != nullptr)
+	{
+		m_stageBgm->SetVolume(180);
+		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
+	}
 	return true;
 }
 
@@ -605,6 +616,11 @@ void PlayScene::ChangeStage(int index, int spawnIndex) {
 
 			m_camera.SetCenter(camPos);
 		}
+	}
+	if (m_stageBgm != nullptr)
+	{
+		m_stageBgm->Stop();
+		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
 	}
 }
 

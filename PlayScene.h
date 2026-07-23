@@ -18,6 +18,7 @@ class EnemyHPBar;
 class MoneyUI; 
 class TransformComponent;
 class VelocityComponent;
+class SoundComponent;
 class HPComponent;
 class GameOverMenuUI;
 class JutsuChargeUI;
@@ -87,6 +88,7 @@ private:
 	Menu m_menu;
 
 	Camera m_camera;
+	SoundComponent* m_stageBgm;
 
 	int m_stageIndex;
 	int m_comboCount = 0;
