@@ -49,7 +49,7 @@
 #include "EnemyHPBar.h"
 #include "Menu.h"
 
-//ƒCƒxƒ“ƒg‚Ì‚½‚ß•ÏX
+//ã‚¤ãƒ™ãƒ³ãƒˆã®ãŸã‚å¤‰æ›´
 #include "EventManager.h"
 #include "EventTexture.h"
 
@@ -67,11 +67,12 @@ PlayScene::PlayScene(Game* game)
 	m_bgHandle(0),
 	m_fgHandle(0),
 	m_eventTexture(std::make_unique<EventTexture>()),
-	m_eventManager(std::make_unique<EventManager>(this, m_eventTexture.get())), //ƒCƒxƒ“ƒg‚Ì‚½‚ß•ÏX
+	m_eventManager(std::make_unique<EventManager>(this, m_eventTexture.get())), //ã‚¤ãƒ™ãƒ³ãƒˆã®ãŸã‚å¤‰æ›´
 	m_respawnPos(200, 800),
 	m_gameOverMenu(nullptr),
 	m_isGameOver(false),
-	m_isPaused(false)
+	m_isPaused(false),
+	m_stageBgm(nullptr)
 {
 
 }
@@ -82,20 +83,19 @@ bool PlayScene::Init() {
 	m_stageIndex = 0;
 	//m_lockedSkillIcon = LoadGraph("assets/images/skills/locked.png");
 	m_menu.Initialize();
+
 	
-	// CSV ‚©‚çƒ}ƒbƒv“Ç‚İ‚İ
+	
 	if (!m_mapData.LoadStage("assets/maps/stage1")) {
-		std::cerr << "ƒ}ƒbƒv‚P“Ç‚İ‚İ¸”s" << std::endl;
 		return false;
 	}
 	if (!m_mapData.LoadStage("assets/maps/stage2")) {
-		std::cerr << "ƒ}ƒbƒv‚Q“Ç‚İ‚İ¸”s" << std::endl;
 		return false;
 	}
 	if (!m_mapData.LoadStage("assets/maps/stage3")) {
-		std::cerr << "ƒ}ƒbƒv‚R“Ç‚İ‚İ¸”s" << std::endl;
 		return false;
 	}
+	
 
 	m_mapData.tileSize = 104;
 
@@ -104,7 +104,17 @@ bool PlayScene::Init() {
 	m_player = new PlayerEntity(this, m_playerSpawnPoints[0], Vector2d({ 152, 64 }));
 	AddActor(m_player);
 
-	// ---- HP UI ì¬ ----
+	m_stageBgm = m_player->AddComponent<SoundComponent>(
+		_T("assets/sounds/bgm2.wav")
+	);
+
+	if (m_stageBgm != nullptr)
+	{
+		m_stageBgm->SetVolume(180);
+		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
+	}
+
+	// ---- HP UI ä½œæˆ ----
 	HPBarUI* hpBar = new HPBarUI(
 		this,
 		m_player->GetHP()
@@ -115,20 +125,20 @@ bool PlayScene::Init() {
 	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
 	AddUIActor(shuriken);
 
-	// ƒvƒŒƒCƒ„[Š‹à UIi¶ã‚É•\¦j
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼æ‰€æŒé‡‘ UIï¼ˆå·¦ä¸Šã«è¡¨ç¤ºï¼‰
 	m_moneyUI = new MoneyUI(this, m_player, "assets/images/uies/money.png");
-	m_moneyUI->SetPosition(20.0f, 110.0f);   // ƒeƒLƒXƒg¶ãŠî€iƒXƒNƒŠ[ƒ“À•Wj
-	m_moneyUI->SetImageSize(40.0f, 40.0f);   // ‰æ‘œ‚ğ 40x40 px ‚É
-	m_moneyUI->SetImageOffset(0.0f, 0.0f);   // ‰æ‘œ‚Ì‘Š‘ÎƒIƒtƒZƒbƒgi•K—v‚È‚ç”÷’²®j
-	m_moneyUI->SetTextOffset(46.0f);         // ‰æ‘œ‰E‘¤‚É”š‚ğ•\¦‚·‚é‹——£
-	m_moneyUI->SetAnchorTopRight(220.0f, 50.0f, -80.0f);// ‰Eã‚ÉŒÅ’èF‰E’[‚©‚ç220px, ã‚©‚ç50px, ‰æ‘œ‚Æ”š‚ÌŠÔŠu‚ğ-60px ‚É‚·‚é
+	m_moneyUI->SetPosition(20.0f, 110.0f);   // ãƒ†ã‚­ã‚¹ãƒˆå·¦ä¸ŠåŸºæº–ï¼ˆã‚¹ã‚¯ãƒªãƒ¼ãƒ³åº§æ¨™ï¼‰
+	m_moneyUI->SetImageSize(40.0f, 40.0f);   // ç”»åƒã‚’ 40x40 px ã«
+	m_moneyUI->SetImageOffset(0.0f, 0.0f);   // ç”»åƒã®ç›¸å¯¾ã‚ªãƒ•ã‚»ãƒƒãƒˆï¼ˆå¿…è¦ãªã‚‰å¾®èª¿æ•´ï¼‰
+	m_moneyUI->SetTextOffset(46.0f);         // ç”»åƒå³å´ã«æ•°å­—ã‚’è¡¨ç¤ºã™ã‚‹è·é›¢
+	m_moneyUI->SetAnchorTopRight(220.0f, 50.0f, -80.0f);// å³ä¸Šã«å›ºå®šï¼šå³ç«¯ã‹ã‚‰220px, ä¸Šã‹ã‚‰50px, ç”»åƒã¨æ•°å­—ã®é–“éš”ã‚’-60px ã«ã™ã‚‹
 	AddUIActor(m_moneyUI);
 
-	// ƒvƒŒƒCƒ„[‹àŠz•ÏX‚É MoneyUI ‚ğ 3 •b•\¦i‘‚¦‚½‚Æ‚«‚Ì‚İj
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼é‡‘é¡å¤‰æ›´æ™‚ã« MoneyUI ã‚’ 3 ç§’è¡¨ç¤ºï¼ˆå¢—ãˆãŸã¨ãã®ã¿ï¼‰
 	if (m_player) {
 		m_player->OnMoneyChanged = [this](int newMoney, int oldMoney) {
 			if (newMoney > oldMoney && m_moneyUI) {
-				m_moneyUI->ShowFor(3.0f); // 3•b•\¦
+				m_moneyUI->ShowFor(3.0f); // 3ç§’è¡¨ç¤º
 			}
 			};
 	}
@@ -138,7 +148,7 @@ bool PlayScene::Init() {
 
 	EffectActor::LoadEffects();
 
-	// Renderer ‚É Camera ‚ğƒZƒbƒg
+	// Renderer ã« Camera ã‚’ã‚»ãƒƒãƒˆ
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
 	return true;
@@ -148,19 +158,19 @@ bool PlayScene::StageInit(int stageNo) {
 	StageData& stage = m_mapData.stages[stageNo];
 	if (m_player != nullptr) m_player->ResetStageState();
 
-	// ƒ}ƒbƒv‚Ìƒ^ƒCƒ‹‚ğ”z’u‚·‚é
+	// ãƒãƒƒãƒ—ã®ã‚¿ã‚¤ãƒ«ã‚’é…ç½®ã™ã‚‹
 	const float tileSize = static_cast<float>(m_mapData.tileSize);
 	const Layer& mapLayer = stage.layers[0];
 
 	for (int y = 0; y < stage.height; ++y) {
 		for (int x = 0; x < stage.width; ++x) {
 			int tileID = mapLayer.tiles[static_cast<std::vector<int, std::allocator<int>>::size_type>(y) * stage.width + x];
-			if (tileID == 0) continue; // ‹óƒ^ƒCƒ‹
+			if (tileID == 0) continue; // ç©ºã‚¿ã‚¤ãƒ«
 
 			Vector2d pos(x * tileSize, y * tileSize);
 
-			// ‚±‚±‚Åƒ^ƒCƒ‹ID‚É‰‚¶‚ÄƒuƒƒbƒN¶¬
-			// —áFGrassBlock ‚Æ IceBlock ‚ğ‰¼‚ÉØ‚è‘Ö‚¦
+			// ã“ã“ã§ã‚¿ã‚¤ãƒ«IDã«å¿œã˜ã¦ãƒ–ãƒ­ãƒƒã‚¯ç”Ÿæˆ
+			// ä¾‹ï¼šGrassBlock ã¨ IceBlock ã‚’ä»®ã«åˆ‡ã‚Šæ›¿ãˆ
 			switch (tileID) {
 			case 1:
 				AddActor(new GroundBlock(this, pos, Vector2d(tileSize, tileSize)));
@@ -321,24 +331,24 @@ bool PlayScene::StageInit(int stageNo) {
 				WhiteEnemyEntity* enemy = new WhiteEnemyEntity(this, pos);
 				AddActor(enemy);
 
-				// HPBar ‚ğ PlayScene ‘¤‚Åì¬‚µ‚Ä“o˜^iUI ‚Í AddUIActor ‚Å“o˜^j
+				// HPBar ã‚’ PlayScene å´ã§ä½œæˆã—ã¦ç™»éŒ²ï¼ˆUI ã¯ AddUIActor ã§ç™»éŒ²ï¼‰
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«•\¦‚·‚é
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãè¡¨ç¤ºã™ã‚‹
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -349,22 +359,22 @@ bool PlayScene::StageInit(int stageNo) {
 				YellowEnemyEntity* enemy = new YellowEnemyEntity(this, pos);
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -375,22 +385,22 @@ bool PlayScene::StageInit(int stageNo) {
 				ArrowEnemyEntity* enemy = new ArrowEnemyEntity(this, pos);
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -401,22 +411,22 @@ bool PlayScene::StageInit(int stageNo) {
 				HealerEnemyEntity* enemy = new HealerEnemyEntity(this, pos);
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -427,22 +437,22 @@ bool PlayScene::StageInit(int stageNo) {
 				ArmorEnemyEntity* enemy = new ArmorEnemyEntity(this, pos);
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_armor.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -453,22 +463,22 @@ bool PlayScene::StageInit(int stageNo) {
 				GunnerEnemyEntity* enemy = new GunnerEnemyEntity(this, pos);
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -479,22 +489,22 @@ bool PlayScene::StageInit(int stageNo) {
 				YoroiBossEntity* enemy = new YoroiBossEntity(this, pos, Vector2d(192, 192));
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -505,22 +515,22 @@ bool PlayScene::StageInit(int stageNo) {
 				SekienkiBossEntity* enemy = new SekienkiBossEntity(this, pos, Vector2d(192, 192));
 				AddActor(enemy);
 				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform ‚Í¶ãÀ•W‚ğg‚¤iƒfƒtƒHƒ‹ƒgj
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // ­‚µã‚Éo‚·
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // •‚ğ¬‚³‚ß, ‚‚³”¼•ª
+				hpBar->SetPosIsCenter(false);          // transform ã¯å·¦ä¸Šåº§æ¨™ã‚’ä½¿ã†ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆï¼‰
+				hpBar->SetFrameOffset(80.0f, 50.0f);   // å°‘ã—ä¸Šã«å‡ºã™
+				hpBar->SetGaugeScale(0.8f, 0.05f);     // å¹…ã‚’å°ã•ã‚, é«˜ã•åŠåˆ†
 				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// ˜g‚Í‚»‚Ì‚Ü‚ÜAƒQ[ƒW‚ğ‰E‚É +3pxA‰º‚É +1px ˆÚ“®
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ƒQ[ƒW‚ğ˜g‚Ì’†S‚æ‚è­‚µã‚É•\¦iã‚É‚¸‚ç‚·‚È‚ç•‰‚Ì’lj
+				hpBar->SetGaugeOffset(10.0f, 0.0f);// æ ã¯ãã®ã¾ã¾ã€ã‚²ãƒ¼ã‚¸ã‚’å³ã« +3pxã€ä¸‹ã« +1px ç§»å‹•
+				hpBar->SetGaugeOffset(0.0f, 0.0f);// ã‚²ãƒ¼ã‚¸ã‚’æ ã®ä¸­å¿ƒã‚ˆã‚Šå°‘ã—ä¸Šã«è¡¨ç¤ºï¼ˆä¸Šã«ãšã‚‰ã™ãªã‚‰è² ã®å€¤ï¼‰
 				AddUIActor(hpBar);
 				m_enemyToHPBarMap[enemy] = hpBar;
 
-				// ƒ_ƒ[ƒW‚Å•\¦FHP ‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯•\¦‚·‚éi2•bj
+				// ãƒ€ãƒ¡ãƒ¼ã‚¸ã§è¡¨ç¤ºï¼šHP ãŒæ¸›ã£ãŸã¨ãã ã‘è¡¨ç¤ºã™ã‚‹ï¼ˆ2ç§’ï¼‰
 				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
 					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // •\¦Œp‘±ŠÔ‚Í’²®‰Â
+						hpBar->ShowFor(0.0f); // è¡¨ç¤ºç¶™ç¶šæ™‚é–“ã¯èª¿æ•´å¯
 					}
 					};
-				// “G‚Ì€–S‚Éƒo[‚ğÁ‚·iŠÈˆÕj
+				// æ•µã®æ­»äº¡æ™‚ã«ãƒãƒ¼ã‚’æ¶ˆã™ï¼ˆç°¡æ˜“ï¼‰
 				enemy->GetHP()->OnDeath = [hpBar]() {
 					if (hpBar) hpBar->SetState(Actor::State::Dead);
 					};
@@ -536,7 +546,7 @@ bool PlayScene::StageInit(int stageNo) {
 		} // for x
 	} // for y
 
-	// ---- ƒQ[ƒ€ƒI[ƒo[ƒƒjƒ…[UI ì¬ ----
+	// ---- ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼ãƒ¡ãƒ‹ãƒ¥ãƒ¼UI ä½œæˆ ----
 	m_gameOverMenu = new GameOverMenuUI(this);
 	AddUIActor(m_gameOverMenu);
 
@@ -547,7 +557,7 @@ bool PlayScene::StageInit(int stageNo) {
 	float halfTile = m_mapData.tileSize * 0.5f;
 	m_camera.SetTileHalfSize(Vector2d(halfTile, halfTile));
 
-	// Camera ‚Ìƒ}ƒbƒv”ÍˆÍİ’è
+	// Camera ã®ãƒãƒƒãƒ—ç¯„å›²è¨­å®š
 	float mapW = (float)stage.width * m_mapData.tileSize;
 	float mapH = (float)stage.height * m_mapData.tileSize;
 	m_camera.SetBounds(Vector2d(0, 0), Vector2d(mapW, mapH));
@@ -599,6 +609,13 @@ void PlayScene::ChangeStage(int index, int spawnIndex) {
 			m_camera.SetCenter(camPos);
 		}
 	}
+
+	if (m_stageBgm != nullptr)
+	{
+		m_stageBgm->Stop();
+		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
+	}
+
 }
 
 void PlayScene::ClearStageActors()
@@ -621,7 +638,7 @@ void PlayScene::ClearStageActors()
 		}
 	}
 
-	// “GHPƒo[‚àÁ‚·
+	// æ•µHPãƒãƒ¼ã‚‚æ¶ˆã™
 	for (auto& pair : m_enemyToHPBarMap)
 	{
 		if (pair.second)
@@ -654,12 +671,12 @@ void PlayScene::RequestStageChange(int stage, int spawnIndex)
 }
 
 void PlayScene::Update(float deltaTime) {
-	// ====== ƒtƒF[ƒh‘JˆÚ’†‚ÍƒQ[ƒ€ƒƒWƒbƒN‚ğ~‚ß‚é ======
+	// ====== ãƒ•ã‚§ãƒ¼ãƒ‰é·ç§»ä¸­ã¯ã‚²ãƒ¼ãƒ ãƒ­ã‚¸ãƒƒã‚¯ã‚’æ­¢ã‚ã‚‹ ======
 	if (m_fadeState != FadeState::None) {
 		UpdateFade(deltaTime);
-		// ƒtƒF[ƒh’†‚à UIiƒQ[ƒ€ƒI[ƒo[ƒƒjƒ…[“™j‚Í“®‚©‚µ‚½‚¢‚È‚ç‚±‚±‚Å
+		// ãƒ•ã‚§ãƒ¼ãƒ‰ä¸­ã‚‚ UIï¼ˆã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼ãƒ¡ãƒ‹ãƒ¥ãƒ¼ç­‰ï¼‰ã¯å‹•ã‹ã—ãŸã„ãªã‚‰ã“ã“ã§
 		updateActors(m_UIactors, deltaTime);
-		return; // ’ÊíXV‚ÍƒXƒLƒbƒv
+		return; // é€šå¸¸æ›´æ–°ã¯ã‚¹ã‚­ãƒƒãƒ—
 	}
 
 	if (m_requestStageChange)
@@ -668,8 +685,8 @@ void PlayScene::Update(float deltaTime) {
 		StartFadeToStage(m_nextStage, m_nextSpawnIndex);
 	}
 
-	//ƒCƒxƒ“ƒg‚Ì‚½‚ß•ÏX
-	m_playTimer += deltaTime; //ƒNƒŠƒAƒV[ƒ“‚Ì‚½‚ß‚É’Ç‰Á
+	//ã‚¤ãƒ™ãƒ³ãƒˆã®ãŸã‚å¤‰æ›´
+	m_playTimer += deltaTime; //ã‚¯ãƒªã‚¢ã‚·ãƒ¼ãƒ³ã®ãŸã‚ã«è¿½åŠ 
 	if (m_eventManager->IsRunning())
 	{
 		m_eventManager->Update(deltaTime);
@@ -700,14 +717,14 @@ void PlayScene::Update(float deltaTime) {
 	updateActors(m_actors, deltaTime);
 	updateActors(m_UIactors, deltaTime);
 
-	// ƒQ[ƒ€ƒI[ƒo[ƒƒjƒ…[‚Ìˆ—
+	// ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®å‡¦ç†
 	if (m_gameOverMenu && m_gameOverMenu->IsActive()) {
 		if (m_gameOverMenu->IsDecided()) {
 			m_gameOverMenu->ResetDecided();
 
 			switch (m_gameOverMenu->GetSelectedItem()) {
 			case GameOverMenuUI::MenuItem::CONTINUE:
-				// ƒRƒ“ƒeƒBƒjƒ…[FƒŠƒXƒ|[ƒ“
+				// ã‚³ãƒ³ãƒ†ã‚£ãƒ‹ãƒ¥ãƒ¼ï¼šãƒªã‚¹ãƒãƒ¼ãƒ³
 				m_isPaused = false;
 				m_isGameOver = false;
 				m_gameOverMenu->SetActive(false);
@@ -715,14 +732,14 @@ void PlayScene::Update(float deltaTime) {
 				break;
 
 			case GameOverMenuUI::MenuItem::WORLD_MAP:
-				// ƒ[ƒ‹ƒhƒ}ƒbƒv‰æ–Ê‚ÖˆÚ“®
-				// TODO: ƒ[ƒ‹ƒhƒ}ƒbƒvƒV[ƒ“‚Ö‚Ì‘JˆÚˆ—‚ğ’Ç‰Á
+				// ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒãƒƒãƒ—ç”»é¢ã¸ç§»å‹•
+				// TODO: ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒãƒƒãƒ—ã‚·ãƒ¼ãƒ³ã¸ã®é·ç§»å‡¦ç†ã‚’è¿½åŠ 
 				std::cout << "Transition to World Map (not implemented yet)" << std::endl;
 				break;
 
 			case GameOverMenuUI::MenuItem::TITLE:
-				// ƒ^ƒCƒgƒ‹‰æ–Ê‚ÖˆÚ“®
-				m_isRunning = false;  // PlayScene‚ğI—¹
+				// ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ã¸ç§»å‹•
+				m_isRunning = false;  // PlaySceneã‚’çµ‚äº†
 				break;
 
 			default:
@@ -733,30 +750,30 @@ void PlayScene::Update(float deltaTime) {
 	if (m_player) {
 		Vector2d playerPos = m_player->GetComponent<TransformComponent>()->GetPosition();
 
-		// ’†ŠÔ“_‚ğƒJƒƒ‰ˆÊ’u‚É
+		// ä¸­é–“ç‚¹ã‚’ã‚«ãƒ¡ãƒ©ä½ç½®ã«
 		Vector2d camPos = playerPos;
 		camPos.y -= 150;
 		m_camera.SetCenter(camPos);
 		m_camera.SetZoom(1.0f);
 		/*
-		// üŒ`•âŠÔ‚Å™X‚ÉƒY[ƒ€•ÏX
+		// ç·šå½¢è£œé–“ã§å¾ã€…ã«ã‚ºãƒ¼ãƒ å¤‰æ›´
 		float currentZoom = m_camera.GetZoom();
 		float zoomSpeed = 5.0f;
 		float newZoom = currentZoom + (targetZoom - currentZoom) * std::min(zoomSpeed * deltaTime, 1.0f);
 		*/
 
-		float fixedCameraY = 400.0f;  // ƒXƒNƒ[ƒ‹ŠJnˆÊ’u‚ÌãŒÀ
+		float fixedCameraY = 400.0f;  // ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«é–‹å§‹ä½ç½®ã®ä¸Šé™
 
 		if (playerPos.y < fixedCameraY) {
-			camPos.y = playerPos.y - 200;  // ã‚ÉˆÚ“®‚µ‚½‚çƒJƒƒ‰‚àƒXƒNƒ[ƒ‹
+			camPos.y = playerPos.y - 200;  // ä¸Šã«ç§»å‹•ã—ãŸã‚‰ã‚«ãƒ¡ãƒ©ã‚‚ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«
 		}
 		else {
-			camPos.y = fixedCameraY - 200;  // ‚»‚êˆÈŠO‚ÍƒJƒƒ‰ŒÅ’è
+			camPos.y = fixedCameraY - 200;  // ãã‚Œä»¥å¤–ã¯ã‚«ãƒ¡ãƒ©å›ºå®š
 		}
 	}
 
-	// “G‚²‚Æ‚ÌHPƒo[’Ç]FWorld -> Screen using m_camera (PlayScene ‚Ì m_camera)
-	const Vector2d baroffset(-90.0f, -250.0f); // “G‚Ì“ªã‚É•\¦‚µ‚½‚¯‚ê‚Î•‰‚Ì Y ƒIƒtƒZƒbƒgB—v’²®B
+	// æ•µã”ã¨ã®HPãƒãƒ¼è¿½å¾“ï¼šWorld -> Screen using m_camera (PlayScene ã® m_camera)
+	const Vector2d baroffset(-90.0f, -250.0f); // æ•µã®é ­ä¸Šã«è¡¨ç¤ºã—ãŸã‘ã‚Œã°è² ã® Y ã‚ªãƒ•ã‚»ãƒƒãƒˆã€‚è¦èª¿æ•´ã€‚
 	for (auto it = m_enemyToHPBarMap.begin(); it != m_enemyToHPBarMap.end(); ) {
 		EnemyEntity* enemy = it->first;
 		EnemyHPBar* hpBar = it->second;
@@ -765,29 +782,29 @@ void PlayScene::Update(float deltaTime) {
 		bool hpBarStillPresent = std::find(m_UIactors.begin(), m_UIactors.end(), hpBar) != m_UIactors.end();
 
 		if (!enemyStillPresent || !hpBarStillPresent) {
-			// ‚Ç‚¿‚ç‚©‘¶İ‚µ‚È‚¯‚ê‚Îƒ}ƒbƒv‚©‚çœ‹i‚Ü‚ê‚É—¼•ûŠù‚ÉíœÏ‚İ‚Ìê‡‚à‚ ‚éj
+			// ã©ã¡ã‚‰ã‹å­˜åœ¨ã—ãªã‘ã‚Œã°ãƒãƒƒãƒ—ã‹ã‚‰é™¤å»ï¼ˆã¾ã‚Œã«ä¸¡æ–¹æ—¢ã«å‰Šé™¤æ¸ˆã¿ã®å ´åˆã‚‚ã‚ã‚‹ï¼‰
 			it = m_enemyToHPBarMap.erase(it);
 			continue;
 		}
 
-		// “G‚ª‘¶İ‚µ‚È‚¢A‚Ü‚½‚Í€–S‚µ‚Ä‚¢‚ê‚Î UI ‚ğÁ‚µ‚Ä map ‚©‚çíœ
+		// æ•µãŒå­˜åœ¨ã—ãªã„ã€ã¾ãŸã¯æ­»äº¡ã—ã¦ã„ã‚Œã° UI ã‚’æ¶ˆã—ã¦ map ã‹ã‚‰å‰Šé™¤
 		if (!enemy || enemy->IsDead() || enemy->GetComponent<HPComponent>() == nullptr) {
 			if (hpBar) { hpBar->SetState(Actor::State::Dead); }
 			it = m_enemyToHPBarMap.erase(it);
 			continue;
 		}
 
-		// “GˆÊ’uæ“¾
+		// æ•µä½ç½®å–å¾—
 		if (hpBar && hpBar->GetState() != Actor::State::Dead) {
 			hpBar->SetMetsuValue(enemy->GetMetsuGauge(), enemy->GetMetsuMax());
 
 			auto transform = enemy->GetComponent<TransformComponent>();
 			if (transform) {
 				Vector2d worldPos = transform->GetPosition() + baroffset;
-				// PlayScene ‚ÌƒJƒƒ‰‚Åƒ[ƒ‹ƒh¨ƒXƒNƒŠ[ƒ“
+				// PlayScene ã®ã‚«ãƒ¡ãƒ©ã§ãƒ¯ãƒ¼ãƒ«ãƒ‰â†’ã‚¹ã‚¯ãƒªãƒ¼ãƒ³
 				Vector2d screenPos = m_camera.WorldToScreen(worldPos);
 
-				const float barWidth = 63.0f; // SetBarSize ‚Æ‡‚í‚¹‚é
+				const float barWidth = 63.0f; // SetBarSize ã¨åˆã‚ã›ã‚‹
 				hpBar->SetPosition(screenPos.x - barWidth * 0.5f, screenPos.y);
 
 			}
@@ -809,10 +826,10 @@ void PlayScene::Draw() {
 	if (!renderer) return;
 	Vector2d cam = m_camera.GetCenter();
 
-	// ‰¼”wŒi
+	// ä»®èƒŒæ™¯
 	DrawBox(0, 0, 1280, 720, GetColor(200, 200, 200), 1);
 
-	// ”wŒi
+	// èƒŒæ™¯
 	switch (m_stageIndex) {
 	case 0:
 		renderer->DrawSpriteEx(Vector2d(-350.0f + (cam.x * 0.5f), m_mapData.stages[m_stageIndex].height * m_mapData.tileSize - 1130.0f), 1.6f, 1.6f, 0.0f, m_bgHandle, true, Vector2d(0, 0), 255, false, false, true);
@@ -828,7 +845,7 @@ void PlayScene::Draw() {
 	drawActors(m_backactors);
 	drawActors(m_actors);
 
-	// ‘OŒi
+	// å‰æ™¯
 	switch (m_stageIndex) {
 	case 0:
 		for (int i = 0; i < 19; i++) {
@@ -848,13 +865,13 @@ void PlayScene::Draw() {
 	if (m_player->GetIsKaryu()) {
 		float timer = m_player->GetKaryuTimer();
 		if (timer > 4.9f) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)((5.0f - timer) / 0.1f * 180)); // 0`255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)((5.0f - timer) / 0.1f * 180)); // 0ï½255
 		}
 		else if (timer < 0.5f) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)(timer / 0.5f * 180)); // 0`255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)(timer / 0.5f * 180)); // 0ï½255
 		}
 		else {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 180); // 0`255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 180); // 0ï½255
 		}
 		DrawBox(0, 0, 1280, 720, GetColor(150, 20, 20), 1);
 
@@ -873,7 +890,7 @@ void PlayScene::Draw() {
 	}
 
 
-	// UŒ‚”ÍˆÍ•`‰æ --------------------------
+	// æ”»æ’ƒç¯„å›²æç”» --------------------------
 	/*Vector2d Pos = m_player->GetPos();
 	AttackHitbox Weak1{ Vector2d(50,100), 100, 100, 30 };
 	if (m_player->GetDir()) {
@@ -887,7 +904,7 @@ void PlayScene::Draw() {
 	renderer->DrawRectCenter(Pos, Weak1.width, Weak1.height, GetColor(0,255,0),false, true);*/
 	//------------------------------------------
 #ifdef _DEBUG
-	// sensor•`‰æ
+	// sensoræç”»
 	Vector2d Pos = m_player->GetPos();
 	Vector2d offset = { 0.0f, 50.0f };
 	if (m_player->GetDir()) {
@@ -904,10 +921,10 @@ void PlayScene::Draw() {
 		{ (float)m_player->GetCombo(), 0 }
 	};
 
-	// ƒRƒ“ƒ{•\¦im_comboCount ‚ª 1 ˆÈã‚È‚ç•\¦j
+	// ã‚³ãƒ³ãƒœè¡¨ç¤ºï¼ˆm_comboCount ãŒ 1 ä»¥ä¸Šãªã‚‰è¡¨ç¤ºï¼‰
 	if (m_player->GetCombo() > 0) {
 		const std::string& debugFont = m_game->GatDebugFont();
-		// ‚±‚±‚Å‚ÍƒtƒHƒ“ƒgƒTƒCƒY‚ğ‘å‚«‚ßi—á 48j‚Å^‚ñ’†ã‚É•\¦
+		// ã“ã“ã§ã¯ãƒ•ã‚©ãƒ³ãƒˆã‚µã‚¤ã‚ºã‚’å¤§ãã‚ï¼ˆä¾‹ 48ï¼‰ã§çœŸã‚“ä¸­ä¸Šã«è¡¨ç¤º
 		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
 		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
 	}
@@ -927,7 +944,7 @@ void PlayScene::Draw() {
 		);
 	}
 
-	// ©‚±‚±‚ğ’Ç‰Á
+	// â†ã“ã“ã‚’è¿½åŠ 
 	DrawFadeOverlay();
 
 #ifdef _DEBUG
@@ -951,19 +968,19 @@ void PlayScene::AddCombo() {
 void PlayScene::RespawnPlayer() {
 	if (!m_player) return;
 
-	// ƒvƒŒƒCƒ„[‚ÌˆÊ’u‚ğƒŠƒXƒ|[ƒ“ˆÊ’u‚É–ß‚·
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ä½ç½®ã‚’ãƒªã‚¹ãƒãƒ¼ãƒ³ä½ç½®ã«æˆ»ã™
 	TransformComponent* transform = m_player->GetComponent<TransformComponent>();
 	if (transform) {
 		transform->SetPosition(m_playerSpawnPoints[0]);
 	}
 
-	// ƒvƒŒƒCƒ„[‚Ì‘¬“x‚ğƒŠƒZƒbƒg
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®é€Ÿåº¦ã‚’ãƒªã‚»ãƒƒãƒˆ
 	VelocityComponent* velocity = m_player->GetComponent<VelocityComponent>();
 	if (velocity) {
 		velocity->Set(Vector2d::Zero());
 	}
 
-	// HP‚ğÅ‘å’l‚É‰ñ•œ
+	// HPã‚’æœ€å¤§å€¤ã«å›å¾©
 	HPComponent* hp = m_player->GetHP();
 	if (hp) {
 		hp->Heal(hp->GetMaxHP());
@@ -990,12 +1007,12 @@ void PlayScene::ShowGameOverMenu() {
 
 
 // ====================================================
-// ƒtƒF[ƒh‘JˆÚ
+// ãƒ•ã‚§ãƒ¼ãƒ‰é·ç§»
 // ====================================================
 
 void PlayScene::StartFadeToStage(int idx, int spawnIndex)
 {
-	// ‚·‚Å‚É‘JˆÚ’†‚È‚ç–³‹
+	// ã™ã§ã«é·ç§»ä¸­ãªã‚‰ç„¡è¦–
 	if (m_fadeState != FadeState::None) return;
 
 	m_pendingStageIndex = idx;
@@ -1003,7 +1020,7 @@ void PlayScene::StartFadeToStage(int idx, int spawnIndex)
 	m_fadeState = FadeState::FadeOut;
 	m_fadeTimer = 0.0f;
 
-	// ƒvƒŒƒCƒ„[‚Ì“®‚«‚ğ~‚ß‚éiˆÃ“]’†‚Í“®‚©‚È‚¢‚Ù‚¤‚ª©‘Rj
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®å‹•ãã‚’æ­¢ã‚ã‚‹ï¼ˆæš—è»¢ä¸­ã¯å‹•ã‹ãªã„ã»ã†ãŒè‡ªç„¶ï¼‰
 	if (m_player) {
 		if (auto vel = m_player->GetComponent<VelocityComponent>()) {
 			Vector2d v = vel->Get();
@@ -1020,9 +1037,9 @@ void PlayScene::UpdateFade(float deltaTime)
 	switch (m_fadeState)
 	{
 	case FadeState::FadeOut:
-		// ™X‚É^‚Á•‚É
+		// å¾ã€…ã«çœŸã£é»’ã«
 		if (m_fadeTimer >= FADE_OUT_DURATION) {
-			// ^‚Á•‚É‚È‚Á‚½uŠÔ‚ÉƒXƒe[ƒW‚ğ\’ziŒ©‚¦‚È‚¢‚Ì‚Åˆá˜aŠ´‚È‚µj
+			// çœŸã£é»’ã«ãªã£ãŸç¬é–“ã«ã‚¹ãƒ†ãƒ¼ã‚¸ã‚’æ§‹ç¯‰ï¼ˆè¦‹ãˆãªã„ã®ã§é•å’Œæ„Ÿãªã—ï¼‰
 			m_stageIndex = m_pendingStageIndex;
 			ChangeStage(m_nextStage, m_nextSpawnIndex);
 			m_pendingStageIndex = -1;
@@ -1032,7 +1049,7 @@ void PlayScene::UpdateFade(float deltaTime)
 		break;
 
 	case FadeState::Hold:
-		// •‰æ–Ê‚ğˆê’èŠÔƒz[ƒ‹ƒh
+		// é»’ç”»é¢ã‚’ä¸€å®šæ™‚é–“ãƒ›ãƒ¼ãƒ«ãƒ‰
 		if (m_fadeTimer >= FADE_HOLD_DURATION) {
 			m_fadeState = FadeState::FadeIn;
 			m_fadeTimer = 0.0f;
@@ -1040,7 +1057,7 @@ void PlayScene::UpdateFade(float deltaTime)
 		break;
 
 	case FadeState::FadeIn:
-		// ™X‚É–¾‚é‚­
+		// å¾ã€…ã«æ˜ã‚‹ã
 		if (m_fadeTimer >= FADE_IN_DURATION) {
 			m_fadeState = FadeState::None;
 			m_fadeTimer = 0.0f;
@@ -1063,17 +1080,17 @@ void PlayScene::DrawFadeOverlay()
 	switch (m_fadeState)
 	{
 	case FadeState::FadeOut:
-		// 0 ¨ 1
+		// 0 â†’ 1
 		t = m_fadeTimer / FADE_OUT_DURATION;
 		break;
 
 	case FadeState::Hold:
-		// Š®‘S‚É•
+		// å®Œå…¨ã«é»’
 		t = 1.0f;
 		break;
 
 	case FadeState::FadeIn:
-		// 1 ¨ 0
+		// 1 â†’ 0
 		t = 1.0f - (m_fadeTimer / FADE_IN_DURATION);
 		break;
 
@@ -1081,7 +1098,7 @@ void PlayScene::DrawFadeOverlay()
 		return;
 	}
 
-	// ƒNƒ‰ƒ“ƒv
+	// ã‚¯ãƒ©ãƒ³ãƒ—
 	if (t < 0.0f) t = 0.0f;
 	if (t > 1.0f) t = 1.0f;
 

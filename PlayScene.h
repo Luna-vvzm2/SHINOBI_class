@@ -6,7 +6,7 @@
 #include "MapData.h"
 #include "ShurikenUI.h"
 #include "MoneyUI.h"
-
+#include "SoundComponent.h"
 #include "Menu.h"
 
 #include <unordered_map>
@@ -21,16 +21,16 @@ class VelocityComponent;
 class HPComponent;
 class GameOverMenuUI;
 
-//ƒCƒxƒ“ƒg‚Ì‚½‚ß’Ç‰Á
+//ã‚¤ãƒ™ãƒ³ãƒˆã®ãŸã‚è¿½åŠ 
 class EventTexture;
 class EventManager;
 
 class PlayScene : public Scene
 {
 public:
-	//	ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	//	ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	PlayScene(class Game* game);
-	//	ƒfƒXƒgƒ‰ƒNƒ^
+	//	ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	~PlayScene() override = default;
 
 	bool Init() override;
@@ -40,13 +40,13 @@ public:
 	void ClearStageActors();
 	void RequestStageChange(int stage, int spawnIndex);
 
-	//	XV
+	//	æ›´æ–°
 	void Update(float deltaTime) override;
 	void Draw() override;
 
 	PlayerEntity* GetPlayer() const { return m_player; }
 
-	// Õ“ËƒCƒxƒ“ƒg‚ÉŒÄ‚Ô
+	// è¡çªã‚¤ãƒ™ãƒ³ãƒˆæ™‚ã«å‘¼ã¶
 	//void SpawnHitEffect(const Vector2d& pos);
 
 	std::vector<EnemyEntity*> GetMetsuEnemies(){ return m_metsuEnemies; }
@@ -60,20 +60,22 @@ public:
 	const Camera& GetCamera() const { return m_camera; }
 	Game* GetGame() const { return m_game; }
 
-	// Å‰‚Ì’n–Ê‚ÌYÀ•W‚ğæ“¾
+	// æœ€åˆã®åœ°é¢ã®Yåº§æ¨™ã‚’å–å¾—
 	float GetInitialGroundY() const { return m_initialGroundY; }
 
-	//ƒNƒŠƒAƒV[ƒ“‚Ì‚½‚ß’Ç‰Á@ƒNƒŠƒAƒ^ƒCƒ€‚ÌƒQƒbƒ^[ŠÖ”
+	//ã‚¯ãƒªã‚¢ã‚·ãƒ¼ãƒ³ã®ãŸã‚è¿½åŠ ã€€ã‚¯ãƒªã‚¢ã‚¿ã‚¤ãƒ ã®ã‚²ãƒƒã‚¿ãƒ¼é–¢æ•°
 	float GetPlayTime() const { return m_playTimer; }
 
-	// ƒvƒŒƒCƒ„[‚ğƒŠƒXƒ|[ƒ“ˆÊ’u‚É–ß‚·
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’ãƒªã‚¹ãƒãƒ¼ãƒ³ä½ç½®ã«æˆ»ã™
 	void RespawnPlayer();
-	// ƒQ[ƒ€ƒI[ƒo[‚Ìˆ—
+	// ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼æ™‚ã®å‡¦ç†
 	void ShowGameOverMenu();
 
 	int m_bgHandle;
 	int m_fgHandle;
 private:
+	SoundComponent* m_stageBgm;
+
 
 	PlayerEntity* m_player;
 	MapData m_mapData;
@@ -89,8 +91,8 @@ private:
 
 	int m_stageIndex;
 	int m_comboCount = 0;
-	float m_comboTimer = 0.0f; // ƒRƒ“ƒ{•\¦‚Ìc‚èŠÔi•bj
-	const float COMBO_DISPLAY_TIME = 2.0f; // ƒRƒ“ƒ{•\¦ŠÔi•bj
+	float m_comboTimer = 0.0f; // ã‚³ãƒ³ãƒœè¡¨ç¤ºã®æ®‹ã‚Šæ™‚é–“ï¼ˆç§’ï¼‰
+	const float COMBO_DISPLAY_TIME = 2.0f; // ã‚³ãƒ³ãƒœè¡¨ç¤ºæ™‚é–“ï¼ˆç§’ï¼‰
 	int m_currentStage;
 	bool m_resultShown = false;
 
@@ -100,43 +102,43 @@ private:
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
 	
-	//ƒCƒxƒ“ƒg‚Ì‚½‚ß•ÏX
+	//ã‚¤ãƒ™ãƒ³ãƒˆã®ãŸã‚å¤‰æ›´
 	std::unique_ptr<EventTexture> m_eventTexture;
 	std::unique_ptr<EventManager> m_eventManager;
-	float m_playTimer{ 0.0f }; //ƒNƒŠƒAƒ^ƒCƒ€‚Ì‚½‚ß‚ÌƒJƒEƒ“ƒ^•Ï”
+	float m_playTimer{ 0.0f }; //ã‚¯ãƒªã‚¢ã‚¿ã‚¤ãƒ ã®ãŸã‚ã®ã‚«ã‚¦ãƒ³ã‚¿å¤‰æ•°
 
-	// ƒŠƒXƒ|[ƒ“ˆÊ’ui‰ŠúˆÊ’uj
+	// ãƒªã‚¹ãƒãƒ¼ãƒ³ä½ç½®ï¼ˆåˆæœŸä½ç½®ï¼‰
 	Vector2d m_respawnPos;
 
-	// ƒQ[ƒ€ƒI[ƒo[ƒƒjƒ…[
+	// ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼ãƒ¡ãƒ‹ãƒ¥ãƒ¼
 	GameOverMenuUI* m_gameOverMenu;
 	bool m_isGameOver;
-	bool m_isPaused;  // ƒQ[ƒ€‚ªˆê’â~’†‚©
+	bool m_isPaused;  // ã‚²ãƒ¼ãƒ ãŒä¸€æ™‚åœæ­¢ä¸­ã‹
 
-	// Å‰‚É”z’u‚³‚ê‚½’n–Ê‚ÌYÀ•W
+	// æœ€åˆã«é…ç½®ã•ã‚ŒãŸåœ°é¢ã®Yåº§æ¨™
 	float m_initialGroundY = 0.0f;
 
-	// ====== ƒtƒF[ƒh‘JˆÚ—p ======
+	// ====== ãƒ•ã‚§ãƒ¼ãƒ‰é·ç§»ç”¨ ======
 	enum class FadeState {
-		None,       // ’ÊíƒvƒŒƒC’†
-		FadeOut,    // ˆÃ“]’†iŸƒXƒe[ƒW‚Öj
-		Hold,       // Š®‘S‚È•‰æ–Ê‚Ìƒz[ƒ‹ƒh
-		FadeIn      // –¾“]’†iVƒXƒe[ƒWŠJnj
+		None,       // é€šå¸¸ãƒ—ãƒ¬ã‚¤ä¸­
+		FadeOut,    // æš—è»¢ä¸­ï¼ˆæ¬¡ã‚¹ãƒ†ãƒ¼ã‚¸ã¸ï¼‰
+		Hold,       // å®Œå…¨ãªé»’ç”»é¢ã®ãƒ›ãƒ¼ãƒ«ãƒ‰
+		FadeIn      // æ˜è»¢ä¸­ï¼ˆæ–°ã‚¹ãƒ†ãƒ¼ã‚¸é–‹å§‹ï¼‰
 	};
 
 	FadeState m_fadeState = FadeState::None;
-	float     m_fadeTimer = 0.0f;   // Œ»İ‚ÌƒtƒF[ƒhó‘Ô‚ÌŒo‰ßŠÔ
-	int       m_pendingStageIndex = -1; // ƒtƒF[ƒhƒAƒEƒgŒã‚ÉØ‚è‘Ö‚¦‚éƒXƒe[ƒW”Ô†
+	float     m_fadeTimer = 0.0f;   // ç¾åœ¨ã®ãƒ•ã‚§ãƒ¼ãƒ‰çŠ¶æ…‹ã®çµŒéæ™‚é–“
+	int       m_pendingStageIndex = -1; // ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆå¾Œã«åˆ‡ã‚Šæ›¿ãˆã‚‹ã‚¹ãƒ†ãƒ¼ã‚¸ç•ªå·
 
-	// ŠeƒtƒF[ƒY‚Ì•b”i“®‰æ‚É‡‚í‚¹‚Ä’²®j
+	// å„ãƒ•ã‚§ãƒ¼ã‚ºã®ç§’æ•°ï¼ˆå‹•ç”»ã«åˆã‚ã›ã¦èª¿æ•´ï¼‰
 	static constexpr float FADE_OUT_DURATION = 0.35f;
 	static constexpr float FADE_HOLD_DURATION = 0.10f;
 	static constexpr float FADE_IN_DURATION = 0.35f;
 
-	// ƒtƒF[ƒh‘JˆÚ‚ğŠJn‚·‚éiŸƒXƒe[ƒW‚Öj
+	// ãƒ•ã‚§ãƒ¼ãƒ‰é·ç§»ã‚’é–‹å§‹ã™ã‚‹ï¼ˆæ¬¡ã‚¹ãƒ†ãƒ¼ã‚¸ã¸ï¼‰
 	void StartFadeToStage(int idx, int spawnIndex);
-	// ƒtƒF[ƒhó‘Ô‚ğXV
+	// ãƒ•ã‚§ãƒ¼ãƒ‰çŠ¶æ…‹ã‚’æ›´æ–°
 	void UpdateFade(float deltaTime);
-	// ƒtƒF[ƒh‚ÌƒI[ƒo[ƒŒƒC‚ğ•`‰æ
+	// ãƒ•ã‚§ãƒ¼ãƒ‰ã®ã‚ªãƒ¼ãƒãƒ¼ãƒ¬ã‚¤ã‚’æç”»
 	void DrawFadeOverlay();
 };
