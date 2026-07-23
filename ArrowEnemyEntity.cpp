@@ -27,7 +27,7 @@ ArrowEnemyEntity::ArrowEnemyEntity(Scene* scene, const Vector2d& pos)
 bool ArrowEnemyEntity::Init() {
 	if (!EnemyEntity::Init()) return false;
 
-	m_hp = AddComponent<HPComponent>(50);
+	m_hp = AddComponent<HPComponent>(420);
 
 
     m_dropTable.clear();
