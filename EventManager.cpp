@@ -1,4 +1,5 @@
 #include <fstream>
+#include <algorithm>
 #include "EventManager.h"
 #include "EventTexture.h"
 #include "Scene.h"
@@ -503,6 +504,7 @@ void BattleEvent::Init()
 
 		m_isAreaSet = true;
 	}
+	m_isPlayerInsideArea = false;
 	m_isSpawned = false;
 	m_isEnd = false;
 }
@@ -538,58 +540,118 @@ void BattleEvent::Update(float deltaTime)
 			}
 		}
 		m_isSpawned = true;
+		std::cerr << "生成された敵の数: " << m_actors.size() << "\n";
 		return;
 	}
 
-	bool enemyAlive = false;
-	for (auto actor : m_scene->GetActors())
-	{
-		if (actor->GetType() == ActorType::Enemy && !(actor->GetState() == Actor::State::Dead))
+	const auto& sceneActors = m_scene->GetActors();
+
+	auto newEnd = std::remove_if(m_actors.begin(), m_actors.end(), [&](Actor* enemy)
 		{
-
-			if (m_isAreaSet)
+			if (enemy == nullptr) return true;
+			auto it = std::find(sceneActors.begin(), sceneActors.end(), enemy);
+			if (it == sceneActors.end() || enemy->GetState() == Actor::State::Dead)
 			{
-				auto transform = actor->GetComponent<TransformComponent>();
-				if (transform)
-				{
-					float posX = transform->GetPosition().x;
-					if (posX <= m_areaXMin - 20.0f || posX >= m_areaXMax + 20.0f) //壁際の敵が範囲から外れるため少し探索範囲を増加
-					{
-						continue;
-					}
-				}
+				return true;
 			}
-			enemyAlive = true;
-			break;
-		}
-	}
+			return false;
+		});
+	
+	m_actors.erase(newEnd, m_actors.end());
 
-
-	if (!enemyAlive)
+	if (m_actors.empty())
 	{
+		std::cerr << "敵が全滅したためイベントを終了します\n";
 		m_isEnd = true; 
 		return;
 	}
 
 	if (m_isAreaSet)
 	{
+		//プレイヤーの処理
 		for (auto actor : m_scene->GetActors())
 		{
-			if (!(actor->GetState() == Actor::State::Dead) && (actor->GetType() == ActorType::Player || actor->GetType() == ActorType::Enemy))
+			if (actor->GetType() == ActorType::Player)
 			{
+				if (actor->GetState() == Actor::State::Dead)//まだ不完全 プレイヤーが死んでもDeadになっていない?
+				{
+					m_isPlayerInsideArea = false;
+					continue;
+				}
+
 				auto transform = actor->GetComponent<TransformComponent>();
 				if (!transform) continue;
 
 				Vector2d pos = transform->GetPosition();
 
-				// 左右の壁で押し戻す
-				if (pos.x > m_areaXMin - 25.0f && pos.x < m_areaXMax + 25.0f) //飛燕によるすり抜け防止で25.0fの猶予
+				if (!m_isPlayerInsideArea)
+				{
+					if (pos.x >= m_areaXMin && pos.x <= m_areaXMax)
+					{
+						m_isPlayerInsideArea = true; 
+					}
+				}
+				else
 				{
 					if (pos.x < m_areaXMin) pos.x = m_areaXMin;
 					if (pos.x > m_areaXMax) pos.x = m_areaXMax;
+
+					transform->SetPosition(pos);
 				}
+			}
+		}
+
+		//イベント内の敵を閉じ込める処理
+		auto clampInside = [this](Actor* actor)
+			{
+				if (!actor || actor->GetState() == Actor::State::Dead) return;
+
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (!transform) return;
+
+				Vector2d pos = transform->GetPosition();
+
+				if (pos.x < m_areaXMin) pos.x = m_areaXMin;
+				if (pos.x > m_areaXMax) pos.x = m_areaXMax;
 
 				transform->SetPosition(pos);
+			};
+
+		for (auto enemy : m_actors)
+		{
+			clampInside(enemy);
+		}
+
+		//エリア外部の敵を侵入させない処理
+		float areaCenter = (m_areaXMin + m_areaXMax) * 0.5f;
+
+		for (auto actor : m_scene->GetActors())
+		{
+			if (actor->GetType() == ActorType::Enemy && actor->GetState() != Actor::State::Dead)
+			{
+				if (std::find(m_actors.begin(), m_actors.end(), actor) != m_actors.end())
+				{
+					continue;
+				}
+
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (!transform) continue;
+
+				Vector2d pos = transform->GetPosition();
+
+				if (pos.x >= m_areaXMin && pos.x <= m_areaXMax)
+				{
+					if (pos.x < areaCenter)
+					{
+						pos.x = m_areaXMin - 1.0f;
+					}
+					else
+					{
+						pos.x = m_areaXMax + 1.0f;
+					}
+
+					transform->SetPosition(pos);
+				}
 			}
 		}
 	}
@@ -613,56 +675,64 @@ void BattleEvent::EnemySpawn()
 	{
 		triggerPos = m_eventManager->GetTriggerPosition();
 	}
-	m_enemyPos += triggerPos;
+	Vector2d spawnPos = m_enemyPos + triggerPos;
 	
 
 	switch (m_enemyType)
 	{
 	case 1:
 	{
-		WhiteEnemyEntity* enemy = new WhiteEnemyEntity(m_scene, m_enemyPos);
+		WhiteEnemyEntity* enemy = new WhiteEnemyEntity(m_scene, spawnPos);
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 2:
 	{
-		YellowEnemyEntity* enemy = new YellowEnemyEntity(m_scene, m_enemyPos);
+		YellowEnemyEntity* enemy = new YellowEnemyEntity(m_scene, spawnPos);
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 3:
 	{
-		ArrowEnemyEntity* enemy = new ArrowEnemyEntity(m_scene, m_enemyPos);
+		ArrowEnemyEntity* enemy = new ArrowEnemyEntity(m_scene, spawnPos);
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 4:
 	{
-		HealerEnemyEntity* enemy = new HealerEnemyEntity(m_scene, m_enemyPos);
+		HealerEnemyEntity* enemy = new HealerEnemyEntity(m_scene, spawnPos);
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 5:
 	{
-		ArmorEnemyEntity* enemy = new ArmorEnemyEntity(m_scene, m_enemyPos);
+		ArmorEnemyEntity* enemy = new ArmorEnemyEntity(m_scene, spawnPos);
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 6:
 	{
-		GunnerEnemyEntity* enemy = new GunnerEnemyEntity(m_scene, m_enemyPos);
+		GunnerEnemyEntity* enemy = new GunnerEnemyEntity(m_scene, spawnPos);
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 7:
 	{
-		YoroiBossEntity* enemy = new YoroiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
+		YoroiBossEntity* enemy = new YoroiBossEntity(m_scene, spawnPos, Vector2d(192, 192));
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 
 	case 8:
 	{
-		SekienkiBossEntity* enemy = new SekienkiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
+		SekienkiBossEntity* enemy = new SekienkiBossEntity(m_scene, spawnPos, Vector2d(192, 192));
+		m_actors.push_back(enemy);
 		m_scene->SpawnActor(enemy);
 	}break;
 

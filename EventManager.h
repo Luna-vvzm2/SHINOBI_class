@@ -12,6 +12,7 @@ class Game;
 class Input;
 class EventBase;
 class EventTexture;
+class Actor;
 
 class EventManager
 {
@@ -171,6 +172,9 @@ private:
 
 	float m_areaXMin{ -64.0f };
 	float m_areaXMax{ 1216.0f };
+
+	std::vector<Actor*> m_actors;
+	bool m_isPlayerInsideArea{ false };
 
 	void EnemySpawn();
 	void Draw() override;
