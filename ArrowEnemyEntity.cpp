@@ -38,8 +38,8 @@ bool ArrowEnemyEntity::Init() {
 
     m_sprite->LoadTextureDiv(
         GetTexturePath(),
-        4,      // 列数（例）
-        7       // 行数（例）
+        4,      // �񐔁i��j
+        7       // �s���i��j
     );
 
     m_animation = AddComponent<AnimationComponent>();
@@ -87,7 +87,7 @@ bool ArrowEnemyEntity::Init() {
 void ArrowEnemyEntity::Update(float deltaTime)
 {
    
-    // ��Ɏ��S�ς݂Ȃ牽����Ȃ�
+    // ?????S????��??????
     if (GetState() == Actor::State::Dead)
         return;
 
@@ -112,7 +112,7 @@ void ArrowEnemyEntity::Update(float deltaTime)
         return;
     }
 
-    // �v���C���[�Ƃ̋���
+    // ?v???C???[??????
     float distance =
         std::abs(player->GetPos().x - GetPos().x);
 
@@ -153,7 +153,7 @@ void ArrowEnemyEntity::Update(float deltaTime)
 
         m_attackTimer -= deltaTime;
 
-        // ���������u�ԂɃv���C���[�ʒu��L�^
+        
         if (!m_attackExecuted && m_attackTimer <= 1.0f)
         {
             m_targetPos.x = player->GetPos().x;
