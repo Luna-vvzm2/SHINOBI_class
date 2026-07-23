@@ -92,8 +92,9 @@ void YoroiBossEntity::Update(float deltaTime)
 
     if (m_sprite)
     {
-        m_sprite->SetDrawSize(220.0f, 220.0f);
-
+        m_sprite->SetSize(1.0f, 1.0f);
+        GetTransform()->SetScale({ 5.0f, 5.0f });
+        m_sprite->SetDrawOffset(0.0f, -80.0f);
         m_sprite->SetFlipX(m_dir);
     }
 }

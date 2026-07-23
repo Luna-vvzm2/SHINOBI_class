@@ -43,7 +43,7 @@
 #include "ShurikenUI.h"
 #include "BackGroundUI.h"
 #include "TreasureBox.h"
-
+#include "JutsuChargeUI.h"
 #include "Camera.h"
 #include "MoneyUI.h"
 #include "EnemyHPBar.h"
@@ -124,6 +124,12 @@ bool PlayScene::Init() {
 	m_moneyUI->SetTextOffset(46.0f);         // 画像右側に数字を表示する距離
 	m_moneyUI->SetAnchorTopRight(220.0f, 50.0f, -80.0f);// 右上に固定：右端から220px, 上から50px, 画像と数字の間隔を-60px にする
 	AddUIActor(m_moneyUI);
+
+	// 忍術チャージUI
+	JutsuChargeUI* jutsuUI = new JutsuChargeUI(this);
+	jutsuUI->SetNinImagePosition(52.0f, 0.0f);
+	jutsuUI->SetNinImageScale(0.46f);  // 50%のサイズ（半分）
+	AddUIActor(jutsuUI);
 
 	// プレイヤー金額変更時に MoneyUI を 3 秒表示（増えたときのみ）
 	if (m_player) {
