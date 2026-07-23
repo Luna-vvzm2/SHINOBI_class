@@ -114,7 +114,7 @@ void SpriteComponent::Draw() {
         0.0f, 
         m_handle,
         true,
-        Vector2d(texW, texH) * 0.5f,
+        Vector2d((float)texW, (float)texH) * 0.5f,
         m_alpha,
         m_flipX,
         m_flipV,
