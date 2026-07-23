@@ -49,7 +49,7 @@ void HPBarUI::Update(float deltaTime)
 }
 
 void HPBarUI::Draw() {
-    if (!m_backBar || !m_hp) return;
+    if (!m_isVisible || !m_backBar || !m_hp) return;
 
     Vector2d pos = m_transform->GetPosition();
     float scale = 0.7f;
@@ -73,8 +73,8 @@ void HPBarUI::Draw() {
     int skew = 14; // ★斜めの傾き具合（ドット数）。数値を大きくするともっと傾きます。
 
     // 基本となる左上の開始位置
-    int baseLeft = static_cast<int>(pos.x + 130);
-    int baseTop = static_cast<int>(pos.y + 160);
+    int baseLeft = static_cast<int>(pos.x + 135);
+    int baseTop = static_cast<int>(pos.y + 165);
 
     // 4頂点の座標を計算（時計回りに指定します：左上 -> 右上 -> 右下 -> 左下）
     int x1 = baseLeft;                 // 1. 左上 (右にずらす)
@@ -84,6 +84,9 @@ void HPBarUI::Draw() {
     int y2 = baseTop;
 
     int x3 = static_cast<int>(baseLeft + barWidth - skew); // 3. 右下
+    if (x3 < baseLeft + skew) {
+		x3 = baseLeft + skew;
+    }
     int y3 = static_cast<int>(baseTop + m_height);
 
     int x4 = baseLeft + skew;                        // 4. 左下 (ずらさない)
