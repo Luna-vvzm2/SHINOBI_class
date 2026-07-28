@@ -17,6 +17,8 @@
 #include "GunnerEnemyEntity.h"
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
+#include "HPComponent.h"
+#include "EnemySpawner.h"
 
 
 EventManager::EventManager(Scene* scene, EventTexture* eventTexture)
@@ -677,69 +679,66 @@ void BattleEvent::EnemySpawn()
 	}
 	Vector2d spawnPos = m_enemyPos + triggerPos;
 	
+	auto* playScene = dynamic_cast<PlayScene*>(m_scene);
+	if (!playScene)
+	{
+		std::cerr << "PlayScene 以外のシーンで EnemySpawn が実行されました。\n";
+		return;
+	}
+	Actor* spawnedEnemy = nullptr;
 
 	switch (m_enemyType)
 	{
 	case 1:
 	{
-		WhiteEnemyEntity* enemy = new WhiteEnemyEntity(m_scene, spawnPos);
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<WhiteEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 2:
 	{
-		YellowEnemyEntity* enemy = new YellowEnemyEntity(m_scene, spawnPos);
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<YellowEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 3:
 	{
-		ArrowEnemyEntity* enemy = new ArrowEnemyEntity(m_scene, spawnPos);
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<ArrowEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 4:
 	{
-		HealerEnemyEntity* enemy = new HealerEnemyEntity(m_scene, spawnPos);
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<HealerEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 5:
 	{
-		ArmorEnemyEntity* enemy = new ArmorEnemyEntity(m_scene, spawnPos);
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<ArmorEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 6:
 	{
-		GunnerEnemyEntity* enemy = new GunnerEnemyEntity(m_scene, spawnPos);
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<GunnerEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 7:
 	{
-		YoroiBossEntity* enemy = new YoroiBossEntity(m_scene, spawnPos, Vector2d(192, 192));
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<YoroiBossEntity>(playScene, spawnPos,"", Vector2d(192, 192));
 	}break;
 
 	case 8:
 	{
-		SekienkiBossEntity* enemy = new SekienkiBossEntity(m_scene, spawnPos, Vector2d(192, 192));
-		m_actors.push_back(enemy);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<SekienkiBossEntity>(playScene, spawnPos, "", Vector2d(192, 192));
 	}break;
 
 	default:
 		std::cerr << "無効な値のため敵を生成できません。\n";
 		break;
 	}
+
+	if (spawnedEnemy)
+	{
+		m_actors.push_back(spawnedEnemy);
+	}
+
 
 }
 

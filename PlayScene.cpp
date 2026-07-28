@@ -49,6 +49,7 @@
 #include "MoneyUI.h"
 #include "EnemyHPBar.h"
 #include "Menu.h"
+#include "EnemySpawner.h"
 
 //イベントのため変更
 #include "EventManager.h"
@@ -336,212 +337,42 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 202:
 			{
-				WhiteEnemyEntity* enemy = new WhiteEnemyEntity(this, pos);
-				AddActor(enemy);
-
-				// HPBar を PlayScene 側で作成して登録（UI は AddUIActor で登録）
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったとき表示する
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<WhiteEnemyEntity>(this, pos);
 			} break;
 
 			case 203:
 			{
-				YellowEnemyEntity* enemy = new YellowEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<YellowEnemyEntity>(this, pos);
 			} break;
 
 			case 204:
 			{
-				ArrowEnemyEntity* enemy = new ArrowEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<ArrowEnemyEntity>(this, pos);
 			} break;
 
 			case 208:
 			{
-				HealerEnemyEntity* enemy = new HealerEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<HealerEnemyEntity>(this, pos);
 			} break;
 
 			case 206:
 			{
-				ArmorEnemyEntity* enemy = new ArmorEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_armor.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<ArmorEnemyEntity>(this, pos);
 			} break;
 
 			case 207:
 			{
-				GunnerEnemyEntity* enemy = new GunnerEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<GunnerEnemyEntity>(this, pos);
 			} break;
 
 			case 205:
 			{
-				YoroiBossEntity* enemy = new YoroiBossEntity(this, pos, Vector2d(192, 192));
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<YoroiBossEntity>(this, pos, "", Vector2d(192, 192));
 			} break;
 
 			case 210:
 			{
-				SekienkiBossEntity* enemy = new SekienkiBossEntity(this, pos, Vector2d(192, 192));
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<SekienkiBossEntity>(this, pos, "", Vector2d(192, 192));
 			} break;
 
 			default:
@@ -1016,6 +847,15 @@ void PlayScene::RespawnPlayer() {
 
 	std::cout << "Player respawned at: " << m_playerSpawnPoints[0].x << ", " << m_playerSpawnPoints[0].y << std::endl;
 }
+
+void PlayScene::RegisterEnemyHPBar(EnemyEntity* enemy, EnemyHPBar* hpBar)
+{
+	if (enemy && hpBar)
+	{
+		m_enemyToHPBarMap[enemy] = hpBar;
+	}
+}
+
 void PlayScene::ShowGameOverMenu() {
 	m_isGameOver = true;
 	m_isPaused = true;

@@ -7,7 +7,7 @@ ClearUI::ClearUI(Scene* scene)
 	: UIActor(scene)
 {
 	m_transform = AddComponent<TransformComponent>();
-	m_title = AddComponent<SpriteComponent>("assets/images/uies/title.png");
+	m_title = AddComponent<SpriteComponent>("assets/images/uies/title.png", false);
 	if (!m_title) {
 		std::cerr << "‰æ‘œ“Ç‚Ýž‚ÝŽ¸”s\n";
 	}
