@@ -82,7 +82,7 @@ bool SekienkiBossEntity::Init()
 
         // 最初の画像の1コマ分のサイズをセット（SetSizeもpublicなのでボスから呼べます）
         m_sprite->SetSize(1.0f, 1.0f);
-        GetTransform()->SetScale({ 0.3f,0.3f });
+        GetTransform()->SetScale({ 1.0f,1.0f });
         m_sprite->SetDrawOffset(0.0f, -130.0f);
     }
 
