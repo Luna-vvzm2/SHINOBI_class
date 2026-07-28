@@ -67,9 +67,7 @@ void JutsuChargeUI::Draw()
         return;
     }
 
-#ifdef _DEBUG
     bool shouldDisplay = (m_jutsuchage);
-#endif
 
     if (shouldDisplay && m_ninImage != nullptr) {
         int ninHandle = m_ninImage->GetHandle();
