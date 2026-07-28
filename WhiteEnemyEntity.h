@@ -52,4 +52,5 @@ private:
 	int m_damageState;
 	float m_damageFrameTimer;
 	bool m_damageHoldGroundFrame;
+	bool m_deadPendingMotion;
 };

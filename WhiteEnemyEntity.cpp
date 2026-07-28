@@ -15,6 +15,26 @@
 #include <DxLib.h>
 #include <cmath>
 
+static int GetFadeAlpha(float elapsed, float duration)
+{
+	if (duration <= 0.0f)
+	{
+		return 0;
+	}
+
+	float ratio = elapsed / duration;
+	if (ratio < 0.0f)
+	{
+		ratio = 0.0f;
+	}
+	if (ratio > 1.0f)
+	{
+		ratio = 1.0f;
+	}
+
+	return static_cast<int>(255.0f * (1.0f - ratio));
+}
+
 class WhiteShurikenBullet : public EnemyEntity
 {
 public:
@@ -167,6 +187,7 @@ WhiteEnemyEntity::WhiteEnemyEntity(Scene* scene, const Vector2d& pos)
 	, m_damageState(0)
 	, m_damageFrameTimer(0.0f)
 	, m_damageHoldGroundFrame(false)
+	, m_deadPendingMotion(false)
 {
 }
 
@@ -176,20 +197,24 @@ bool WhiteEnemyEntity::Init()
 
 	m_anim = AddComponent<AnimationComponent>();
 	m_anim->SetSprite(m_sprite);
+	if (m_sprite != nullptr)
+	{
+		m_sprite->SetAlpha(255);
+	}
 	DefineAnimationClips();
 
 	return true;
 }
 
 
-// õ“G”ÍˆÍ‚Æ‹——£”»’è
+// ç´¢æ•µç¯„å›²ã¨è·é›¢åˆ¤å®š
 static const float WHITE_TILE_SIZE = 104.0f;
 static const float WHITE_ENEMY_HALF_WIDTH = 48.0f;
 static const float WHITE_PLAYER_HALF_WIDTH = 42.5f;
 static const float WHITE_SWORD_GAP_RANGE = WHITE_TILE_SIZE * 0.7f;
 static const float WHITE_FIND_RANGE = 800.0f;
 static const float WHITE_NEAR_SWORD_RANGE = WHITE_ENEMY_HALF_WIDTH + WHITE_PLAYER_HALF_WIDTH + WHITE_SWORD_GAP_RANGE;
-//Œ•UŒ‚‚Æè— Œ•UŒ‚‚Ì‹«–Ú
+//å‰£æ”»æ’ƒã¨æ‰‹è£å‰£æ”»æ’ƒã®å¢ƒç›®
 static const float WHITE_BACK_RANGE = 250.0f;
 static const float WHITE_STOP_SHURIKEN_RANGE = 612.0f;
 static const float WHITE_SHURIKEN_RANGE = 650.0f;
@@ -198,16 +223,16 @@ static const float WHITE_SAME_FLOOR_Y_RANGE = WHITE_TILE_SIZE * 0.5f;
 static const float WHITE_STUCK_MOVE_EPS = 1.0f;
 static const float WHITE_STUCK_IDLE_TIME = 0.25f;
 
-// ˆÚ“®ŠÖŒW
+// ç§»å‹•é–¢ä¿‚
 static const float WHITE_APPROACH_SPEED = 120.0f;
 static const float WHITE_BACK_SPEED = 150.0f;
 static const float WHITE_FAR_APPROACH_SPEED = 250.0f;
 static const float WHITE_BULLET_SPEED = 250.0f;
 
-// ŠÔŠÖŒW
+// æ™‚é–“é–¢ä¿‚
 static const float WHITE_RECHECK_TIME = 0.3f;
 
-// è— Œ•UŒ‚
+// æ‰‹è£å‰£æ”»æ’ƒ
 static const float WHITE_SHURIKEN_COOLDOWN = 0.675f;
 static const int WHITE_SHURIKEN_DAMAGE = 15;
 static const float WHITE_SHURIKEN_SHOT_TIME = 40.0f / 60.0f;
@@ -216,10 +241,10 @@ static const Vector2d WHITE_SHURIKEN_BULLET_DRAW_SIZE = Vector2d(48.0f, 48.0f);
 static const float WHITE_SHURIKEN_BULLET_ROTATE_INTERVAL = 4.0f / 60.0f;
 static const float WHITE_SHURIKEN_BULLET_ROTATE_STEP = 15.0f * 3.14159265f / 180.0f;
 
-// Œ•UŒ‚
-//Œ•UŒ‚¨‘Ò‹@¨Œ•UŒ‚‚ÌƒAƒCƒhƒ‹ŠÔ
+// å‰£æ”»æ’ƒ
+//å‰£æ”»æ’ƒâ†’å¾…æ©Ÿâ†’å‰£æ”»æ’ƒã®ã‚¢ã‚¤ãƒ‰ãƒ«æ™‚é–“
 static const float WHITE_SWORD_COOLDOWN = 0.225f;
-//Œ•UŒ‚”ÍˆÍ
+//å‰£æ”»æ’ƒç¯„å›²
 static const float WHITE_SWORD_ATTACK_RANGE = WHITE_BACK_RANGE - 20.0f;
 static const float WHITE_SWORD_HEIGHT_RANGE = 80.0f;
 static const int WHITE_SWORD_DAMAGE = 10;
@@ -229,7 +254,7 @@ static const float WHITE_SWORD_HIT_TIME = 50.0f / 60.0f;
 static const float WHITE_SWORD_ACTIVE_END_TIME = 72.5f / 60.0f;
 static const float WHITE_SWORD_END_TIME = 87.5f / 60.0f;
 
-// ‰æ‘œQÆ
+// ç”»åƒå‚ç…§
 static const char* WHITE_TEXTURE_IDLE = "assets/images/enemy/white/idle.png";
 static const char* WHITE_TEXTURE_WALK = "assets/images/enemy/white/walk.png";
 static const char* WHITE_TEXTURE_SHURIKEN = "assets/images/enemy/white/shuriken.png";
@@ -244,7 +269,7 @@ static const int WHITE_SHEET_Y_NUM = 10;
 static const int WHITE_HIT_WEAK_X_NUM = 4;
 static const int WHITE_HIT_WEAK_Y_NUM = 1;
 
-// ƒ_ƒ[ƒWŠÖŒW
+// ãƒ€ãƒ¡ãƒ¼ã‚¸é–¢ä¿‚
 static const int WHITE_BLOW_MIN_DAMAGE = 10;
 static const int WHITE_BLOW_LARGE_MIN_DAMAGE = 25;
 static const int WHITE_DAMAGE_NONE = 0;
@@ -257,7 +282,7 @@ static const float WHITE_WEAK_HIT_TOTAL_TIME = 25.0f / 60.0f;
 static const float WHITE_BLOW_TOTAL_TIME = 55.0f / 60.0f;
 static const float WHITE_BLOW_LARGE_HOLD_TIME = 52.5f / 60.0f;
 static const float WHITE_BLOW_LARGE_TOTAL_TIME = 67.5f / 60.0f;
-static const float WHITE_DEAD_SHOW_TIME = 15.0f / 60.0f;
+static const float WHITE_DEAD_SHOW_TIME = 45.0f / 60.0f;
 
 void WhiteEnemyEntity::DefineAnimationClips()
 {
@@ -394,7 +419,7 @@ void WhiteEnemyEntity::DefineAnimationClips()
 
 	AnimationClip hitDead;
 	hitDead.frames = { 37 };
-	hitDead.frameDurations = { 15.0f / 60.0f };
+	hitDead.frameDurations = { 45.0f / 60.0f };
 	hitDead.loop = false;
 	m_anim->AddClip("hit_dead", hitDead);
 }
@@ -609,6 +634,7 @@ void WhiteEnemyEntity::StartDeadHit()
 		WHITE_SHEET_X_NUM,
 		WHITE_SHEET_Y_NUM
 	);
+	m_deadPendingMotion = false;
 	m_damageState = WHITE_DAMAGE_DEAD;
 	m_damageFrameTimer = 0.0f;
 	m_damageHoldGroundFrame = false;
@@ -621,13 +647,13 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 		return;
 	}
 
-	m_hp->Damage(damage);
-
-	if (m_hp->GetHP() <= 0)
+	if (m_deadPendingMotion || m_damageState == WHITE_DAMAGE_DEAD)
 	{
 		StartDeadHit();
 		return;
 	}
+
+	m_hp->Damage(damage);
 
 	Vector2d damageKnockback = knockback;
 	Vector2d playerPos = Vector2d::Zero();
@@ -638,6 +664,24 @@ void WhiteEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 		Vector2d myPos = GetPos();
 		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
 		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
+	}
+
+	if (m_hp->GetHP() <= 0)
+	{
+		if (damage >= WHITE_BLOW_LARGE_MIN_DAMAGE)
+		{
+			StartLargeBlowHit(damageKnockback);
+		}
+		else
+		{
+			StartBlowHit(damageKnockback);
+		}
+		m_deadPendingMotion = true;
+
+		PlayScene* play = static_cast<PlayScene*>(m_scene);
+		printf("Remove %p\n", this);
+		play->RemoveMetsuEnemy(this);
+		return;
 	}
 
 	if (damage >= WHITE_BLOW_LARGE_MIN_DAMAGE)
@@ -680,6 +724,10 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 	else if (m_damageState == WHITE_DAMAGE_DEAD)
 	{
 		m_damageFrameTimer += deltaTime;
+		if (m_sprite != nullptr)
+		{
+			m_sprite->SetAlpha(GetFadeAlpha(m_damageFrameTimer, WHITE_DEAD_SHOW_TIME));
+		}
 		if (m_damageFrameTimer >= WHITE_DEAD_SHOW_TIME)
 		{
 			SetState(Actor::State::Dead);
@@ -720,6 +768,12 @@ void WhiteEnemyEntity::UpdateDamageMotion(float deltaTime)
 
 	if (m_damageFrameTimer >= totalTime)
 	{
+		if (m_deadPendingMotion)
+		{
+			StartDeadHit();
+			return;
+		}
+
 		m_damageState = WHITE_DAMAGE_NONE;
 		m_actionLock = false;
 		m_currentMotionName = "";
@@ -805,21 +859,21 @@ void WhiteEnemyEntity::Update(float deltaTime)
 
 	/*----------------
 
-		ó‘Ôˆê——
+		çŠ¶æ…‹ä¸€è¦§
 		||whiteState||
-		0 ‘Ò‹@Eõ“G
-		1 Ú‹ß‚µ‚È‚ª‚çè— Œ•UŒ‚
-		2 Œã‘Ş‚µ‚È‚ª‚çŒ•UŒ‚‚ÌÄg—p‚ğ‘Ò‚Â
-		3 ’â~‚µ‚Äè— Œ•UŒ‚
-		4 ’â~‚µ‚ÄŒ•UŒ‚
-		5 ‰“‹——£‚©‚çÚ‹ß
-		6 €–S
+		0 å¾…æ©Ÿãƒ»ç´¢æ•µ
+		1 æ¥è¿‘ã—ãªãŒã‚‰æ‰‹è£å‰£æ”»æ’ƒ
+		2 å¾Œé€€ã—ãªãŒã‚‰å‰£æ”»æ’ƒã®å†ä½¿ç”¨ã‚’å¾…ã¤
+		3 åœæ­¢ã—ã¦æ‰‹è£å‰£æ”»æ’ƒ
+		4 åœæ­¢ã—ã¦å‰£æ”»æ’ƒ
+		5 é è·é›¢ã‹ã‚‰æ¥è¿‘
+		6 æ­»äº¡
 
-		UŒ‚ƒ^ƒCƒv
+		æ”»æ’ƒã‚¿ã‚¤ãƒ—
 		||attackType||
-		0 UŒ‚‚È‚µ
-		1 è— Œ•UŒ‚
-		2 Œ•UŒ‚
+		0 æ”»æ’ƒãªã—
+		1 æ‰‹è£å‰£æ”»æ’ƒ
+		2 å‰£æ”»æ’ƒ
 
    ---------------*/
 
@@ -836,7 +890,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 				m_dir = false;
 			}
 
-			// ‹ß‹——£‚Å‚ÍŒ•‚ğg‚¢AÄg—p‘Ò‚¿‚ÌŠÔ‚ÍŒã‘Ş‚·‚éB
+			// è¿‘è·é›¢ã§ã¯å‰£ã‚’ä½¿ã„ã€å†ä½¿ç”¨å¾…ã¡ã®é–“ã¯å¾Œé€€ã™ã‚‹ã€‚
 			if (distance < WHITE_BACK_RANGE)
 			{
 				if (m_cooldownTimer <= 0.0f)
@@ -890,7 +944,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 1:
-			// è— Œ•‚ÌË’ö‚Ü‚ÅÚ‹ß‚·‚éB
+			// æ‰‹è£å‰£ã®å°„ç¨‹ã¾ã§æ¥è¿‘ã™ã‚‹ã€‚
 			PlaySheetMotion("walk");
 			PrepareMoveTracking(WHITE_APPROACH_SPEED * dir);
 			m_velocity->SetVelocity(Vector2d(WHITE_APPROACH_SPEED * dir, 0.0f));
@@ -899,7 +953,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			{
 				m_actionLock = false;
 			}
-			// Œ•‚ÌÄg—p‘Ò‚¿’†‚ÍŠÔ‡‚¢‚ğæ‚éB
+			// å‰£ã®å†ä½¿ç”¨å¾…ã¡ä¸­ã¯é–“åˆã„ã‚’å–ã‚‹ã€‚
 			if (m_cooldownTimer <= 0.0f)
 			{
 				if (distance < WHITE_BACK_RANGE)
@@ -939,7 +993,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 3:
-			// è— Œ•‚ÌË’ö“à‚Å’â~‚·‚éB
+			// æ‰‹è£å‰£ã®å°„ç¨‹å†…ã§åœæ­¢ã™ã‚‹ã€‚
 			PlaySheetMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -966,7 +1020,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 4:
-			// ‹ß‹——£‚Å’â~‚µ‚ÄŒ•‚ğg‚¤B
+			// è¿‘è·é›¢ã§åœæ­¢ã—ã¦å‰£ã‚’ä½¿ã†ã€‚
 			PlaySheetMotion("idle");
 			m_velocity->SetVelocity(Vector2d(0.0f, 0.0f));
 
@@ -997,7 +1051,7 @@ void WhiteEnemyEntity::Update(float deltaTime)
 			break;
 
 		case 6:
-			// €–Só‘Ô‚ÖˆÚs‚·‚éB
+			// æ­»äº¡çŠ¶æ…‹ã¸ç§»è¡Œã™ã‚‹ã€‚
 			SetState(Actor::State::Dead);
 			break;
 		}

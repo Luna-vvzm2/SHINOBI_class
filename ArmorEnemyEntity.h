@@ -29,7 +29,7 @@ private:
 	void TriggerExplosion(const Vector2d& playerPos, PlayerEntity* player);
 	void OnHPChanged(int newHP, int oldHP);
 	void StartDamageMotion(const Vector2d& knockback);
-	void StartDeadMotion();
+	void StartDeadMotion(const Vector2d& knockback);
 	void StartTurnMotion();
 	void UpdateDeadMotion(float deltaTime);
 	void UpdateTurnMotion(float deltaTime);

@@ -12,6 +12,26 @@
 #include "Vector2d.h"
 #include <cmath>
 
+static int GetFadeAlpha(float elapsed, float duration)
+{
+	if (duration <= 0.0f)
+	{
+		return 0;
+	}
+
+	float ratio = elapsed / duration;
+	if (ratio < 0.0f)
+	{
+		ratio = 0.0f;
+	}
+	if (ratio > 1.0f)
+	{
+		ratio = 1.0f;
+	}
+
+	return static_cast<int>(255.0f * (1.0f - ratio));
+}
+
 class GunnerBullet : public EntityActor
 {
 public:
@@ -120,6 +140,7 @@ bool GunnerEnemyEntity::Init()
 	{
 		m_sprite->LoadTextureDiv(GUNNER_TEXTURE_SHEET, GUNNER_SHEET_X_NUM, GUNNER_SHEET_Y_NUM);
 		m_sprite->SetDrawSize(96.0f, 190.0f);
+		m_sprite->SetAlpha(255);
 	}
 	DefineAnimationClips();
 	PlayMotion("idle", true);
@@ -150,11 +171,12 @@ static const int GUNNER_DAMAGE_NONE = 0;
 static const int GUNNER_DAMAGE_SHORT = 1;
 static const int GUNNER_DAMAGE_BLOW = 2;
 static const int GUNNER_DAMAGE_BLOW_LARGE = 3;
+static const int GUNNER_DAMAGE_DEAD = 4;
 static const float GUNNER_HIT_TOTAL_TIME = 9.0f / 60.0f;
-static const float GUNNER_DAMAGE1_DEAD_TIME = 16.0f / 60.0f;
-static const float GUNNER_DAMAGE1_TOTAL_TIME = 22.0f / 60.0f;
-static const float GUNNER_DAMAGE2_DEAD_TIME = 25.0f / 60.0f;
-static const float GUNNER_DAMAGE2_TOTAL_TIME = 31.0f / 60.0f;
+static const float GUNNER_DAMAGE1_TOTAL_TIME = 30.0f / 60.0f;
+static const float GUNNER_DAMAGE2_TOTAL_TIME = 38.0f / 60.0f;
+static const float GUNNER_DEAD_FADE_START_TIME = 8.0f / 60.0f;
+static const float GUNNER_DEAD_TOTAL_TIME = 32.0f / 60.0f;
 static const float GUNNER_TURN_TIME = 4.0f / 60.0f;
 
 
@@ -209,24 +231,15 @@ void GunnerEnemyEntity::UpdateTurnMotion(float deltaTime)
 	}
 }
 
-void GunnerEnemyEntity::StartDamageMotion(const Vector2d& knockback, int damage, bool dead)
+void GunnerEnemyEntity::StartDamageMotion(const Vector2d& knockback, int damage)
 {
 	m_attackType = 0;
 	m_attackActive = false;
 	m_actionLock = true;
 	m_turning = false;
-	m_damageDead = dead;
+	m_damageDead = false;
 	m_damageTimer = 0.0f;
-
-	Vector2d damageKnockback = knockback;
-	Vector2d playerPos = Vector2d::Zero();
-	if (TryGetPlayerInfo(playerPos))
-	{
-		Vector2d myPos = GetPos();
-		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
-		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
-	}
-	m_velocity->SetVelocity(damageKnockback);
+	m_velocity->SetVelocity(knockback);
 	SetFacing();
 
 	if (damage >= GUNNER_BLOW_LARGE_MIN_DAMAGE)
@@ -246,6 +259,24 @@ void GunnerEnemyEntity::StartDamageMotion(const Vector2d& knockback, int damage,
 	}
 }
 
+void GunnerEnemyEntity::StartDeadMotion(const Vector2d& knockback)
+{
+	m_attackType = 0;
+	m_attackActive = false;
+	m_actionLock = true;
+	m_turning = false;
+	m_damageDead = true;
+	m_damageType = GUNNER_DAMAGE_DEAD;
+	m_damageTimer = 0.0f;
+	m_velocity->SetVelocity(knockback);
+	if (m_sprite != nullptr)
+	{
+		m_sprite->SetAlpha(255);
+	}
+	SetFacing();
+	PlayMotion("dead", true);
+}
+
 void GunnerEnemyEntity::UpdateDamageMotion(float deltaTime)
 {
 	if (m_damageType == GUNNER_DAMAGE_NONE)
@@ -253,28 +284,35 @@ void GunnerEnemyEntity::UpdateDamageMotion(float deltaTime)
 		return;
 	}
 
-	m_damageTimer += deltaTime;
+	if (m_damageType == GUNNER_DAMAGE_DEAD)
+	{
+		m_damageTimer += deltaTime;
+		if (m_sprite != nullptr && m_damageTimer >= GUNNER_DEAD_FADE_START_TIME)
+		{
+			m_sprite->SetAlpha(GetFadeAlpha(
+				m_damageTimer - GUNNER_DEAD_FADE_START_TIME,
+				GUNNER_DEAD_TOTAL_TIME - GUNNER_DEAD_FADE_START_TIME
+			));
+		}
+		if (m_damageTimer >= GUNNER_DEAD_TOTAL_TIME)
+		{
+			OnDead();
+		}
+		return;
+	}
 
-	float deadTime = GUNNER_HIT_TOTAL_TIME;
+	m_damageTimer += deltaTime;
 	float totalTime = GUNNER_HIT_TOTAL_TIME;
 	if (m_damageType == GUNNER_DAMAGE_BLOW)
 	{
-		deadTime = GUNNER_DAMAGE1_DEAD_TIME;
 		totalTime = GUNNER_DAMAGE1_TOTAL_TIME;
 	}
 	else if (m_damageType == GUNNER_DAMAGE_BLOW_LARGE)
 	{
-		deadTime = GUNNER_DAMAGE2_DEAD_TIME;
 		totalTime = GUNNER_DAMAGE2_TOTAL_TIME;
 	}
 
-	if (m_damageDead && m_damageTimer >= deadTime)
-	{
-		OnDead();
-		return;
-	}
-
-	if (!m_damageDead && m_damageTimer >= totalTime)
+	if (m_damageTimer >= totalTime)
 	{
 		SetFacing();
 		m_damageType = GUNNER_DAMAGE_NONE;
@@ -393,7 +431,7 @@ void GunnerEnemyEntity::DefineAnimationClips()
 	m_anim->AddClip("hit", hit);
 
 	AnimationClip damage1;
-	damage1.frames = { 19, 23, 26, 27, 28, 30, 31, 32, 33, 34 };
+	damage1.frames = { 19, 23, 26, 27, 28, 30, 31, 32, 33, 33 };
 	damage1.frameDurations = {
 		1.0f / 60.0f,
 		3.0f / 60.0f,
@@ -410,7 +448,7 @@ void GunnerEnemyEntity::DefineAnimationClips()
 	m_anim->AddClip("damage1", damage1);
 
 	AnimationClip damage2;
-	damage2.frames = { 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 };
+	damage2.frames = { 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 33 };
 	damage2.frameDurations = {
 		1.0f / 60.0f,
 		5.0f / 60.0f,
@@ -429,6 +467,20 @@ void GunnerEnemyEntity::DefineAnimationClips()
 	};
 	damage2.loop = false;
 	m_anim->AddClip("damage2", damage2);
+
+	AnimationClip dead;
+	dead.frames = { 19, 23, 26, 27, 28, 29, 30 };
+	dead.frameDurations = {
+		1.0f / 60.0f,
+		3.0f / 60.0f,
+		4.0f / 60.0f,
+		6.0f / 60.0f,
+		6.0f / 60.0f,
+		6.0f / 60.0f,
+		6.0f / 60.0f
+	};
+	dead.loop = false;
+	m_anim->AddClip("dead", dead);
 }
 
 // Start gun attack.
@@ -464,13 +516,31 @@ void GunnerEnemyEntity::StartGunAttack(const Vector2d& playerPos)
 
 void GunnerEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
 {
-	if (damage <= 0 || m_hp == nullptr)
+	if (damage <= 0 || m_hp == nullptr || m_damageDead)
 	{
 		return;
 	}
 
 	m_hp->Damage(damage);
-	StartDamageMotion(knockback, damage, m_hp->GetHP() <= 0);
+
+	Vector2d damageKnockback = knockback;
+	Vector2d playerPos = Vector2d::Zero();
+	if (TryGetPlayerInfo(playerPos))
+	{
+		Vector2d myPos = GetPos();
+		float awaySign = myPos.x < playerPos.x ? -1.0f : 1.0f;
+		damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
+		m_dir = playerPos.x >= myPos.x;
+	}
+
+	if (m_hp->GetHP() <= 0)
+	{
+		StartDeadMotion(damageKnockback);
+	}
+	else
+	{
+		StartDamageMotion(damageKnockback, damage);
+	}
 }
 
 void GunnerEnemyEntity::Update(float deltaTime)
