@@ -273,13 +273,13 @@ bool PlayerEntity::Init() {
     wallJump.loop = false;
     m_anim->AddClip("wallJump", wallJump);
 
-    AnimationClip wallClimbUp; //ã€€å£ã‚’æ­©ã„ã¦ç™»ã‚‹ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³
+    AnimationClip wallClimbUp; //@•Ç‚ğ•à‚¢‚Ä“o‚éƒAƒjƒ[ƒVƒ‡ƒ“
     wallClimbUp.frames = { 99, 100, 101, 102 };
     wallClimbUp.speed = 0.1f;
     wallClimbUp.loop = true;
     m_anim->AddClip("wallClimbUp", wallClimbUp);
 
-    AnimationClip wallClimb; // å£ã‚ˆã˜ç™»ã‚Š
+    AnimationClip wallClimb; // •Ç‚æ‚¶“o‚è
     wallClimb.frames = { 103, 103, 104, 105, 105, 106 };
     wallClimb.speed = 0.1f;
     wallClimb.loop = false;
@@ -522,11 +522,11 @@ bool PlayerEntity::Init() {
     m_collision->SetRect(85, 152);
     m_sprite->SetDrawOffset(0.0f, -34.0f);
 
-    // HPãŒ0ã«ãªã£ãŸã¨ãã®ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã‚’è¨­å®š
+    // HP‚ª0‚É‚È‚Á‚½‚Æ‚«‚ÌƒR[ƒ‹ƒoƒbƒN‚ğİ’è
     if (m_hp) {
         m_hp->OnDeath = [this]() {
             std::cout << "Player died! Showing Game Over Menu..." << std::endl;
-            // PlaySceneã‚’å–å¾—ã—ã¦ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤º
+            // PlayScene‚ğæ“¾‚µ‚ÄƒQ[ƒ€ƒI[ƒo[ƒƒjƒ…[‚ğ•\¦
             PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
             if (playScene) {
                 playScene->ShowGameOverMenu();
@@ -626,7 +626,7 @@ void PlayerEntity::Update(float deltaTime) {
     if (m_anim) m_anim->Update(deltaTime);
     EntityActor::Update(deltaTime);
 
-    // ãƒ‡ãƒãƒƒã‚°ç”¨ï¼š4ã‚­ãƒ¼ã‚’æŠ¼ã™ã¨HPãŒ0ã«ãªã‚‹
+    // ƒfƒoƒbƒO—pF4ƒL[‚ğ‰Ÿ‚·‚ÆHP‚ª0‚É‚È‚é
 #ifdef _DEBUG
     const Input& input = m_scene->GetGame()->GetInput();
     if (input.GetKey().IsTrigger(Key::NUM_4)) {
@@ -1194,7 +1194,7 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
-    m_sprite->SetDrawOffset(0.0f, -62.0f);   // ä¸Šã«48px
+    m_sprite->SetDrawOffset(0.0f, -62.0f);   // ã‚É48px
     m_squat = true;
 }
 
@@ -1247,7 +1247,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.3f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
                     m_kunaiPending = true;
                     m_anim->Play("KunaiSquat", true);
                 }
@@ -1256,7 +1256,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.2f;
                     m_attackLockTimer = 0.1f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
                     m_kunaiPending = true;
                     m_anim->Play("KunaiAir", true);
                 }
@@ -1265,7 +1265,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.3f;
                     m_attackLockTimer = 0.3f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
+                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
                     m_kunaiPending = true;
                     m_anim->Play("Kunai", true);
                 }
@@ -1878,7 +1878,7 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
-        // ã—ã‚ƒãŒã¿ãªãŒã‚‰ç§»å‹•
+        // ‚µ‚á‚ª‚İ‚È‚ª‚çˆÚ“®
         if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
         {
             ChangeState(ActionState::SQUAT_WALK);
@@ -1932,7 +1932,7 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
-        // ç§»å‹•ã‚­ãƒ¼é›¢ã—ãŸ
+        // ˆÚ“®ƒL[—£‚µ‚½
         if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
         {
             ChangeState(ActionState::STOP_LONG);
@@ -2365,7 +2365,7 @@ void PlayerEntity::AddMoney(int delta)
 }
 
 void PlayerEntity::UpdateDead(float deltaTime) {
-    // ç”»é¢ä¸­å¤®ã®ç›®æ¨™åº§æ¨™ï¼ˆã‚²ãƒ¼ãƒ ã®ç”»é¢è§£åƒåº¦ã«åˆã‚ã›ã¦æ•°å€¤ã‚’èª¿æ•´ã—ã¦ãã ã•ã„ï¼‰
+    // ‰æ–Ê’†‰›‚Ì–Ú•WÀ•WiƒQ[ƒ€‚Ì‰æ–Ê‰ğ‘œ“x‚É‡‚í‚¹‚Ä”’l‚ğ’²®‚µ‚Ä‚­‚¾‚³‚¢j
     Vector2d centerPos(960.0f, 540.0f);
 
     if (!m_isDeadTriggered) {
@@ -2376,16 +2376,16 @@ void PlayerEntity::UpdateDead(float deltaTime) {
         AnimationClip dead;
         dead.frames = { 0, 1, 2, 3, 4, 5 };
         dead.speed = 0.12f;
-        dead.loop = false; // 1å›å†ç”Ÿã—ãŸã‚‰æœ€å¾Œã®ã‚³ãƒã§æ­¢ã¾ã‚‹
+        dead.loop = false; // 1‰ñÄ¶‚µ‚½‚çÅŒã‚ÌƒRƒ}‚Å~‚Ü‚é
         m_anim->AddClip("dead", dead);
         m_anim->Play("dead");
 
-        // æ­»äº¡ã—ãŸç¬é–“ã«ä¸€ç¬ã§ç”»é¢ä¸­å¤®ã¸ãƒ¯ãƒ¼ãƒ—ã•ã›ã‚‹
+        // €–S‚µ‚½uŠÔ‚Éˆêu‚Å‰æ–Ê’†‰›‚Öƒ[ƒv‚³‚¹‚é
         m_transform->SetPosition(centerPos);
         m_velocity->Set(Vector2d::Zero());
-        // ç‰©ç†ç§»å‹•ã‚’å®Œå…¨ã«åœæ­¢
+        // •¨—ˆÚ“®‚ğŠ®‘S‚É’â~
         m_velocity->Set(Vector2d::Zero());
-        // æ¯ãƒ•ãƒ¬ãƒ¼ãƒ ç”»é¢ä¸­å¤®ã®ä½ç½®ã«å®Œå…¨ã«å›ºå®šã™ã‚‹
+        // –ˆƒtƒŒ[ƒ€‰æ–Ê’†‰›‚ÌˆÊ’u‚ÉŠ®‘S‚ÉŒÅ’è‚·‚é
         m_transform->SetPosition(centerPos);
 
     }
@@ -2407,10 +2407,10 @@ void PlayerEntity::ResetStageState()
 }
 
 //======================================
-// ãƒ‰ãƒ­ãƒƒãƒ—ã‚¢ã‚¤ãƒ†ãƒ ã‹ã‚‰å‘¼ã°ã‚Œã‚‹é–¢æ•°
+// ƒhƒƒbƒvƒAƒCƒeƒ€‚©‚çŒÄ‚Î‚ê‚éŠÖ”
 //======================================
 
-//è¿½åŠ 
+//’Ç‰Á
 void PlayerEntity::AddCoin(int value)
 {
     m_coin += value;
