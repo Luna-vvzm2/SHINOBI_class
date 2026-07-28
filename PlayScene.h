@@ -70,6 +70,11 @@ public:
 
 	// プレイヤーをリスポーン位置に戻す
 	void RespawnPlayer();
+
+	//敵HPバー処理に使用
+	void AddUIActorFromExternal(UIActor* uiActor) { AddUIActor(uiActor); }
+	void RegisterEnemyHPBar(EnemyEntity* enemy, EnemyHPBar* hpBar);
+
 	// ゲームオーバー時の処理
 	void ShowGameOverMenu();
 
