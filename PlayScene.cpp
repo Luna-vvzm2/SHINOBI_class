@@ -342,37 +342,37 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 203:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<YellowEnemyEntity>(this, pos);
+				auto* yellowEnemy = EnemySpawner::SpawnEnemy<YellowEnemyEntity>(this, pos);
 			} break;
 
 			case 204:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<ArrowEnemyEntity>(this, pos);
+				auto* arrowEnemy = EnemySpawner::SpawnEnemy<ArrowEnemyEntity>(this, pos);
 			} break;
 
 			case 208:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<HealerEnemyEntity>(this, pos);
+				auto* healereEnemy = EnemySpawner::SpawnEnemy<HealerEnemyEntity>(this, pos);
 			} break;
 
 			case 206:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<ArmorEnemyEntity>(this, pos);
+				auto* armorEnemy = EnemySpawner::SpawnEnemy<ArmorEnemyEntity>(this, pos);
 			} break;
 
 			case 207:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<GunnerEnemyEntity>(this, pos);
+				auto* gunnernemy = EnemySpawner::SpawnEnemy<GunnerEnemyEntity>(this, pos);
 			} break;
 
 			case 205:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<YoroiBossEntity>(this, pos, "", Vector2d(192, 192));
+				auto* yoroiBoss = EnemySpawner::SpawnEnemy<YoroiBossEntity>(this, pos, "assets/images/uies/HP_enemy_black.png", Vector2d(192, 192));
 			} break;
 
 			case 210:
 			{
-				auto* whiteEnemy = EnemySpawner::SpawnEnemy<SekienkiBossEntity>(this, pos, "", Vector2d(192, 192));
+				auto* sekienkiBoss = EnemySpawner::SpawnEnemy<SekienkiBossEntity>(this, pos, "assets/images/uies/HP_enemy_black.png", Vector2d(192, 192));
 			} break;
 
 			default:
