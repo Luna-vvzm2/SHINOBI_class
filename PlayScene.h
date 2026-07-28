@@ -51,7 +51,7 @@ public:
 	// Õ“ËƒCƒxƒ“ƒg‚ÉŒÄ‚Ô
 	//void SpawnHitEffect(const Vector2d& pos);
 
-	std::vector<EnemyEntity*> GetMetsuEnemies(){ return m_metsuEnemies; }
+	bool IsActorAlive(Actor* actor) const;
 
 	void AddCombo();
 

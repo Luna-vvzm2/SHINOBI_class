@@ -976,6 +976,18 @@ void PlayScene::Draw() {
 #endif
 }
 
+bool PlayScene::IsActorAlive(Actor* actor) const
+{
+	if (actor == nullptr)
+		return false;
+
+	return std::find(
+		m_actors.begin(),
+		m_actors.end(),
+		actor
+	) != m_actors.end();
+}
+
 void PlayScene::AddCombo() {
 	m_comboCount++;
 	std::cout << "Combo: " << m_comboCount << std::endl;

@@ -733,33 +733,62 @@ void PlayerEntity::UpdateExecution(float deltaTime)
         }
     }
 
-    if (m_executionTimer <= 0.0f) {
-        if (m_executionTargets.empty()) 
+    if (m_executionTimer <= 0.0f)
+    {
+        while (!m_executionTargets.empty())
         {
-            m_isExecution = false;
-            return;
-        }
-        EnemyEntity* target = m_executionTargets.back();
-        Vector2d prevPos = m_transform->GetPosition();
-        Vector2d lastPos = target->GetPos();
-        m_transform->SetPosition(lastPos);
-        target->MetsuAttacked();
-        m_combo++;
-        AddJutsuGauge();
-        m_executionTimer = m_invincibleTime  = 0.2f;
+            EnemyEntity* target = m_executionTargets.back();
+            m_executionTargets.pop_back();
 
-        m_executionTargets.pop_back();
+            if (target == nullptr)
+                continue;
+
+            PlayScene* play = static_cast<PlayScene*>(m_scene);
+
+            if (!play->IsActorAlive(target))
+                continue;
+
+            if (target->IsDead())
+                continue;
+
+            if (!target->IsMetsu())
+                continue;
+
+            Vector2d prevPos = m_transform->GetPosition();
+            Vector2d lastPos = target->GetPos();
+
+            m_transform->SetPosition(lastPos);
+
+            target->MetsuAttacked();
+
+            m_combo++;
+            AddJutsuGauge();
+
+            m_executionTimer = m_invincibleTime = 0.2f;
+
+            if (m_executionTargets.empty())
+            {
+                m_isExecution = false;
+
+                Vector2d dir = lastPos - prevPos;
+
+                if (dir.length() > 0.0f)
+                {
+                    dir = dir.normalize();
+                    dir.y -= 0.3f;
+
+                    m_dir = dir.x > 0.0f ? 1.0f : 0.0f;
+                    m_velocity->Set(dir * m_dashSpeed);
+                }
+            }
+
+            break;
+        }
 
         if (m_executionTargets.empty())
         {
             m_isExecution = false;
-            Vector2d dir = lastPos - prevPos;
-            dir = dir.normalize();
-            dir.y -= 0.3f;
-            m_dir = dir.x > 0.0f ? 1.0f : 0.0f;
-            m_velocity->Set(dir * m_dashSpeed);
         }
-
     }
     else {
         m_executionTimer -= deltaTime;
@@ -1222,7 +1251,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 m_attackType = AttackType::WEAK_ATTACK;
                 switch (m_weakAttackIdx) {
                 case 0:
-                    m_attackTimer = 0.8f;
+                    m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.13f;
                     CheckAttackHit(weak1);
                     pPos.x += (m_dir ? 100.0f : -100.0f);
@@ -1231,7 +1260,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_anim->Play("weakAttack1", true);
                     break;
                 case 1:
-                    m_attackTimer = 0.7f;
+                    m_attackTimer = 0.4f;
                     m_attackLockTimer = 0.2f;
                     CheckAttackHit(weak2);
                     pPos.x += (m_dir ? 30.0f : -30.0f);
@@ -1240,7 +1269,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_anim->Play("weakAttack2", true);
                     break;
                 case 2:
-                    m_attackTimer = 1.2f;
+                    m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.25f;
                     CheckAttackHit(weak3);
                     pPos.y -= 50.0f;
@@ -1248,7 +1277,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_anim->Play("weakAttack3", true);
                     break;
                 case 3:
-                    m_attackTimer = 1.3f;
+                    m_attackTimer = 1.0f;
                     m_attackLockTimer = 1.3f;
                     CheckAttackHit(weak4);
                     pPos.x += (m_dir ? 100.0f : -100.0f);
@@ -1419,7 +1448,7 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
                 enemy->Open();
                 continue;
             }
-            enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
+            enemy->TakeDamage( hitbox.damage, { m_dir ? 150.0f : -150.0f, -300.0f });
             enemy->TakeMetsu(hitbox.metsu);
             m_hit = true;
             m_combo++;
