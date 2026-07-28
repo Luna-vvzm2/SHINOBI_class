@@ -96,6 +96,21 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_maxHaku(100)
 
     , m_ignorePlatform(false)
+
+    //Sound
+
+    , m_kunaiSound(nullptr)
+    , m_excusionSound(nullptr)
+    , m_kamaeSound(nullptr)
+    , m_karyuSound(nullptr)
+    , m_weakAttackSound1(nullptr)
+    , m_weakAttackSound2(nullptr)
+    , m_weakAttackSound3(nullptr)
+    , m_weakAttackSound4(nullptr)
+    , m_strongAttackSound1(nullptr)
+    , m_strongAttackSound2(nullptr)
+    , m_hayabusaAttackSound(nullptr)
+    , m_karaburiSound(nullptr)
 {
 }
 
@@ -258,13 +273,13 @@ bool PlayerEntity::Init() {
     wallJump.loop = false;
     m_anim->AddClip("wallJump", wallJump);
 
-    AnimationClip wallClimbUp; //@•Ç‚ğ•à‚¢‚Ä“o‚éƒAƒjƒ[ƒVƒ‡ƒ“
+    AnimationClip wallClimbUp; //ã€€å£ã‚’æ­©ã„ã¦ç™»ã‚‹ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³
     wallClimbUp.frames = { 99, 100, 101, 102 };
     wallClimbUp.speed = 0.1f;
     wallClimbUp.loop = true;
     m_anim->AddClip("wallClimbUp", wallClimbUp);
 
-    AnimationClip wallClimb; // •Ç‚æ‚¶“o‚è
+    AnimationClip wallClimb; // å£ã‚ˆã˜ç™»ã‚Š
     wallClimb.frames = { 103, 103, 104, 105, 105, 106 };
     wallClimb.speed = 0.1f;
     wallClimb.loop = false;
@@ -507,11 +522,11 @@ bool PlayerEntity::Init() {
     m_collision->SetRect(85, 152);
     m_sprite->SetDrawOffset(0.0f, -34.0f);
 
-    // HP‚ª0‚É‚È‚Á‚½‚Æ‚«‚ÌƒR[ƒ‹ƒoƒbƒN‚ğİ’è
+    // HPãŒ0ã«ãªã£ãŸã¨ãã®ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã‚’è¨­å®š
     if (m_hp) {
         m_hp->OnDeath = [this]() {
             std::cout << "Player died! Showing Game Over Menu..." << std::endl;
-            // PlayScene‚ğæ“¾‚µ‚ÄƒQ[ƒ€ƒI[ƒo[ƒƒjƒ…[‚ğ•\¦
+            // PlaySceneã‚’å–å¾—ã—ã¦ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤º
             PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
             if (playScene) {
                 playScene->ShowGameOverMenu();
@@ -521,6 +536,68 @@ bool PlayerEntity::Init() {
 
     m_anim->Play("idle");
     m_state = ActionState::IDLE;
+
+    m_kunaiSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/kunai.wav")
+    );
+    if (m_kunaiSound != nullptr) m_kunaiSound->SetVolume(180);
+    
+    m_excusionSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/excusion.wav")
+    );
+    if (m_excusionSound != nullptr) m_excusionSound->SetVolume(180);
+
+    m_kamaeSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/kamae.wav")
+    );
+    if (m_kamaeSound != nullptr) m_kamaeSound->SetVolume(180);
+
+    m_karyuSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/karyu.wav")
+    );
+    if (m_karyuSound != nullptr) m_karyuSound->SetVolume(180);
+
+    m_weakAttackSound1 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack1.wav")
+    );
+    if (m_weakAttackSound1 != nullptr) m_weakAttackSound1->SetVolume(140);
+
+    m_weakAttackSound2 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack2.wav")
+    );
+    if (m_weakAttackSound2 != nullptr) m_weakAttackSound2->SetVolume(140);
+
+    m_weakAttackSound3 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack3.wav")
+    );
+    if (m_weakAttackSound3 != nullptr) m_weakAttackSound3->SetVolume(140);
+
+    m_weakAttackSound4 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack4.wav")
+    );
+    if (m_weakAttackSound4 != nullptr) m_weakAttackSound4->SetVolume(140);
+
+    m_strongAttackSound1 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack4.wav")
+    );
+    if (m_strongAttackSound1 != nullptr) m_strongAttackSound1->SetVolume(140);
+
+    m_strongAttackSound2 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack4.wav")
+    );
+    if (m_strongAttackSound2 != nullptr) m_strongAttackSound2->SetVolume(140);
+
+    m_hayabusaAttackSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/hayabusa.wav")
+    );
+    if (m_hayabusaAttackSound != nullptr) m_hayabusaAttackSound->SetVolume(120);
+
+    m_karaburiSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/karaburi.wav")
+    );
+    if (m_hayabusaAttackSound != nullptr) m_hayabusaAttackSound->SetVolume(100);
+
+   
 
 
     return true;
@@ -549,7 +626,7 @@ void PlayerEntity::Update(float deltaTime) {
     if (m_anim) m_anim->Update(deltaTime);
     EntityActor::Update(deltaTime);
 
-    // ƒfƒoƒbƒO—pF4ƒL[‚ğ‰Ÿ‚·‚ÆHP‚ª0‚É‚È‚é
+    // ãƒ‡ãƒãƒƒã‚°ç”¨ï¼š4ã‚­ãƒ¼ã‚’æŠ¼ã™ã¨HPãŒ0ã«ãªã‚‹
 #ifdef _DEBUG
     const Input& input = m_scene->GetGame()->GetInput();
     if (input.GetKey().IsTrigger(Key::NUM_4)) {
@@ -760,6 +837,10 @@ void PlayerEntity::UpdateExecution(float deltaTime)
             m_transform->SetPosition(lastPos);
 
             target->MetsuAttacked();
+
+            if (m_excusionSound != nullptr) {
+                m_excusionSound->Play();
+            }
 
             m_combo++;
             AddJutsuGauge();
@@ -1113,7 +1194,7 @@ void PlayerEntity::EnterSquat()
 
     m_transform->SetPosition(pos);
     m_collision->SetRect(90, 95);
-    m_sprite->SetDrawOffset(0.0f, -62.0f);   // ã‚É48px
+    m_sprite->SetDrawOffset(0.0f, -62.0f);   // ä¸Šã«48px
     m_squat = true;
 }
 
@@ -1166,7 +1247,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.3f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
                     m_kunaiPending = true;
                     m_anim->Play("KunaiSquat", true);
                 }
@@ -1175,7 +1256,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.2f;
                     m_attackLockTimer = 0.1f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
                     m_kunaiPending = true;
                     m_anim->Play("KunaiAir", true);
                 }
@@ -1184,7 +1265,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_attackTimer = 0.3f;
                     m_attackLockTimer = 0.3f;
                     m_kunai--;
-                    m_kunaiSpawnTimer = 0.05f; // –ñ3f
+                    m_kunaiSpawnTimer = 0.05f; // ç´„3f
                     m_kunaiPending = true;
                     m_anim->Play("Kunai", true);
                 }
@@ -1797,7 +1878,7 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
-        // ‚µ‚á‚ª‚İ‚È‚ª‚çˆÚ“®
+        // ã—ã‚ƒãŒã¿ãªãŒã‚‰ç§»å‹•
         if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
         {
             ChangeState(ActionState::SQUAT_WALK);
@@ -1851,7 +1932,7 @@ void PlayerEntity::UpdateState() {
             return;
         }
 
-        // ˆÚ“®ƒL[—£‚µ‚½
+        // ç§»å‹•ã‚­ãƒ¼é›¢ã—ãŸ
         if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
         {
             ChangeState(ActionState::STOP_LONG);
@@ -2016,14 +2097,32 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::WEAK_ATTACK1:
         m_anim->Play("weakAttack1");
+        if (m_weakAttackSound1 != nullptr && m_hit) {
+            m_weakAttackSound1->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::WEAK_ATTACK2:
         m_anim->Play("weakAttack2");
+        if (m_weakAttackSound2 != nullptr && m_hit) {
+            m_weakAttackSound2->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::WEAK_ATTACK3:
         m_anim->Play("weakAttack3");
+        if (m_weakAttackSound3 != nullptr && m_hit) {
+            m_weakAttackSound3->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::ATTACK_END:
@@ -2032,22 +2131,52 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::WEAK_ATTACK4:
         m_anim->Play("weakAttack4");
+        if (m_weakAttackSound4 != nullptr && m_hit) {
+            m_weakAttackSound4->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::WEAK_AIR_ATTACK1:
         m_anim->Play("weakAirAttack1");
+        if (m_weakAttackSound1 != nullptr && m_hit) {
+            m_weakAttackSound1->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::WEAK_AIR_ATTACK2:
         m_anim->Play("weakAirAttack2");
+        if (m_weakAttackSound2 != nullptr && m_hit) {
+            m_weakAttackSound2->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::WEAK_AIR_ATTACK3:
         m_anim->Play("weakAirAttack3");
+        if (m_weakAttackSound3 != nullptr && m_hit) {
+            m_weakAttackSound3->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::STRONG_ATTACK1:
         m_anim->Play("strongAttack1");
+        if (m_strongAttackSound1 != nullptr && m_hit) {
+            m_strongAttackSound1->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::STRONG_ATTACK_END:
@@ -2056,34 +2185,62 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::STRONG_ATTACK2:
         m_anim->Play("strongAttack2");
+        if (m_strongAttackSound2 != nullptr && m_hit) {
+            m_strongAttackSound2->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::HAYABUSA:
         m_anim->Play("Hayabusa");
+        if (m_hayabusaAttackSound != nullptr && m_hit) {
+            m_hayabusaAttackSound->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
     case ActionState::HAYABUSA_HIT:
         m_anim->Play("HayabusaHit");
         break;
-
+        
     case ActionState::HAYABUSA_GROUND:
         m_anim->Play("HayabusaGround");
         break;
 
     case ActionState::KUNAI:
         m_anim->Play("Kunai");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
     case ActionState::KUNAI_AIR:
         m_anim->Play("KunaiAir");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
     case ActionState::KUNAI_WALL:
         m_anim->Play("wallKunai");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
     case ActionState::KUNAI_SQUAT:
         m_anim->Play("KunaiSquat");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
     case ActionState::HIT_TRAP:
@@ -2104,10 +2261,12 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::KAMAE:
         m_anim->Play("Kamae");
+        
         break;
 
     case ActionState::KAMAE_END:
         m_anim->Play("KamaeEnd");
+        
         break;
 
     case ActionState::AIR_KAMAE:
@@ -2128,6 +2287,10 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::EXECUTION_START:
         m_anim->Play("executionStart");
+        if (m_kamaeSound != nullptr && !m_kamaeSound->IsPlaying())
+        {
+            m_kamaeSound->Play();
+        }
         break;
 
     case ActionState::EXECUTION_HORIZON:
@@ -2140,10 +2303,15 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     case ActionState::EXECUTION_END:
         m_anim->Play("executionEnd");
+        
         break;
 
     case ActionState::KARYU_START:
         m_anim->Play("KaryuStart");
+        if (m_karyuSound != nullptr)
+        {
+            m_karyuSound->Play();
+        }
         break;
 
     case ActionState::KARYU_MID:
@@ -2197,7 +2365,7 @@ void PlayerEntity::AddMoney(int delta)
 }
 
 void PlayerEntity::UpdateDead(float deltaTime) {
-    // ‰æ–Ê’†‰›‚Ì–Ú•WÀ•WiƒQ[ƒ€‚Ì‰æ–Ê‰ğ‘œ“x‚É‡‚í‚¹‚Ä”’l‚ğ’²®‚µ‚Ä‚­‚¾‚³‚¢j
+    // ç”»é¢ä¸­å¤®ã®ç›®æ¨™åº§æ¨™ï¼ˆã‚²ãƒ¼ãƒ ã®ç”»é¢è§£åƒåº¦ã«åˆã‚ã›ã¦æ•°å€¤ã‚’èª¿æ•´ã—ã¦ãã ã•ã„ï¼‰
     Vector2d centerPos(960.0f, 540.0f);
 
     if (!m_isDeadTriggered) {
@@ -2208,16 +2376,16 @@ void PlayerEntity::UpdateDead(float deltaTime) {
         AnimationClip dead;
         dead.frames = { 0, 1, 2, 3, 4, 5 };
         dead.speed = 0.12f;
-        dead.loop = false; // 1‰ñÄ¶‚µ‚½‚çÅŒã‚ÌƒRƒ}‚Å~‚Ü‚é
+        dead.loop = false; // 1å›å†ç”Ÿã—ãŸã‚‰æœ€å¾Œã®ã‚³ãƒã§æ­¢ã¾ã‚‹
         m_anim->AddClip("dead", dead);
         m_anim->Play("dead");
 
-        // €–S‚µ‚½uŠÔ‚Éˆêu‚Å‰æ–Ê’†‰›‚Öƒ[ƒv‚³‚¹‚é
+        // æ­»äº¡ã—ãŸç¬é–“ã«ä¸€ç¬ã§ç”»é¢ä¸­å¤®ã¸ãƒ¯ãƒ¼ãƒ—ã•ã›ã‚‹
         m_transform->SetPosition(centerPos);
         m_velocity->Set(Vector2d::Zero());
-        // •¨—ˆÚ“®‚ğŠ®‘S‚É’â~
+        // ç‰©ç†ç§»å‹•ã‚’å®Œå…¨ã«åœæ­¢
         m_velocity->Set(Vector2d::Zero());
-        // –ˆƒtƒŒ[ƒ€‰æ–Ê’†‰›‚ÌˆÊ’u‚ÉŠ®‘S‚ÉŒÅ’è‚·‚é
+        // æ¯ãƒ•ãƒ¬ãƒ¼ãƒ ç”»é¢ä¸­å¤®ã®ä½ç½®ã«å®Œå…¨ã«å›ºå®šã™ã‚‹
         m_transform->SetPosition(centerPos);
 
     }
@@ -2239,10 +2407,10 @@ void PlayerEntity::ResetStageState()
 }
 
 //======================================
-// ƒhƒƒbƒvƒAƒCƒeƒ€‚©‚çŒÄ‚Î‚ê‚éŠÖ”
+// ãƒ‰ãƒ­ãƒƒãƒ—ã‚¢ã‚¤ãƒ†ãƒ ã‹ã‚‰å‘¼ã°ã‚Œã‚‹é–¢æ•°
 //======================================
 
-//’Ç‰Á
+//è¿½åŠ 
 void PlayerEntity::AddCoin(int value)
 {
     m_coin += value;
