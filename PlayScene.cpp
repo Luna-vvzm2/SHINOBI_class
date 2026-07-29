@@ -844,7 +844,7 @@ void PlayScene::RespawnPlayer() {
 	if (hp) {
 		hp->Heal(hp->GetMaxHP());
 	}
-
+	m_player->SetState(Actor::State::Active);
 	std::cout << "Player respawned at: " << m_playerSpawnPoints[0].x << ", " << m_playerSpawnPoints[0].y << std::endl;
 }
 

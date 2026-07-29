@@ -1544,6 +1544,12 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
 
 void PlayerEntity::UpdateState() {
     if (m_hp->GetHP() <= 0) {
+        if (m_state == ActionState::DEAD) {
+            if (m_anim->IsFinished()) {
+                SetState(Actor::State::Paused);
+                return;
+            }
+        }
         ChangeState(ActionState::DEAD);
         m_canMove = false;
         return;
