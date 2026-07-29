@@ -23,8 +23,7 @@ Game::Game()
 Game::~Game() {
 
 
-
-	End();
+;
 }
 
 bool Game::Init(const std::string& title, UINT width, UINT height, UINT color, const std::string& gamefont, const std::string& debugfont) {
@@ -239,7 +238,7 @@ void Game::End() {
 	if (m_renderer) {
 		m_renderer.reset();
 	}
-	//SpriteComponent::ReleaseTextures();
+	SpriteComponent::ReleaseTextures();
 	DxLib_End();	//	DxLib終了処理
 	std::cout << "アプリ終了" << std::endl;
 }
