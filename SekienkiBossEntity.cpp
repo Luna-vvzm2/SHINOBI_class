@@ -439,7 +439,10 @@ void SekienkiBossEntity::StartJumpAttack()
 
 void SekienkiBossEntity::UpdateAI(float deltaTime)
 {
-    if (m_dead) return;
+    if (m_dead) { 
+        SetState(Actor::State::Dead);
+        return; 
+    }
 
     PhaseChange();
     if (m_attackStep == 11 || m_attackStep == 12)
@@ -990,6 +993,7 @@ void SekienkiBossEntity::UpdateAttack(float deltaTime)
         if (m_anim->IsFinished())
         {
             // 撃破処理
+            m_dead = true;
         }
 
         return;
@@ -1010,7 +1014,6 @@ void SekienkiBossEntity::TakeDamage(int damage, const Vector2d& knockback)
         // HPが0以下になったら死亡処理へ
         if (m_hp->GetHP() <= 0)
         {
-            m_dead = true;
             m_attackStep = 13;       // 攻撃ステートをリセット
             m_attackTimer = 0.0f;   // タイマー停止
             SetVel({ 0.0f, 0.0f }); // その場に停止
