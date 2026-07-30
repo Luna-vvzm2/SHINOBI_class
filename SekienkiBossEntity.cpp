@@ -43,6 +43,7 @@ bool SekienkiBossEntity::Init()
         return false;
 
     m_hp = AddComponent<HPComponent>(GetMaxHP());
+    m_metsuMax = GetMaxHP() * 0.3;
 
     // コンポーネントの取得
     m_anim = AddComponent<AnimationComponent>();

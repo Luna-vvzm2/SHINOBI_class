@@ -29,6 +29,7 @@ bool YoroiBossEntity::Init()
     if (!BossEntity::Init()) return false;
 
     m_hp = AddComponent<HPComponent>(GetMaxHP());
+    m_metsuMax = GetMaxHP() * 0.3;
 
     if (m_sprite)
     {
