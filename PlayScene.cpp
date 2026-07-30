@@ -158,7 +158,7 @@ bool PlayScene::Init() {
 
 	if (m_stageBgm != nullptr)
 	{
-		m_stageBgm->SetVolume(70);
+		m_stageBgm->SetVolume(90);
 		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
 	}
 	return true;
@@ -676,7 +676,7 @@ void PlayScene::Update(float deltaTime) {
 	{
 		m_shurikenUI->SetCount(m_player->GetShurikenCount());
 	}
-
+	std::cout << "canMove: " << m_player->GetCanMove() << std::endl;
 }
 		
 void PlayScene::Draw() {

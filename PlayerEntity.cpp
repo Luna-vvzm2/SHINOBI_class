@@ -595,7 +595,7 @@ bool PlayerEntity::Init() {
     m_karaburiSound = AddComponent<SoundComponent>(
         _T("assets/sounds/player/karaburi.wav")
     );
-    if (m_hayabusaAttackSound != nullptr) m_hayabusaAttackSound->SetVolume(100);
+    if (m_hayabusaAttackSound != nullptr) m_karaburiSound->SetVolume(90);
 
    
 
@@ -1295,7 +1295,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 switch (m_airAttackIdx) {
                 case 0: {
                     m_attackTimer = 0.2f;
-                    m_attackLockTimer = 0.1f;
+                    m_attackLockTimer = 0.2f;
                     CheckAttackHit(airWeak1);
                     if (m_hit) m_airAttackIdx++;
                     auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack1, !m_dir);
@@ -1546,11 +1546,11 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
 }
 
 void PlayerEntity::UpdateState() {
+    PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
     if (m_hp->GetHP() <= 0) {
         if (m_state == ActionState::DEAD) {
             if (m_anim->IsFinished()) {
                 SetState(Actor::State::Paused);
-                PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
                 if (playScene) {
                     playScene->ShowGameOverMenu();
                 }
@@ -1560,6 +1560,11 @@ void PlayerEntity::UpdateState() {
         ChangeState(ActionState::DEAD);
         m_canMove = false;
         return;
+    }
+
+    if (m_state == ActionState::HIT_TRAP) {
+        
+        playScene->RespawnPlayer();
     }
 
     if (m_getHit) {
@@ -2257,7 +2262,7 @@ void PlayerEntity::ChangeState(ActionState newState)
         break;
 
     case ActionState::HIT_TRAP:
-        m_anim->Play("hitTrap");
+        m_anim->Play("trapHit");
         break;
 
     case ActionState::HIT_GROUND:
@@ -2363,9 +2368,8 @@ void PlayerEntity::SetMoney(int amount)
 }
 
 void PlayerEntity::HitTrap() {
-    m_hp->Damage(10);
-
-    m_state = ActionState::HIT_TRAP;
+    ChangeState(ActionState::HIT_TRAP);
+    m_canMove = false;
 }
 
 void PlayerEntity::AddMoney(int delta)

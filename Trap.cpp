@@ -49,14 +49,9 @@ void Trap::Update(float deltaTime) {
 
         // 交差判定
         if (m_collision->CheckCollision(playerCol)) {
-            HPComponent* playerHP = player->GetHP();
-
-            if (playerHP) {
-                playerHP->Damage(m_damage); // HPを減らす
-
-                // クールダウンをリセット（例: 1秒間は連続ヒットしない）
-                m_currentCooldown = 1.0f;
-            }
+            player->HitTrap();
+            // クールダウンをリセット（例: 1秒間は連続ヒットしない）
+            m_currentCooldown = 1.0f;
         }
     }
 }
