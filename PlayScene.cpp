@@ -736,6 +736,14 @@ void PlayScene::Draw() {
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 
+	// コンボ表示（m_comboCount が 1 以上なら表示）
+	if (m_player->GetCombo() > 0) {
+		const std::string& debugFont = m_game->GatDebugFont();
+		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
+		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
+		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
+	}
+
 	drawActors(m_UIactors);
 
 	if (m_menu.IsOpen())
@@ -779,13 +787,6 @@ void PlayScene::Draw() {
 		{ (float)m_player->GetCombo(), 0 }
 	};
 
-	// コンボ表示（m_comboCount が 1 以上なら表示）
-	if (m_player->GetCombo() > 0) {
-		const std::string& debugFont = m_game->GatDebugFont();
-		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
-		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
-		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
-	}
 
 	if (m_resultShown) {
 		const std::string& debugFont = m_game->GatDebugFont();
