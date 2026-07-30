@@ -720,7 +720,7 @@ void PlayerEntity::UpdateJutsuKamae(float deltaTime) {
 }
 
 void PlayerEntity::UpdateKaryu(float deltaTime) {
-
+    if (m_state == ActionState::DEAD) return;
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (m_KaryuTimer <= 0.0f) {
@@ -789,6 +789,7 @@ void PlayerEntity::UpdateKamae(float deltaTime)
 
 void PlayerEntity::UpdateExecution(float deltaTime)
 {
+    if (m_state == ActionState::DEAD) return;
     if (!m_isExecution) {
         if (!m_isKamae) return;
     }
