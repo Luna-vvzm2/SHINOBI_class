@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include "PlayScene.h"
+#include "TitleScene.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
 #include "SoundComponent.h"
@@ -540,7 +541,9 @@ void PlayScene::Update(float deltaTime) {
 
 	if (input.IsTrigger(Action::MENU))
 	{
+		if (m_player->GetState() != Actor::State::Paused)
 		m_menu.Toggle();
+
 		return;
 	}
 
@@ -589,8 +592,13 @@ void PlayScene::Update(float deltaTime) {
 
 			case GameOverMenuUI::MenuItem::TITLE:
 				// タイトル画面へ移動
-				m_isRunning = false;  // PlaySceneを終了
-				break;
+			{
+				Game* game = m_eventManager->GetGame();
+				if (game)
+				{
+					game->ChangeScene(std::make_unique<TitleScene>(game));
+				}
+			}	break;
 
 			default:
 				break;

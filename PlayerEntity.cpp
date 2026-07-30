@@ -523,16 +523,16 @@ bool PlayerEntity::Init() {
     m_sprite->SetDrawOffset(0.0f, -34.0f);
 
     // HPが0になったときのコールバックを設定
-    if (m_hp) {
-        m_hp->OnDeath = [this]() {
-            std::cout << "Player died! Showing Game Over Menu..." << std::endl;
-            // PlaySceneを取得してゲームオーバーメニューを表示
-            PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
-            if (playScene) {
-                playScene->ShowGameOverMenu();
-            }
-            };
-    }
+    //if (m_hp) {
+    //    m_hp->OnDeath = [this]() {
+    //        std::cout << "Player died! Showing Game Over Menu..." << std::endl;
+    //        // PlaySceneを取得してゲームオーバーメニューを表示
+    //        PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
+    //        if (playScene) {
+    //            playScene->ShowGameOverMenu();
+    //        }
+    //        };
+    //}
 
     m_anim->Play("idle");
     m_state = ActionState::IDLE;
@@ -1549,6 +1549,10 @@ void PlayerEntity::UpdateState() {
         if (m_state == ActionState::DEAD) {
             if (m_anim->IsFinished()) {
                 SetState(Actor::State::Paused);
+                PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
+                if (playScene) {
+                    playScene->ShowGameOverMenu();
+                }
                 return;
             }
         }
