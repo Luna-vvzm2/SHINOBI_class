@@ -863,6 +863,13 @@ void PlayScene::ShowGameOverMenu() {
 	m_isGameOver = true;
 	m_isPaused = true;
 
+	auto it = std::find(m_UIactors.begin(), m_UIactors.end(), m_gameOverMenu);
+	if (it != m_UIactors.end())
+	{
+		m_UIactors.erase(it);
+		m_UIactors.push_back(m_gameOverMenu);
+	}
+
 	if (m_hpBarUI) {
 		m_hpBarUI->SetVisible(false);
 	}
