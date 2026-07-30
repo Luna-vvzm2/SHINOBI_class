@@ -67,12 +67,10 @@ void JutsuChargeUI::Draw()
         return;
     }
 
-    bool shouldDisplay = (m_jutsuchage);
+    bool shouldDisplay = (m_jutsuchage && m_isVisible);
 
     if (shouldDisplay && m_ninImage != nullptr) {
         int ninHandle = m_ninImage->GetHandle();
-        printf("DEBUG: Displaying nin image. Handle: %d, Position: (%.1f, %.1f), Scale: %.2f, DamageCount: %d\n",
-            ninHandle, m_ninImageX, m_ninImageY, m_ninImageScale, m_damageCount);
 
         if (ninHandle >= 0) {
             // ★変更：スケールを適用

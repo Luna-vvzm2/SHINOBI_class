@@ -129,10 +129,10 @@ bool PlayScene::Init() {
 	AddUIActor(m_moneyUI);
 
 	// 忍術チャージUI
-	JutsuChargeUI* jutsuUI = new JutsuChargeUI(this);
-	jutsuUI->SetNinImagePosition(52.0f, 0.0f);
-	jutsuUI->SetNinImageScale(0.46f);  // 50%のサイズ（半分）
-	AddUIActor(jutsuUI);
+	m_jutsuChargeUI = new JutsuChargeUI(this);
+	m_jutsuChargeUI->SetNinImagePosition(52.0f, 0.0f);
+	m_jutsuChargeUI->SetNinImageScale(0.46f);  // 50%のサイズ（半分）
+	AddUIActor(m_jutsuChargeUI);
 
 	// プレイヤー金額変更時に MoneyUI を 3 秒表示（増えたときのみ）
 	if (m_player) {
@@ -575,6 +575,9 @@ void PlayScene::Update(float deltaTime) {
 				if (m_shurikenUI) {
 					m_shurikenUI->SetVisible(true);
 				}
+				if (m_jutsuChargeUI) {
+					m_jutsuChargeUI->SetVisible(true);
+				}
 				RespawnPlayer();
 				break;
 
@@ -866,6 +869,11 @@ void PlayScene::ShowGameOverMenu() {
 
 	if (m_shurikenUI) {
 		m_shurikenUI->SetVisible(false);
+	}
+
+	if (m_jutsuChargeUI) {
+		m_jutsuChargeUI->SetVisible(false);
+		std::cout << "m_jutsuChargeUI = false;" << std::endl;
 	}
 
 	if (m_gameOverMenu) {

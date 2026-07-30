@@ -604,6 +604,7 @@ bool PlayerEntity::Init() {
 }
 
 void PlayerEntity::Update(float deltaTime) {
+    EntityActor::Update(deltaTime);
     UpdateIgnorePlatform();
     UpdateInvincible(deltaTime);
 
@@ -624,7 +625,6 @@ void PlayerEntity::Update(float deltaTime) {
     UpdateState();
 
     if (m_anim) m_anim->Update(deltaTime);
-    EntityActor::Update(deltaTime);
 
     // デバッグ用：4キーを押すとHPが0になる
 #ifdef _DEBUG
@@ -664,6 +664,7 @@ void PlayerEntity::UpdateIgnorePlatform()
 
 void PlayerEntity::UpdateInvincible(float deltaTime)
 {
+    if (m_state == ActionState::DEAD) return;
     if (m_getHit) {
         m_getHitTimer -= deltaTime;
         if (m_getHitTimer <= 0.0f) {
@@ -1226,6 +1227,7 @@ void PlayerEntity::SpawnKunai()
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
+    if (m_state == ActionState::DEAD) return;
     if (m_isKamae) return;
     if (m_isExecution) return;
     if (m_isJutsuKamae) return;

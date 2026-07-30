@@ -16,6 +16,7 @@ public:
     void SetNinImagePosition(float x, float y);
     void SetNinImageScale(float scale);
 
+    void SetVisible(bool visible) { m_isVisible = visible; }
 private:
     SpriteComponent* m_ninImage = nullptr;
 
@@ -25,4 +26,5 @@ private:
     float m_ninImageY = 20.0f;
     float m_ninImageScale = 1.0f;
     int m_damageCount = 0;
+    bool m_isVisible = true;
 };

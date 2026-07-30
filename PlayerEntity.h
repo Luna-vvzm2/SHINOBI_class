@@ -79,6 +79,7 @@ public:
     int GetJutsuGaugeAmount() const { return m_jutsuGauge; }
 
     bool OnGround() const { return m_isGround; }
+    bool GetCanMove() { return m_canMove; }
     void SetCanMove(bool canMove) { m_canMove = canMove; }
     void SetPosition(Vector2d pos) { m_transform->SetPosition(pos); }
 
