@@ -2,6 +2,7 @@
 #include "EnemyEntity.h"
 #include "EffectActor.h"
 #include "Scene.h"
+#include "PlayScene.h"
 #include "BlockActor.h"
 #include "KunaiActor.h"
 #include "TreasureBox.h"
@@ -15,7 +16,6 @@
 #include "KaryuTextUI.h"
 #include "Input.h"
 #include "Game.h"
-#include "PlayScene.h"
 #include <Windows.h>
 
 //                       offset, width, height, damage, metsu

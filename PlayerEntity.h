@@ -1,7 +1,6 @@
 #pragma once
-#include "EnemyEntity.h"
+#include "EntityActor.h"
 #include "BlockActor.h"
-#include "Vector2d.h"
 #include "SpriteComponent.h"
 #include "TransformComponent.h"
 #include <functional>
@@ -25,10 +24,9 @@ struct SensorData
     BlockActor* frontNearGround = nullptr;
 };
 
-class TransformComponent;
+class EnemyEntity;
 class VelocityComponent;
 class GravityComponent;
-class SpriteComponent;
 class CollisionComponent;
 class AnimationComponent;
 class HPComponent;

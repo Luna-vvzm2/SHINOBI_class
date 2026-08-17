@@ -42,14 +42,10 @@
 #include "StructureBBlock.h"
 #include "Trap.h"
 #include "HPBarUI.h"
-#include "ShurikenUI.h"
 #include "BackGroundUI.h"
 #include "TreasureBox.h"
 #include "JutsuChargeUI.h"
-#include "Camera.h"
-#include "MoneyUI.h"
 #include "EnemyHPBar.h"
-#include "Menu.h"
 #include "EnemySpawner.h"
 
 //イベントのため変更

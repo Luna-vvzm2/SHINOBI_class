@@ -1,7 +1,6 @@
 #pragma once
 #include "Scene.h"
 #include "Vector2d.h"
-#include "EnemyEntity.h"
 #include "Camera.h"
 #include "MapData.h"
 #include "ShurikenUI.h"
@@ -9,17 +8,15 @@
 
 #include "Menu.h"
 
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
 class PlayerEntity;
 class EnemyEntity;
 class HPBarUI;
 class EnemyHPBar;
-class MoneyUI; 
-class TransformComponent;
-class VelocityComponent;
 class SoundComponent;
-class HPComponent;
 class GameOverMenuUI;
 class JutsuChargeUI;
 

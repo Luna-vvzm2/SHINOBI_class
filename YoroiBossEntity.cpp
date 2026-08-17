@@ -1,5 +1,6 @@
 ﻿#include "YoroiBossEntity.h"
 #include "TransformComponent.h"
+#include "CollisionComponent.h"
 #include "VelocityComponent.h"
 #include "HPComponent.h"
 #include "PlayScene.h"

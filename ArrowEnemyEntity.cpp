@@ -1,5 +1,6 @@
 #include "ArrowEnemyEntity.h"
 #include "VelocityComponent.h"
+#include "CollisionComponent.h"
 #include "HPComponent.h"
 #include "Vector2d.h"
 #include "EnemyBullet.h"

@@ -1,6 +1,7 @@
 ﻿#include "SekienkiBossEntity.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
+#include "CollisionComponent.h"
 #include "HPComponent.h"
 #include "PlayScene.h"
 #include "PlayerEntity.h"

@@ -1,4 +1,6 @@
 #include "SpriteComponent.h"
+#include "TransformComponent.h"
+#include "CollisionComponent.h"
 #include "TextureManager.h"
 #include "Actor.h"
 #include "Scene.h"
@@ -7,9 +9,6 @@
 #include <DxLib.h>
 #include <iostream>
 #include <unordered_set>
-#include "TransformComponent.h"
-#include "CollisionComponent.h"
-#include "PlayerEntity.h"
 
 std::unordered_map<std::string, int>
 SpriteComponent::s_textureCache;

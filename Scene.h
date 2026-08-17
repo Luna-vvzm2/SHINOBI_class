@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <iostream>
 #include "Actor.h"
-#include "CollisionComponent.h"
 
 class Game;
 class Actor;
+struct Segment;
 
 class Scene
 {
