@@ -33,6 +33,8 @@ void Input::Init() {
     m_actionPadMap[static_cast<size_t>(Action::STRONG_ATTACK)] = { Joypad::Y };
     m_actionPadMap[static_cast<size_t>(Action::KUNAI)] = { Joypad::B };
     m_actionPadMap[static_cast<size_t>(Action::KAMAE)] = { Joypad::LB };
+    m_actionPadMap[static_cast<size_t>(Action::G)] = { Joypad::LT };
+    m_actionPadMap[static_cast<size_t>(Action::JUTSU_KAMAE)] = { Joypad::RT };
     m_actionPadMap[static_cast<size_t>(Action::JUMP)] = { Joypad::A };
     m_actionPadMap[static_cast<size_t>(Action::ESCAPE)] = { Joypad::START };
     m_actionPadMap[static_cast<size_t>(Action::ENTER)] = { Joypad::B };

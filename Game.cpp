@@ -207,8 +207,6 @@ void Game::Draw() {
 	if (m_input.GetPad().IsDown(Joypad::RB)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "RB", Color(255, 64, 0), m_debugFont, 24, false);
 	if (m_input.GetPad().IsDown(Joypad::BACK)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "BACK", Color(255, 64, 0), m_debugFont, 24, false);
 	if (m_input.GetPad().IsDown(Joypad::START)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "START", Color(255, 64, 0), m_debugFont, 24, false);
-	if (m_input.GetPad().IsDown(Joypad::LSB)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "LSB", Color(255, 64, 0), m_debugFont, 24, false);
-	if (m_input.GetPad().IsDown(Joypad::RSB)) m_renderer->DrawTextL(Vector2d(150.0f, 0), "RSB", Color(255, 64, 0), m_debugFont, 24, false);
 
 	if (!m_renderer) return;
 
