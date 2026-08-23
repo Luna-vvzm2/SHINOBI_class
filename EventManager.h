@@ -75,7 +75,6 @@ public:
 	virtual void Draw() = 0;
 
 protected:
-	std::string LoadConfig(const std::string& text, const std::string& configName) const; //テキストから設定を読み取る
 	void LoadTexts(const std::string& filePath); //テキストファイルの読み込み
 	void DeleteTexts(); //テキストデータの解放
 	std::vector<std::string> m_texts; //表示テキスト
@@ -112,6 +111,8 @@ private:
 
 	std::string m_talkerName{ "" };
 	std::string m_talkText{ "" };
+	bool m_isTextTimerActive{ false }; //テキスト表示タイマーが有効か
+	float m_textTimer{ 0.0f }; //テキスト表示タイマー
 	ActorPosition m_talkerPosition{ ActorPosition::None };
 	int m_actorTextureId{ -1 }; //立ち絵のid
 	int m_actorW{ 480 };

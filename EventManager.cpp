@@ -1,4 +1,5 @@
 #include <fstream>
+#include <sstream>
 #include <algorithm>
 #include "EventManager.h"
 #include "EventTexture.h"
@@ -20,6 +21,17 @@
 #include "HPComponent.h"
 #include "EnemySpawner.h"
 
+inline std::vector<std::string> SplitCSV(const std::string& line)
+{
+	std::vector<std::string> tokens;
+	std::stringstream ss(line);
+	std::string token;
+	while (std::getline(ss, token, ','))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
+}
 
 EventManager::EventManager(Scene* scene, EventTexture* eventTexture)
 	: m_scene(scene)
@@ -138,22 +150,31 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 			eventTexts.clear();
 		};
 
+	bool isHeaderLine = true; //一行目をスキップするフラグ
+
 	while (std::getline(ifs, text))
 	{
+		std::istringstream i_stream(text);
 		if (text.empty() || text.rfind("//", 0) == 0)continue;
 
-		if (text.find("[TYPE=") != std::string::npos)
+		if (isHeaderLine)
+		{
+			isHeaderLine = false;
+			continue;
+		}
+
+		std::stringstream ss(text);
+		std::string type;
+		std::getline(ss, type, ',');
+
+		if (!type.empty())
 		{
 			pushEvent();
-
-			if (text.find("TALK") != std::string::npos) eventType = "TALK";
-			else if (text.find("BATTLE") != std::string::npos) eventType = "BATTLE";
-			else if (text.find("CUTIN") != std::string::npos) eventType = "CUTIN";
-			else if (text.find("CLEAR") != std::string::npos) eventType = "CLEAR";
-			continue;
+			eventType = type;
 		}
 		eventTexts.push_back(text);
 	}
+
 	pushEvent();
 	ifs.close();
 
@@ -184,16 +205,6 @@ EventTexture* EventManager::GetEventTexture() const
 
 EventBase::EventBase() = default;
 EventBase::~EventBase() = default;
-
-std::string EventBase::LoadConfig(const std::string& text, const std::string& configName) const
-{
-	size_t pos = text.find(configName + "=\"");
-	if (pos == std::string::npos) return "";
-	size_t start = pos + configName.length() + 2;
-	size_t end = text.find("\"", start);
-	if (end == std::string::npos) return "";
-	return text.substr(start, end - start);
-}
 
 void EventBase::LoadTexts(const std::string& filePath)
 {
@@ -255,17 +266,10 @@ void TalkEvent::Init()
 		{
 			for (const std::string& text : m_texts)
 			{
-				size_t configEndPos = text.find(']');
-				if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+				auto tokens = SplitCSV(text);
+				if(tokens.size() > 3 && !tokens[3].empty() && tokens[3] != "None")
 				{
-					std::string configPart = text.substr(1, configEndPos - 1);
-
-					std::string imgPath = LoadConfig(configPart, "path");
-
-					if (!imgPath.empty() && imgPath != "None")
-					{
-						texManager->LoadTexture(imgPath);
-					}
+					texManager->LoadTexture(tokens[3]);
 				}
 			}
 		}
@@ -283,6 +287,16 @@ void TalkEvent::Update(float deltaTime)
 	{
 		NextText();
 	}
+	if (m_isTextTimerActive)
+	{
+		m_textTimer -= deltaTime;
+		if (m_textTimer <= 0.0f)
+		{
+			m_isTextTimerActive = false;
+			NextText();
+		}
+	}
+
 	if (input.IsDown(Action::ESCAPE)) //スキップ処理
 	{
 		if (input.GetPressFrame(Action::ESCAPE) >= m_skipTimer)
@@ -320,73 +334,55 @@ void TalkEvent::ShowText()
 	if (m_currentLine < 0 || m_currentLine >= static_cast<int>(m_texts.size())) return;
 
 	const std::string& text = m_texts[m_currentLine];
+	auto tokens = SplitCSV(text);
 
-	size_t configEndPos = text.find(']'); 
-
-	if (text.front() == '[' && configEndPos != std::string::npos)
+	if(tokens.size() > 1 && !tokens[1].empty() && tokens[1] != "None")
 	{
-		std::string configPart = text.substr(1, configEndPos - 1);
-		m_talkText = text.substr(configEndPos + 1);
+		m_talkerName = tokens[1];
+	}
 
-		std::string nameStr = LoadConfig(configPart, "name");
-		if (!nameStr.empty() && nameStr != "None")
+	if (tokens.size() > 2 && !tokens[2].empty() && tokens[2] != "None")
+	{
+		m_textTimer = std::stof(tokens[2]);
+		m_isTextTimerActive = true;
+	}
+
+	if (tokens.size() > 3 && !tokens[3].empty() && tokens[3] != "None")
+	{
+		if(tokens[3] == "R") m_talkerPosition = ActorPosition::Right;
+		else if (tokens[3] == "L") m_talkerPosition = ActorPosition::Left;
+	}
+
+	if(tokens.size() > 4 && !tokens[4].empty() && tokens[4] != "None")
+	{
+		if (m_eventManager && m_eventManager->GetEventTexture())
 		{
-			m_talkerName = nameStr;
+			m_actorTextureId = m_eventManager->GetEventTexture()->LoadTexture(tokens[4]);
 		}
 
-		std::string imgPath = LoadConfig(configPart, "path");
-		if (!imgPath.empty() && imgPath != "None")
+		//画像のサイズを変更できる機能（必要ないかも）
+		if (tokens.size() > 6 && !tokens[6].empty() && tokens[6] != "None")
 		{
-			if (m_eventManager && m_eventManager->GetEventTexture())
-			{
-				m_actorTextureId = m_eventManager->GetEventTexture()->LoadTexture(imgPath);
-			}
-
-			std::string wStr = LoadConfig(configPart, "w");
-			std::string hStr = LoadConfig(configPart, "h");
-
-			if (!wStr.empty() && wStr != "None" && std::isdigit(wStr[0]))
-			{
-				m_actorW = std::stoi(wStr);
-			}
-			else
-			{
-				m_actorW = 480;
-			}
-
-			if (!hStr.empty() && hStr != "None" && std::isdigit(hStr[0]))
-			{
-				m_actorH = std::stoi(hStr);
-			}
-			else
-			{
-				m_actorH = 510;
-			}
+			m_actorW = std::stoi(tokens[6]);
+		}
+		else
+		{
+			m_actorW = 480;
 		}
 
-		std::string timeStr = LoadConfig(configPart, "time");
-		if (!timeStr.empty() && timeStr != "None")
+		if (tokens.size() > 7 && !tokens[7].empty() && tokens[7] != "None")
 		{
-			float displayTime = stof(timeStr);
+			m_actorH = std::stoi(tokens[7]);
 		}
-
-		std::string posStr = LoadConfig(configPart, "pos");
-		if (!posStr.empty() && posStr != "None")
+		else
 		{
-			if (posStr == "R")
-			{
-				m_talkerPosition = ActorPosition::Right;
-			}
-			else if (posStr == "L")
-			{
-				m_talkerPosition = ActorPosition::Left;
-			}
+			m_actorH = 510;
 		}
 	}
-	else
+
+	if(tokens.size() > 5 && !tokens[5].empty() && tokens[5] != "None")
 	{
-		//設定がない場合設定を保持して次のセリフを表示
-		m_talkText = text;
+		m_talkText = tokens[5];
 	}
 
 
@@ -517,29 +513,35 @@ void BattleEvent::Update(float deltaTime)
 	{
 		for (const std::string& text : m_texts)
 		{
-			
-			size_t configEndPos = text.find(']');
-			if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+			auto tokens = SplitCSV(text);
+			if (tokens.size() > 1 && !tokens[1].empty() && tokens[1] != "None")
 			{
-				std::string configPart = text.substr(1, configEndPos - 1);
-
-				std::string enemyStr = LoadConfig(configPart, "enemyType");
-				if (!enemyStr.empty() && enemyStr != "None") m_enemyType = std::stoi(enemyStr);
-
-				std::string posXStr = LoadConfig(configPart, "posX");
-				if (!posXStr.empty() && posXStr != "None") m_enemyPos.x = std::stof(posXStr);
-
-				std::string posYStr = LoadConfig(configPart, "posY");
-				if (!posYStr.empty() && posYStr != "None") m_enemyPos.y = -std::stof(posYStr);
-
-				std::string areaMinStr = LoadConfig(configPart, "areaMin");
-				if (!areaMinStr.empty() && areaMinStr != "None") m_areaXMin = std::stof(areaMinStr);
-
-				std::string areaMaxStr = LoadConfig(configPart, "areaMax");
-				if (!areaMaxStr.empty() && areaMaxStr != "None") m_areaXMax = std::stof(areaMaxStr);
-
-				EnemySpawn();
+				Vector2d triggerPos = m_eventManager->GetTriggerPosition();
+				m_areaXMin = std::stof(tokens[1]);
+				m_areaXMin += triggerPos.x;
 			}
+
+			if (tokens.size() > 2 && !tokens[2].empty() && tokens[2] != "None")
+			{
+				m_areaXMax = std::stof(tokens[2]);
+				m_areaXMax += m_areaXMin;
+			}
+
+			if (tokens.size() > 3 && !tokens[3].empty() && tokens[3] != "None")
+			{
+				m_enemyType = std::stoi(tokens[3]);
+			}
+
+			if (tokens.size() > 4 && !tokens[4].empty() && tokens[4] != "None")
+			{
+				m_enemyPos.x = std::stof(tokens[4]);
+			}
+
+			if (tokens.size() > 5 && !tokens[5].empty() && tokens[5] != "None")
+			{
+				m_enemyPos.y = -std::stof(tokens[5]);
+			}
+			EnemySpawn();
 		}
 		m_isSpawned = true;
 		std::cerr << "生成された敵の数: " << m_actors.size() << "\n";
@@ -596,6 +598,7 @@ void BattleEvent::Update(float deltaTime)
 				else
 				{
 					if (pos.x < m_areaXMin) pos.x = m_areaXMin;
+
 					if (pos.x > m_areaXMax) pos.x = m_areaXMax;
 
 					transform->SetPosition(pos);
@@ -779,43 +782,36 @@ void CutInEvent::Init()
 		{
 			for (const std::string& text : m_texts)
 			{
-				size_t configEndPos = text.find(']');
-				if (!text.empty() && text.front() == '[' && configEndPos != std::string::npos)
+				auto tokens = SplitCSV(text);
+
+				if (tokens.size() > 1 && !tokens[1].empty() && tokens[1] != "None")
 				{
-					std::string configPart = text.substr(1, configEndPos - 1);
+					m_rBossName = tokens[1];
+				}
 
-					std::string uImgPath = LoadConfig(configPart, "bandPath");
-					if (!uImgPath.empty() && uImgPath != "None")
-					{
-						if (m_eventManager && m_eventManager->GetEventTexture())
-						{
-							m_bandTextureId = m_eventManager->GetEventTexture()->LoadTexture(uImgPath);
-						}
-					}
+				if (tokens.size() > 2 && !tokens[2].empty() && tokens[2] != "None")
+				{
+					m_jBossName = tokens[2];
+				}
 
-					std::string bImgPath = LoadConfig(configPart, "bossPath");
-					if (!bImgPath.empty() && bImgPath != "None")
-					{
-						if (m_eventManager && m_eventManager->GetEventTexture())
-						{
-							m_bossTextureId = m_eventManager->GetEventTexture()->LoadTexture(bImgPath);
-						}
-					}
+				if (tokens.size() > 3 && !tokens[3].empty() && tokens[3] != "None")
+				{
+					m_displayTime = std::stof(tokens[3]);
+				}
 
-					std::string mImgPath = LoadConfig(configPart, "musashiPath");
-					if (!mImgPath.empty() && mImgPath != "None")
-					{
-						if (m_eventManager && m_eventManager->GetEventTexture())
-						{
-							m_musashiTextureId = m_eventManager->GetEventTexture()->LoadTexture(mImgPath);
-						}
-					}
+				if (tokens.size() > 4 && !tokens[4].empty() && tokens[4] != "None")
+				{
+					m_bossTextureId = texManager->LoadTexture(tokens[4]);
+				}
 
+				if (tokens.size() > 5 && !tokens[5].empty() && tokens[5] != "None")
+				{
+					m_musashiTextureId = texManager->LoadTexture(tokens[5]);
+				}
 
-					m_jBossName = LoadConfig(configPart, "jName");
-					m_rBossName = LoadConfig(configPart, "rName");
-
-					m_displayTime = std::stof(LoadConfig(configPart, "time"));
+				if (tokens.size() > 6 && !tokens[6].empty() && tokens[6] != "None")
+				{
+					m_bandTextureId = texManager->LoadTexture(tokens[6]);
 				}
 			}
 		}
@@ -1052,7 +1048,7 @@ void EventTrigger::Update(float deltaTime)
 			Vector2d adjustedPos = { myPos.x, groundY - 100.0f};
 			m_eventManager->SetTriggerPosition(adjustedPos);
 
-			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".txt";
+			std::string filePath = "assets/events/event_" + std::to_string(m_eventId) + ".csv";
 			m_eventManager->LoadEventTimeLine(filePath, adjustedPos);
 		}
 
