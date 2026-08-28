@@ -78,6 +78,9 @@
     <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(IncludePath)</IncludePath>
     <ExternalIncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -167,6 +170,7 @@
     <ClCompile Include="GameOverMenuUI.cpp" />
     <ClCompile Include="GunnerEnemyEntity.cpp" />
     <ClCompile Include="HealerEnemyEntity.cpp" />
+    <ClCompile Include="HitboxData.cpp" />
     <ClCompile Include="HouseBlock.cpp" />
     <ClCompile Include="JutsuChargeUI.cpp" />
     <ClCompile Include="KaryuTextUI.cpp" />
@@ -264,6 +268,7 @@
     <ClInclude Include="GameOverMenuUI.h" />
     <ClInclude Include="GunnerEnemyEntity.h" />
     <ClInclude Include="HealerEnemyEntity.h" />
+    <ClInclude Include="HitboxData.h" />
     <ClInclude Include="HouseBlock.h" />
     <ClInclude Include="JutsuChargeUI.h" />
     <ClInclude Include="KaryuTextUI.h" />
