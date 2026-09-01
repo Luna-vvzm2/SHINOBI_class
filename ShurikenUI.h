@@ -10,7 +10,10 @@ public:
     void SetCount(int count);
     void Draw() override;
 
+    void SetVisible(bool visible) { m_isVisible = visible; }
+    bool IsVisible() const { return m_isVisible; }
 private:
     SpriteComponent* m_icon = nullptr; // ¬‚³‚Èè— Œ•ƒAƒCƒRƒ“
     int m_count = 0;
+    bool m_isVisible = true;
 };

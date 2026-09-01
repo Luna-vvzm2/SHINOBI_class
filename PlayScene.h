@@ -1,7 +1,6 @@
 #pragma once
 #include "Scene.h"
 #include "Vector2d.h"
-#include "EnemyEntity.h"
 #include "Camera.h"
 #include "MapData.h"
 #include "ShurikenUI.h"
@@ -9,17 +8,17 @@
 
 #include "Menu.h"
 
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
 class PlayerEntity;
 class EnemyEntity;
 class HPBarUI;
 class EnemyHPBar;
-class MoneyUI; 
-class TransformComponent;
-class VelocityComponent;
-class HPComponent;
+class SoundComponent;
 class GameOverMenuUI;
+class JutsuChargeUI;
 
 //イベントのため追加
 class EventTexture;
@@ -49,7 +48,7 @@ public:
 	// 衝突イベント時に呼ぶ
 	//void SpawnHitEffect(const Vector2d& pos);
 
-	std::vector<EnemyEntity*> GetMetsuEnemies(){ return m_metsuEnemies; }
+	bool IsActorAlive(Actor* actor) const;
 
 	void AddCombo();
 
@@ -63,15 +62,23 @@ public:
 	// 最初の地面のY座標を取得
 	float GetInitialGroundY() const { return m_initialGroundY; }
 
+	//クリアシーンのため追加　クリアタイムのゲッター関数
+	float GetPlayTime() const { return m_playTimer; }
+
 	// プレイヤーをリスポーン位置に戻す
 	void RespawnPlayer();
+
+	//敵HPバー処理に使用
+	void AddUIActorFromExternal(UIActor* uiActor) { AddUIActor(uiActor); }
+	void RegisterEnemyHPBar(EnemyEntity* enemy, EnemyHPBar* hpBar);
+
 	// ゲームオーバー時の処理
 	void ShowGameOverMenu();
 
 	int m_bgHandle;
 	int m_fgHandle;
 private:
-
+	
 	PlayerEntity* m_player;
 	MapData m_mapData;
 	std::vector<Vector2d> m_playerSpawnPoints;
@@ -83,6 +90,7 @@ private:
 	Menu m_menu;
 
 	Camera m_camera;
+	SoundComponent* m_stageBgm;
 
 	int m_stageIndex;
 	int m_comboCount = 0;
@@ -91,15 +99,18 @@ private:
 	int m_currentStage;
 	bool m_resultShown = false;
 
+	HPBarUI* m_hpBarUI = nullptr;
 	ShurikenUI* m_shurikenUI = nullptr;
-
 	MoneyUI* m_moneyUI = nullptr;
+
+	JutsuChargeUI* m_jutsuChargeUI = nullptr;
 
 	std::unordered_map<EnemyEntity*, EnemyHPBar*> m_enemyToHPBarMap;
 	
 	//イベントのため変更
 	std::unique_ptr<EventTexture> m_eventTexture;
 	std::unique_ptr<EventManager> m_eventManager;
+	float m_playTimer{ 0.0f }; //クリアタイムのためのカウンタ変数
 
 	// リスポーン位置（初期位置）
 	Vector2d m_respawnPos;

@@ -1,8 +1,6 @@
 #pragma once
 #include "EnemyEntity.h"
 
-class AnimationComponent;
-
 class ArrowEnemyEntity : public EnemyEntity
 {
 public:
@@ -15,9 +13,6 @@ public:
     void TakeDamage(int damage, const Vector2d& knockback) override;
 
 private:
-    void CancelAttackForDamage();
-    void StartHit(const Vector2d& knockback);
-    void StartDeadHit();
 
 
     enum class AttackState
@@ -41,8 +36,10 @@ private:
     float m_damageTimer = 0.0f;
     int m_damagePerSecond = 10;
     bool m_isHit = false;
-    bool m_isDying = false;
+    float m_hitTimer;
     AnimationComponent* m_animation = nullptr;
+    float m_detectRange = 1000.0f;   // 感知距離
+    float m_attackRange = 500.0f;   // 攻撃開始距離（必要なら）
+    bool m_targetLocked = false;
 };
-
 

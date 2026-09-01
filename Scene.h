@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <iostream>
 #include "Actor.h"
-#include "CollisionComponent.h"
 
 class Game;
 class Actor;
+struct Segment;
 
 class Scene
 {
@@ -22,6 +22,7 @@ public:
 	enum class Type {
 		Title,
 		Play,
+		Clear, //クリアシーンのために追加
 
 	};
 	//addactorを移動

@@ -39,6 +39,15 @@ bool EnemyHPBar::Init()
         }
     }
 
+    m_metsuFullSprite = AddComponent<SpriteComponent>(m_metsuFullImagePath);
+    if (m_metsuFullSprite) {
+        int handle = m_metsuFullSprite->GetHandle();
+        if (handle >= 0) {
+            // 必要に応じてサイズを設定
+            m_metsuFullSprite->SetSize(m_maxWidth, m_height);
+        }
+    }
+
     m_transform->SetPosition({ 0.0f, 0.0f });
 
     // 初期は非表示
@@ -91,13 +100,13 @@ void EnemyHPBar::Draw()
             if (GetGraphSize(handle, &origW, &origH) != -1 && origW > 0 && origH > 0) {
                 float scaleX = m_maxWidth / static_cast<float>(origW);
                 // 描画 API: DrawSprite は中心座標を渡す仕様なので左上 -> 中心へ変換
-                Vector2d centerPos(posLeftTop.x + m_maxWidth * 0.5f, posLeftTop.y + m_height * 0.5f);
+                Vector2d centerPos(posLeftTop.x + m_maxWidth * 0.5f, posLeftTop.y + m_hpGaugeYOffset + m_height * 0.5f);
                 renderer->DrawSprite(centerPos, scaleX, 0.0f, handle, true, false);
                 frameDrawn = true;
             }
             else {
                 // フォールバック: DxLib 直描画（左上基準）
-                DrawGraph(static_cast<int>(posLeftTop.x), static_cast<int>(posLeftTop.y), handle, TRUE);
+                DrawGraph(static_cast<int>(posLeftTop.x), static_cast<int>(posLeftTop.y + m_hpGaugeYOffset), handle, TRUE);
                 frameDrawn = true;
             }
         }
@@ -105,8 +114,8 @@ void EnemyHPBar::Draw()
 
     if (!frameDrawn) {
         // 画像がないときはシンプルな枠を描画
-        renderer->DrawRect(posLeftTop, m_maxWidth, m_height, Color(0, 0, 0), true, false);
-        renderer->DrawRect(posLeftTop, m_maxWidth, m_height, Color(255, 255, 255), false, false);
+        renderer->DrawRect(Vector2d(posLeftTop.x, posLeftTop.y + m_hpGaugeYOffset), m_maxWidth, m_height, Color(0, 0, 0), true, false);
+        renderer->DrawRect(Vector2d(posLeftTop.x, posLeftTop.y + m_hpGaugeYOffset), m_maxWidth, m_height, Color(255, 255, 255), false, false);
     }
 
     // --- 赤いゲージ（枠の内側）を計算して描画 ---
@@ -116,7 +125,7 @@ void EnemyHPBar::Draw()
 
     // 横方向は gaugeWidthScale の中心寄せ、縦方向も中心寄せ
     float innerX = posLeftTop.x + (m_maxWidth * (1.0f - m_gaugeWidthScale) * 0.5f) + m_padLeft;
-    float innerY = posLeftTop.y + (m_height - (m_padTop + m_padBottom)) * 0.5f * (1.0f - m_gaugeHeightScale) + m_padTop;
+    float innerY = posLeftTop.y + m_hpGaugeYOffset + (m_height - (m_padTop + m_padBottom)) * 0.5f * (1.0f - m_gaugeHeightScale) + m_padTop;
 
     innerX += m_gaugeOffsetX;
     innerY += m_gaugeOffsetY;
@@ -137,6 +146,35 @@ void EnemyHPBar::Draw()
     metsuRatio = std::clamp(metsuRatio, 0.0f, 1.0f);
 
     renderer->DrawRect(Vector2d(metsuX, metsuY), metsuW * metsuRatio, metsuH, Color(255, 255, 255), true, false);
+
+    if (metsuRatio >= 1.0f && m_metsuFullSprite)  // 満タンの場合
+    {
+        int handle = m_metsuFullSprite->GetHandle();
+        if (handle >= 0) {
+            // HPバーの上に表示
+            Vector2d metsuImagePos(posLeftTop.x, posLeftTop.y - m_metsuHeight + 10);  // HPバー上方に表示
+
+            int imgW = 0, imgH = 0;
+            if (GetGraphSize(handle, &imgW, &imgH) != -1 && imgW > 0 && imgH > 0) {
+                float scaleX = m_maxWidth / static_cast<float>(imgW);
+                Vector2d centerPos(metsuImagePos.x + m_maxWidth * 0.5f, metsuImagePos.y + static_cast<float>(imgH) * 0.5f);
+                renderer->DrawSprite(centerPos, scaleX, 0.0f, handle, true, false);
+            }
+        }
+    }
+}
+
+void EnemyHPBar::SetMetsuFullImagePath(const std::string& imagePath)
+{
+    m_metsuFullImagePath = imagePath;
+    if (m_metsuFullSprite) {
+        // 既存のスプライトを再設定（必要に応じて）
+        m_metsuFullSprite = AddComponent<SpriteComponent>(m_metsuFullImagePath);
+    }
+}
+
+void EnemyHPBar::SetHPGaugeYOffset(float offsetY) {
+    m_hpGaugeYOffset = offsetY;
 }
 
 void EnemyHPBar::SetPosition(float x, float y)

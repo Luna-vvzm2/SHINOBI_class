@@ -21,8 +21,8 @@ public:
 		RB,
 		BACK,
 		START,
-		LSB,
-		RSB,
+		LT,
+		RT,
 		BUTTON_COUNT
 
 	};

@@ -1,10 +1,10 @@
 #pragma once
-#include "EnemyEntity.h"
+#include "EntityActor.h"
 #include "BlockActor.h"
-#include "Vector2d.h"
 #include "SpriteComponent.h"
 #include "TransformComponent.h"
 #include <functional>
+#include"SoundComponent.h"
 
 struct AttackHitbox
 {
@@ -24,16 +24,118 @@ struct SensorData
     BlockActor* frontNearGround = nullptr;
 };
 
-class TransformComponent;
+class EnemyEntity;
 class VelocityComponent;
 class GravityComponent;
-class SpriteComponent;
 class CollisionComponent;
 class AnimationComponent;
 class HPComponent;
+class Input;
 
 class PlayerEntity : public EntityActor {
 public:
+    enum class PlayerState {
+        IDLE,
+
+        RUN_START,
+        RUN,
+        STOP_SHORT,
+        STOP_LONG,
+
+        CHANGE_DIR,
+        CHANGE_DIR_RUN,
+
+        SQUAT_START,
+        SQUAT,
+        SQUAT_IDLE,
+        SQUAT_WALK,
+
+        JUMP_START,
+        JUMP,
+        JUMP_SECOND,
+        FALL,
+        JUMP_LANDING,
+
+        ATTACK,
+        WEAK_ATTACK1,
+        WEAK_ATTACK2,
+        WEAK_ATTACK3,
+        ATTACK_END,
+        WEAK_ATTACK4,
+
+        WEAK_AIR_ATTACK1,
+        WEAK_AIR_ATTACK2,
+        WEAK_AIR_ATTACK3,
+        HAYABUSA,
+        HAYABUSA_HIT,
+        HAYABUSA_GROUND,
+
+        STRONG_ATTACK1,
+        STRONG_ATTACK_END,
+        STRONG_ATTACK2,
+
+        SQUAT_ATTACK,
+        WALL_ATTACK,
+
+        KUNAI,
+        KUNAI_AIR,
+        KUNAI_SQUAT,
+        KUNAI_WALL,
+
+        HIT,
+        HIT_GROUND,
+        HIT_AIR,
+        HIT_AIR_LANDING,
+        HIT_TRAP,
+
+        ROLL,
+        HIEN,
+        SENTEN,
+        ROLL_LANDING,
+
+        SOU_KUNAI_SENTEN,
+
+        WALL_HOLD,
+        WALL_JUMP,
+        WALL_CLIMB,
+        WALL_CLIMB_UP,
+        PLATFORM_CLIMB,
+        CLIMB_END,
+
+        KAMAE,
+        KAMAE_END,
+        AIR_KAMAE,
+        AIR_KAMAE_END,
+
+        JUTSU_KAMAE,
+        JUTSU_KAMAE_END,
+
+        EXECUTION_START,
+        EXECUTION_HORIZON,
+        EXECUTION_VERTICAL,
+        EXECUTION_END,
+
+        KARYU_START,
+        KARYU_MID,
+        KARYU_END,
+
+        DEAD,
+    };
+
+    enum class AttackType {
+        NONE,
+        WEAK_ATTACK,
+        STRONG_ATTACK,
+        KUNAI,
+        SQUAT_ATTACK,
+        SQUAT_KUNAI,
+        AIR_ATTACK,
+        AIR_KUNAI,
+        WALL_ATTACK,
+        WALL_KUNAI,
+        HAYABUSA,
+    };
+
     explicit PlayerEntity(Scene* scene, const Vector2d& pos = Vector2d::Zero(), const Vector2d& size = { 32,32 });
     ~PlayerEntity() override = default;
 
@@ -54,12 +156,15 @@ public:
     void CollectExecutionTargets();
     std::vector<EnemyEntity*> CollectEnemiesInScreen();
 
-    void UpdateMove(float deltaTime);
+    void UpdateScale();
     void UpdateJump(float deltaTime);
     void UpdateGravity(float deltaTime);
     void UpdateAttack(float deltaTime);
-    void UpdateState();
-    void ChangeState(ActionState newState);
+    void UpdateState(float deltaTime);
+    void ChangeState(PlayerState newState);
+    void UpdateMove();
+    void UpdateDir(const Input& input);
+    void UpdateDash(float deltaTime);
     void UpdateDead(float deltaTime); // 死亡時の専用アップデート
 
     ActorType GetType() const override { return ActorType::Player; }
@@ -75,8 +180,10 @@ public:
         printf("jutsuGauge: %d\n", m_jutsuGauge);
     }
     bool GetJutsuCharge() { return m_jutsuCharge; }
+    int GetJutsuGaugeAmount() const { return m_jutsuGauge; }
 
     bool OnGround() const { return m_isGround; }
+    bool GetCanMove() { return m_canMove; }
     void SetCanMove(bool canMove) { m_canMove = canMove; }
     void SetPosition(Vector2d pos) { m_transform->SetPosition(pos); }
 
@@ -103,19 +210,7 @@ public:
 
     void SpawnKunai();
 
-    enum class AttackType {
-        NONE,
-        WEAK_ATTACK,
-        STRONG_ATTACK,
-        KUNAI,
-        SQUAT_ATTACK,
-        SQUAT_KUNAI,
-        AIR_ATTACK,
-        AIR_KUNAI,
-        WALL_ATTACK,
-        WALL_KUNAI,
-        HAYABUSA,
-    };
+    
 
     Vector2d GetDrawOffset() const { return m_sprite->GetDrawOffset(); }
     // ★追加: 手裏剣の数を返す関数
@@ -148,6 +243,8 @@ private:
 
     int m_combo;
     int m_kunai;
+
+    PlayerState m_state;
 
     float m_kunaiSpawnTimer;
     bool m_kunaiPending;
@@ -217,6 +314,26 @@ private:
     int m_maxHaku;
 
     std::string GetTexturePath() const override;
+
+    //サウンド関係
+
+    SoundComponent* m_excusionSound;
+    SoundComponent* m_kamaeSound;
+    SoundComponent* m_karyuSound;
+    SoundComponent* m_kunaiSound;
+    SoundComponent* m_weakAttackSound1;
+    SoundComponent* m_weakAttackSound2;
+    SoundComponent* m_weakAttackSound3;
+    SoundComponent* m_weakAttackSound4;
+
+    SoundComponent* m_strongAttackSound1;
+    SoundComponent* m_strongAttackSound2;
+
+
+    SoundComponent* m_hayabusaAttackSound;
+
+    SoundComponent* m_karaburiSound;
+
 
 };
 

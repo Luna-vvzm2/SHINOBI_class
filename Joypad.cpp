@@ -15,8 +15,6 @@ void Joypad::Init(int padNumber) {
 	m_buttonMap[RB] = PAD_INPUT_6;
 	m_buttonMap[BACK] = PAD_INPUT_7;
 	m_buttonMap[START] = PAD_INPUT_8;
-	m_buttonMap[LSB] = PAD_INPUT_9;
-	m_buttonMap[RSB] = PAD_INPUT_10;
 
 	// ‰Šúó‘Ô
 	int state = GetJoypadInputState(DX_INPUT_PAD1 + padNumber);
@@ -45,6 +43,17 @@ void Joypad::Update() {
 	if (GetJoypadXInputState(DX_INPUT_PAD1 + m_padNumber, &xi) == 0) {
 		m_LT = xi.LeftTrigger / 255.0f; // 0.0f ` 1.0f
 		m_RT = xi.RightTrigger / 255.0f; // 0.0f ` 1.0f
+
+		// ˆê’èˆÈã‰Ÿ‚µ‚½‚çu‰Ÿ‚µ‚Ä‚¢‚év‚Æ”»’è
+		m_nowButtons[LT] = m_LT > 0.2f;
+		m_nowButtons[RT] = m_RT > 0.2f;
+	}
+	else {
+		m_LT = 0.0f;
+		m_RT = 0.0f;
+
+		m_nowButtons[LT] = false;
+		m_nowButtons[RT] = false;
 	}
 
 	GetJoypadAnalogInput(&LX, &LY, inputType);

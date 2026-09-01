@@ -7,7 +7,7 @@ TitleUI::TitleUI(Scene* scene)
 	: UIActor(scene)
 {
 	m_transform = AddComponent<TransformComponent>();
-	m_title = AddComponent<SpriteComponent>("assets/images/uies/title.png");
+	m_title = AddComponent<SpriteComponent>("assets/images/uies/title.png", false);
 	if (!m_title) {
 		std::cerr << "画像読み込み失敗\n";
 	}
@@ -17,7 +17,7 @@ TitleUI::TitleUI(Scene* scene)
 bool TitleUI::Init() {
 	if (!UIActor::Init()) return false;
 
-	m_transform->SetPosition({ 80, 100 });
+	m_transform->SetPosition({ 0, 0 });
 
 	return true;
 }
@@ -37,7 +37,7 @@ void TitleUI::Draw() {
 	int w, h;
 	GetGraphSize(m_title->GetHandle(), &w, &h);
 
-	int ScaleX = 2;
+	int ScaleX = 1;
 	int ScaleY = ScaleX;
 
 	// スクリーン座標描画（カメラ影響なし）

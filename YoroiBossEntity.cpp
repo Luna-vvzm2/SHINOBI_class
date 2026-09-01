@@ -1,5 +1,6 @@
 ﻿#include "YoroiBossEntity.h"
 #include "TransformComponent.h"
+#include "CollisionComponent.h"
 #include "VelocityComponent.h"
 #include "HPComponent.h"
 #include "PlayScene.h"
@@ -29,6 +30,7 @@ bool YoroiBossEntity::Init()
     if (!BossEntity::Init()) return false;
 
     m_hp = AddComponent<HPComponent>(GetMaxHP());
+    m_metsuMax = GetMaxHP() * 0.3;
 
     if (m_sprite)
     {
@@ -92,8 +94,9 @@ void YoroiBossEntity::Update(float deltaTime)
 
     if (m_sprite)
     {
-        m_sprite->SetDrawSize(220.0f, 220.0f);
-
+        m_sprite->SetSize(1.0f, 1.0f);
+        GetTransform()->SetScale({ 1.0f, 1.0f });
+        m_sprite->SetDrawOffset(0.0f, -55.0f);
         m_sprite->SetFlipX(m_dir);
     }
 }

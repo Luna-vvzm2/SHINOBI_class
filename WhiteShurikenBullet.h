@@ -2,6 +2,7 @@
 #include "EntityActor.h"
 #include "PlayerEntity.h"
 #include "Game.h"
+#include "CollisionComponent.h"
 #include "VelocityComponent.h"
 
 class WhiteShurikenBullet : public EntityActor

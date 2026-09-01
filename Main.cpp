@@ -34,6 +34,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hRrevInstance, _
 	if (game->Init(WinGameName, WinWidth, WinHeight, WinColor, GameFont, DebugFont)) {
 		game->Run();
 	}
+	game->End();
 	return 0;
 
 }

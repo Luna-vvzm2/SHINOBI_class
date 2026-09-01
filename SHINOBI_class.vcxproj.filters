@@ -213,9 +213,6 @@
     <ClCompile Include="ShurikenUI.cpp">
       <Filter>ソース ファイル\Actor\UI</Filter>
     </ClCompile>
-    <ClCompile Include="DropItemEntity.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="TreasureBox.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -261,9 +258,6 @@
     <ClCompile Include="EquipmentMenu.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="GameOverMenuUI.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Menu.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -271,9 +265,6 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="MenuPage.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Mouse.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="SkillMenu.cpp">
@@ -284,6 +275,30 @@
     </ClCompile>
     <ClCompile Include="KaryuTextUI.cpp">
       <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ClearScene.cpp">
+      <Filter>ソース ファイル\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="ClearUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="DropItemEntity.cpp">
+      <Filter>ソース ファイル\Actor\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="GameOverMenuUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>ソース ファイル\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="JutsuChargeUI.cpp">
+      <Filter>ソース ファイル\Actor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundComponent.cpp">
+      <Filter>ソース ファイル\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="HitboxData.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -534,6 +549,24 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KaryuTextUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ClearScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ClearUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="JutsuChargeUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemySpawner.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="HitboxData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

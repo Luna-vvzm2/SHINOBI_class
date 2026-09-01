@@ -41,7 +41,7 @@ public:
     int GetHandle() const { return m_handle; }
     void SetAlpha(int alpha) { m_alpha = alpha; }
     int GetAlpha() const { return m_alpha; }
-
+    bool GetFlipH() const;
     void SetFlipV(bool flip)
     {
         m_flipV = flip;
@@ -57,7 +57,10 @@ private:
     float m_width;
     float m_height;
     std::string m_texturePath;
+
     static std::unordered_map<std::string, int> s_textureCache;
+    static std::unordered_map<std::string, std::vector<int>> s_textureDivCache;
+
     //‰æ‘œˆÊ’u’²®
     Vector2d m_drawOffset = Vector2d::Zero();
 

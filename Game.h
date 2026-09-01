@@ -30,7 +30,7 @@ public:
 	const std::string& GatGameFont() const { return m_gameFont; }
 	const std::string& GatDebugFont() const { return m_debugFont; }
 
-
+	void ChangeScene(std::unique_ptr<Scene>nextScene); //クリアシーンのために追加 シーンを外部から切り替えるための関数
 
 private:
 
@@ -42,6 +42,7 @@ private:
 	Input m_input;
 
 	std::unique_ptr<Scene> m_scene;
+	std::unique_ptr<Scene> m_nextScene{ nullptr };//クリアシーンのために追加
 
 	bool m_running;
 	bool m_ended;

@@ -15,88 +15,17 @@ public:
 
     enum class ActionState {
         IDLE,
-
-        RUN_START,
         RUN,
-        STOP_SHORT,
-        STOP_LONG,
-
-        CHANGE_DIR,
-        CHANGE_DIR_RUN,
-
-        SQUAT_START,
         SQUAT,
-        SQUAT_IDLE,
-        SQUAT_WALK,
 
-        JUMP_START,
         JUMP,
-        JUMP_SECOND,
         FALL,
-        JUMP_LANDING,
 
         ATTACK,
-        WEAK_ATTACK1,
-        WEAK_ATTACK2,
-        WEAK_ATTACK3,
-        ATTACK_END,
-        WEAK_ATTACK4,
-
-        WEAK_AIR_ATTACK1,
-        WEAK_AIR_ATTACK2,
-        WEAK_AIR_ATTACK3,
-        HAYABUSA,
-        HAYABUSA_HIT,
-        HAYABUSA_GROUND,
-
-        STRONG_ATTACK1,
-        STRONG_ATTACK_END,
-        STRONG_ATTACK2,
-
-        SQUAT_ATTACK,
-        WALL_ATTACK,
-
         KUNAI,
-        KUNAI_AIR,
-        KUNAI_SQUAT,
-        KUNAI_WALL,
 
         HIT,
-        HIT_GROUND,
-        HIT_AIR,
-        HIT_AIR_LANDING,
-        HIT_TRAP,
-
         ROLL,
-        HIEN,
-        SENTEN,
-        ROLL_LANDING,
-
-        SOU_KUNAI_SENTEN,
-
-        WALL_HOLD,
-        WALL_JUMP,
-        WALL_CLIMB,
-        WALL_CLIMB_UP,
-        PLATFORM_CLIMB,
-        CLIMB_END,
-
-        KAMAE,
-        KAMAE_END,
-        AIR_KAMAE,
-        AIR_KAMAE_END,
-
-        JUTSU_KAMAE,
-        JUTSU_KAMAE_END,
-
-        EXECUTION_START,
-        EXECUTION_HORIZON,
-        EXECUTION_VERTICAL,
-        EXECUTION_END,
-
-        KARYU_START,
-        KARYU_MID,
-        KARYU_END,
 
         CHASE,
         DEAD,

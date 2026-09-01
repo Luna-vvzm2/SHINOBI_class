@@ -10,3 +10,6 @@
 
 [TYPE="BATTLE"]
 [enemyType="8" posX="720.0f" posY="0.0f"]
+
+[TYPE="CLEAR"]
+[]

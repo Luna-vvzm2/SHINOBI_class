@@ -1,4 +1,6 @@
 #include "SpriteComponent.h"
+#include "TransformComponent.h"
+#include "CollisionComponent.h"
 #include "TextureManager.h"
 #include "Actor.h"
 #include "Scene.h"
@@ -7,12 +9,12 @@
 #include <DxLib.h>
 #include <iostream>
 #include <unordered_set>
-#include "TransformComponent.h"
-#include "CollisionComponent.h"
-#include "PlayerEntity.h"
 
 std::unordered_map<std::string, int>
 SpriteComponent::s_textureCache;
+
+std::unordered_map<std::string, std::vector<int>>
+SpriteComponent::s_textureDivCache;
 
 // --------------------
 // コンストラクタ
@@ -108,9 +110,17 @@ void SpriteComponent::Draw() {
     }
 
     renderer->DrawSpriteEx(
-        pos, scale.x, scale.y, transform->GetAngle(), m_handle,
-        true, Vector2d((float)texW, (float)texH) * 0.5f, m_alpha, m_flipX, false, m_useCamera
-    );
+        pos, 
+        scale.x,
+        scale.y,
+        0.0f, 
+        m_handle,
+        true,
+        Vector2d((float)texW, (float)texH) * 0.5f,
+        m_alpha,
+        m_flipX,
+        m_flipV,
+        m_useCamera);
 }
 
 // --------------------
@@ -120,6 +130,39 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
 {
     // まず画像全体を読み込み、サイズを取得
     int total = xNum * yNum;
+
+    // =========================
+    // キャッシュ確認
+    // =========================
+    auto it = s_textureDivCache.find(path);
+
+    if (it != s_textureDivCache.end())
+    {
+        // すでに読み込み済み
+        m_frames = it->second;
+
+        if (m_frames.empty())
+            return false;
+
+        m_currentFrame = 0;
+        m_handle = m_frames[0];
+
+        int texW = 0;
+        int texH = 0;
+
+        GetGraphSize(m_handle, &texW, &texH);
+
+        SetSize(
+            static_cast<float>(texW),
+            static_cast<float>(texH)
+        );
+
+        return true;
+    }
+
+    // =========================
+    // まだキャッシュされていない
+    // =========================
     int tempHandle = LoadGraph(path.c_str());
     if (tempHandle == -1) {
         std::cerr << "[ERROR] 画像読み込み失敗: " << path << std::endl;
@@ -134,8 +177,8 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
     int frameW = texW / xNum;
     int frameH = texH / yNum;
 
-    // フレーム配列確保
-    m_frames.resize(total);
+    // 分割画像のハンドル
+    std::vector<int> frames(total);
 
     SetDrawBlendMode(
         DX_BLENDMODE_ALPHA,
@@ -150,7 +193,7 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
         yNum,
         frameW,
         frameH,
-        m_frames.data()
+        frames.data()
     );
     SetDrawBlendMode(
         DX_BLENDMODE_NOBLEND,
@@ -161,6 +204,16 @@ bool SpriteComponent::LoadTextureDiv(const std::string& path, int xNum, int yNum
         std::cerr << "[ERROR] 分割画像読み込み失敗: " << path << std::endl;
         return false;
     }
+
+    // =========================
+    // キャッシュに保存
+    // =========================
+    s_textureDivCache[path] = frames;
+
+    // =========================
+    // このSpriteComponentで使用
+    // =========================
+    m_frames = frames;
 
     // 初期フレームを設定
     m_currentFrame = 0;
@@ -248,4 +301,23 @@ void SpriteComponent::ReleaseTextures()
     TextureManager::ReleaseTextures(
         s_textureCache
     );
+
+    // 分割テクスチャ
+    for (auto& pair : s_textureDivCache)
+    {
+        for (int handle : pair.second)
+        {
+            if (handle != -1)
+            {
+                DeleteGraph(handle);
+            }
+        }
+    }
+
+    s_textureDivCache.clear();
+}
+
+bool SpriteComponent::GetFlipH() const
+{
+    return m_flipX;
 }

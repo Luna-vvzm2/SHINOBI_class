@@ -19,6 +19,8 @@ void ShurikenUI::SetCount(int count)
 
 void ShurikenUI::Draw()
 {
+    if (!m_isVisible) return;
+
     Renderer* renderer = m_scene->GetGame()->GetRenderer();
     const std::string& font = m_scene->GetGame()->GatDebugFont();
 

@@ -1,7 +1,7 @@
 #include "Scene.h"
-#include "Game.h"
+#include "Actor.h"
 #include "CollisionComponent.h"
-#include "Vector2d.h"
+#include <iostream>
 
 Scene::Scene(Game* game)
 	: m_game(game),

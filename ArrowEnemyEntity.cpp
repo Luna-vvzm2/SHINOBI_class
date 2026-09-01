@@ -1,5 +1,6 @@
 #include "ArrowEnemyEntity.h"
 #include "VelocityComponent.h"
+#include "CollisionComponent.h"
 #include "HPComponent.h"
 #include "Vector2d.h"
 #include "EnemyBullet.h"
@@ -10,9 +11,6 @@
 #include "BlockActor.h"
 #include "DropItemEntity.h"
 #include "EntityActor.h"
-#include "AnimationComponent.h"
-#include "SpriteComponent.h"
-#include "CollisionComponent.h"
 #include <cmath>
 
 
@@ -32,126 +30,65 @@ bool ArrowEnemyEntity::Init() {
 
 	m_hp = AddComponent<HPComponent>(420);
 
-    // =========================
-  // ドロップ設定（テスト用）
-  // =========================
+
     m_dropTable.clear();
 
     m_dropTable.push_back({ ItemType::Coin, 1.0f });
     m_dropTable.push_back({ ItemType::Kunai,1.0f });
+	
 
-    m_collision->SetRect(82.4f, 182.4f);
-    m_collision->SetOffset(Vector2d(-30.0f, 0.0f));
-
-    m_sprite->LoadTextureDiv(GetTexturePath(), 4, 7);
-    m_sprite->SetDrawSize(0.0f, 324.0f);
-    m_sprite->SetDrawOffset(15.0f, -50.0f);
+    m_sprite->LoadTextureDiv(
+        GetTexturePath(),
+        4,      // �񐔁i��j
+        7       // �s���i��j
+    );
 
     m_animation = AddComponent<AnimationComponent>();
     m_animation->SetSprite(m_sprite);
 
-    AnimationClip stay;
-    stay.frames = { 0 };
-    stay.speed = 1.0f / 24.0f;
-    stay.loop = true;
+    AnimationClip idle;
+    idle.frames = {0};
+    idle.speed = 0.18f;
+    idle.loop = true;
 
-    AnimationClip attackReady;
-    attackReady.frames = { 2,2,2,2,3,4,4,4,4,4,5,5,5,5,5,5,6,6,6,7,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,9,9,9,10 };
-    attackReady.speed = 1.0f / 24.0f;
-    attackReady.loop = false;
+    AnimationClip warning;
+    warning.frames = {1,2,3,4,5,6,7,8};
+    warning.speed = 0.10f;
+    warning.loop = false;
 
     AnimationClip attack;
-    attack.frames = { 0 };
-    attack.speed = 1.0f / 24.0f;
+    attack.frames = { 9,0 };
+    attack.speed = 0.08f;
     attack.loop = false;
 
     AnimationClip hit;
-    hit.frames = { 11,15,15,16,16,18,18,18,19,19,20,22,23,25,24 };
-    hit.speed = 1.0f / 24.0f;
+    hit.frames = {10,11,12,13};
+    hit.speed = 0.08f;
     hit.loop = false;
 
     AnimationClip dead;
-    dead.frames = { 11,15,15,16,16,18,18,18,19,19,20,22,23,25,24 };
-    dead.speed = 1.0f / 24.0f;
+    dead.frames = {10,11,12,13,14,15,16,17,18,19,20,21,22};
+    dead.speed = 0.10f;
     dead.loop = false;
 
-    m_animation->AddClip("Stay", stay);
-    m_animation->AddClip("AttackReady", attackReady);
+    m_animation->AddClip("Idle", idle);
+    m_animation->AddClip("Warning", warning);
     m_animation->AddClip("Attack", attack);
     m_animation->AddClip("Hit", hit);
     m_animation->AddClip("Dead", dead);
-    m_animation->Play("Stay");
 
-	return true;
-}
+    m_animation->Play("Idle");
 
-void ArrowEnemyEntity::CancelAttackForDamage()
-{
-    m_attackExecuted = false;
-    m_attackTimer = 0.0f;
-}
+    m_transform->SetScale(Vector2d(0.4f, 0.4f));
 
-void ArrowEnemyEntity::StartHit(const Vector2d& knockback)
-{
-    constexpr float ARROW_HIT_KNOCKBACK_SCALE = 0.35f;
+    return true;
 
-    CancelAttackForDamage();
-    m_velocity->Set(knockback * ARROW_HIT_KNOCKBACK_SCALE);
-    m_attackState = AttackState::Hit;
-
-    if (m_animation != nullptr)
-    {
-        m_animation->Play("Hit", true);
-    }
-}
-
-void ArrowEnemyEntity::StartDeadHit()
-{
-    CancelAttackForDamage();
-    m_isDying = true;
-    m_attackState = AttackState::Dead;
-    m_deathTimer = 0.0f;
-    m_velocity->Set(Vector2d::Zero());
-
-    if (m_animation != nullptr)
-    {
-        m_animation->Play("Dead", true);
-    }
-}
-
-void ArrowEnemyEntity::TakeDamage(int damage, const Vector2d& knockback)
-{
-    if (m_hp == nullptr || m_isDying)
-    {
-        return;
-    }
-
-    m_hp->Damage(damage);
-
-    if (m_hp->GetHP() <= 0)
-    {
-        StartDeadHit();
-
-        return;
-    }
-
-    Vector2d damageKnockback = knockback;
-    PlayScene* play = static_cast<PlayScene*>(m_scene);
-    PlayerEntity* player = play != nullptr ? play->GetPlayer() : nullptr;
-    if (player != nullptr)
-    {
-        float awaySign = GetPos().x < player->GetPos().x ? -1.0f : 1.0f;
-        damageKnockback.x = std::fabs(damageKnockback.x) * awaySign;
-    }
-
-    StartHit(damageKnockback);
 }
 
 void ArrowEnemyEntity::Update(float deltaTime)
 {
    
-    m_isHit = false;
-    // 先に死亡済みなら何もしない
+    // ?????S????��??????
     if (GetState() == Actor::State::Dead)
         return;
 
@@ -166,56 +103,72 @@ void ArrowEnemyEntity::Update(float deltaTime)
         }
     }*/
 
-    if (m_hp && m_hp->GetHP() <= 0 && !m_isDying)
-    {
-        StartDeadHit();
-    }
+ 
 
     auto player =
         static_cast<PlayScene*>(m_scene)->GetPlayer();
+    if (!player)
+    {
+        EnemyEntity::Update(deltaTime);
+        return;
+    }
+
+    // ?v???C???[??????
+    float distance =
+        std::abs(player->GetPos().x - GetPos().x);
 
     switch (m_attackState)
     {
     case AttackState::Idle:
-        if (m_animation->GetCurrentName() != "Stay")
+        m_sprite->SetDrawOffset(0.0f, -15.0f);
+        m_animation->Play("Idle");
+        if (distance <= m_detectRange)
         {
-            m_animation->Play("Stay");
+            m_attackTimer += deltaTime;
+
+            if (m_attackTimer >= 3.0f)
+            {
+                m_attackTimer = 2.0f;
+                m_attackExecuted = false;
+                m_attackState = AttackState::Warning;
+            }
         }
+        
 
-        m_attackTimer += deltaTime;
-
-        if (m_attackTimer >= 3.0f)
+        if (player->GetPos().x > GetPos().x)
         {
-            float groundY = GetGroundY(player->GetPos().x);
-
-            float targetX = player->GetPos().x;
-            float targetY = GetGroundY(targetX);
-
-            m_targetPos = Vector2d(targetX, targetY);
-
-            m_attackTimer = 1.0f;
-
-            m_attackExecuted = false;
-
-            m_attackState = AttackState::Warning;
-
+            m_sprite->SetFlipX(true);
         }
-
+        else
+        {
+            m_sprite->SetFlipX(false);
+        }
         break;
 
     case AttackState::Warning:
-        if (m_animation->GetCurrentName() != "AttackReady")
+
+        if (m_animation->GetCurrentName() != "Warning")
         {
-            m_animation->Play("AttackReady");
+            m_animation->Play("Warning");
         }
 
         m_attackTimer -= deltaTime;
 
+        
+        if (!m_attackExecuted && m_attackTimer <= 1.0f)
+        {
+            m_targetPos.x = player->GetPos().x;
+            m_targetPos.y = GetGroundY(m_targetPos.x);
+
+            m_attackExecuted = true;
+        }
+
         if (m_attackTimer <= 0.0f)
         {
+            
             m_attackTimer = 0.2f;
-
             m_attackState = AttackState::Attack;
+            m_attackExecuted = false;
         }
 
         break;
@@ -230,18 +183,37 @@ void ArrowEnemyEntity::Update(float deltaTime)
         {
             Vector2d playerPos = player->GetPos();
 
-            float radius = 120.0f;
+            float radius = 200.0f;
 
             float dx = playerPos.x - m_targetPos.x;
             float dy = playerPos.y - m_targetPos.y;
 
-            float distanceSq =
-                dx * dx +
-                dy * dy;
+            float distanceSq = dx * dx + dy * dy;
+            float groundY = GetGroundY(m_targetPos.x);
 
-            if (distanceSq <= radius * radius)
+            float lineHalfW = 32.0f;
+            float lineCenterY = groundY * 0.5f;
+            float lineHalfH = groundY * 0.5f;
+
+            bool hitLine =
+                std::abs(playerPos.x - m_targetPos.x) <= lineHalfW &&
+                std::abs(playerPos.y - lineCenterY) <= lineHalfH;
+            bool hitCircle = distanceSq <= radius * radius;
+
+            if (hitLine || hitCircle)
             {
-                // player->Damage(10);
+                Vector2d knockback;
+
+                if (playerPos.x < m_targetPos.x)
+                {
+                    knockback = Vector2d(-800.0f, -250.0f);
+                }
+                else
+                {
+                    knockback = Vector2d(800.0f, -250.0f);
+                }
+
+                player->TakeDamage(20, knockback);
             }
 
             m_attackExecuted = true;
@@ -251,28 +223,15 @@ void ArrowEnemyEntity::Update(float deltaTime)
 
         if (m_attackTimer <= 0.0f)
         {
-            m_attackTimer = 2.0f;
+            m_attackTimer = 1.0f;
             m_attackState = AttackState::Cooldown;
         }
 
         break;
 
-        m_attackTimer -= deltaTime;
-
-        if (m_attackTimer <= 0.0f)
-        {
-            m_attackTimer = 2.0f;
-            m_attackState = AttackState::Cooldown;
-        }
-
-        break;
 
     case AttackState::Cooldown:
-        if (m_animation->GetCurrentName() != "Stay")
-        {
-            m_animation->Play("Stay");
-        }
-
+        m_animation->Play("Idle");
         m_attackTimer -= deltaTime;
 
         if (m_attackTimer <= 0.0f)
@@ -287,28 +246,43 @@ void ArrowEnemyEntity::Update(float deltaTime)
         {
             m_animation->Play("Hit");
         }
+        m_hitTimer -= deltaTime;
 
-        if (m_animation->IsFinished())
+        if (m_hitTimer <= 0.0f)
         {
+            SetVel(Vector2d::Zero());
+
             m_attackState = AttackState::Idle;
-            m_attackTimer = 0.0f;
         }
+
         break;
 
     case AttackState::Dead:
+        m_sprite->SetDrawOffset(0.0f, -20.0f);
         if (m_animation->GetCurrentName() != "Dead")
         {
             m_animation->Play("Dead");
         }
 
+        if (m_deathTimer > 1.0f)
+        {
+            float t = (m_deathTimer - 1.0f) / 1.0f;
+
+            int alpha = (int)(255 * (1.0f - t));
+
+            m_sprite->SetAlpha(alpha);
+
+        }
         SetVel(Vector2d::Zero());
+
         m_deathTimer += deltaTime;
 
-        if (m_deathTimer >= 1.0f)
+        if (m_deathTimer >= 1.5f)
         {
             OnDead();
             return;
         }
+
         break;
     }
 
@@ -322,7 +296,7 @@ void ArrowEnemyEntity::Draw()
 
     EnemyEntity::Draw();
 
-#ifdef _DEBUG
+
 
     Renderer* renderer =
         m_scene->GetGame()->GetRenderer();
@@ -352,7 +326,7 @@ void ArrowEnemyEntity::Draw()
             Color(255, 0, 0),
             false);
     }
-#endif
+
 }
 
 float ArrowEnemyEntity::GetGroundY(float x)
@@ -392,8 +366,48 @@ float ArrowEnemyEntity::GetGroundY(float x)
     return groundY;
 }
 
+void ArrowEnemyEntity::TakeDamage(int damage,
+    const Vector2d& knockback)
+{
+    if (m_hp == nullptr)
+    {
+        return;
+    }
+
+    m_hp->Damage(damage);
+
+    if (m_hp->GetHP() <= 0)
+    {
+        m_attackState = AttackState::Dead;
+        m_deathTimer = 0.0f;
+        return;
+    }
+
+    m_attackState = AttackState::Hit;
+
+    Vector2d force = knockback;
+
+    PlayScene* playScene =
+        static_cast<PlayScene*>(GetScene());
+
+    PlayerEntity* player =
+        playScene ? playScene->GetPlayer() : nullptr;
+
+    if (player)
+    {
+        float sign =
+            GetPos().x < player->GetPos().x ?
+            -1.0f : 1.0f;
+
+        force.x = std::fabs(force.x) * sign;
+    }
+
+    SetVel(force);
+
+    m_hitTimer = 0.3f;
+}
 std::string ArrowEnemyEntity::GetTexturePath() const {
     
-    return "assets/images/enemy/arrow/arrow.png";
+    return "assets/images/Enemy/arrow.png";
 
 }

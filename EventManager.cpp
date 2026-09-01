@@ -1,9 +1,11 @@
 #include <fstream>
+#include <algorithm>
 #include "EventManager.h"
 #include "EventTexture.h"
 #include "Scene.h"
 #include "Input.h"
 #include "PlayScene.h"
+#include "ClearScene.h"
 #include "PlayerEntity.h"
 #include "Game.h"
 #include "Actor.h"
@@ -15,6 +17,8 @@
 #include "GunnerEnemyEntity.h"
 #include "YoroiBossEntity.h"
 #include "SekienkiBossEntity.h"
+#include "HPComponent.h"
+#include "EnemySpawner.h"
 
 
 EventManager::EventManager(Scene* scene, EventTexture* eventTexture)
@@ -127,6 +131,10 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 			{
 				m_eventQueue.push_back(std::make_unique<CutInEvent>(m_scene, eventTexts, this));
 			}
+			else if (eventType == "CLEAR")
+			{
+				m_eventQueue.push_back(std::make_unique<ClearEvent>(m_scene, eventTexts, this));
+			}
 			eventTexts.clear();
 		};
 
@@ -141,6 +149,7 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 			if (text.find("TALK") != std::string::npos) eventType = "TALK";
 			else if (text.find("BATTLE") != std::string::npos) eventType = "BATTLE";
 			else if (text.find("CUTIN") != std::string::npos) eventType = "CUTIN";
+			else if (text.find("CLEAR") != std::string::npos) eventType = "CLEAR";
 			continue;
 		}
 		eventTexts.push_back(text);
@@ -152,6 +161,12 @@ void EventManager::LoadEventTimeLine(const std::string& filePath, const Vector2d
 	{
 		m_eventQueue[0]->Init();
 	}
+}
+
+Game* EventManager::GetGame() const
+{
+	if (!m_scene) return nullptr;
+	return m_scene->GetGame();
 }
 
 void EventManager::Draw()
@@ -229,11 +244,6 @@ void TalkEvent::Init()
 {
 	for (auto actor : m_scene->GetActors())
 	{
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(false);
-		}
 		actor->SetState(Actor::State::Paused);
 	}
 
@@ -287,11 +297,6 @@ void TalkEvent::End()
 	for (auto actor : m_scene->GetActors())
 	{
 		actor->SetState(Actor::State::Active);
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(true);
-		}
 	}
 	 
 	if (m_eventManager)
@@ -487,12 +492,8 @@ void BattleEvent::Init()
 
 	for (auto actor : m_scene->GetActors())
 	{
-		actor->SetState(Actor::State::Active);
 		if (actor->GetType() == ActorType::Player)
 		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(true);
-
 			Vector2d playerPos = actor->GetComponent<TransformComponent>()->GetPosition();
 		}
 	}
@@ -505,6 +506,7 @@ void BattleEvent::Init()
 
 		m_isAreaSet = true;
 	}
+	m_isPlayerInsideArea = false;
 	m_isSpawned = false;
 	m_isEnd = false;
 }
@@ -540,58 +542,118 @@ void BattleEvent::Update(float deltaTime)
 			}
 		}
 		m_isSpawned = true;
+		std::cerr << "生成された敵の数: " << m_actors.size() << "\n";
 		return;
 	}
 
-	bool enemyAlive = false;
-	for (auto actor : m_scene->GetActors())
-	{
-		if (actor->GetType() == ActorType::Enemy && actor->GetState() == Actor::State::Active)
+	const auto& sceneActors = m_scene->GetActors();
+
+	auto newEnd = std::remove_if(m_actors.begin(), m_actors.end(), [&](Actor* enemy)
 		{
-
-			if (m_isAreaSet)
+			if (enemy == nullptr) return true;
+			auto it = std::find(sceneActors.begin(), sceneActors.end(), enemy);
+			if (it == sceneActors.end() || enemy->GetState() == Actor::State::Dead)
 			{
-				auto transform = actor->GetComponent<TransformComponent>();
-				if (transform)
-				{
-					float posX = transform->GetPosition().x;
-					if (posX <= m_areaXMin - 20.0f || posX >= m_areaXMax + 20.0f) //壁際の敵が範囲から外れるため少し探索範囲を増加
-					{
-						continue;
-					}
-				}
+				return true;
 			}
-			enemyAlive = true;
-			break;
-		}
-	}
+			return false;
+		});
+	
+	m_actors.erase(newEnd, m_actors.end());
 
-
-	if (!enemyAlive)
+	if (m_actors.empty())
 	{
+		std::cerr << "敵が全滅したためイベントを終了します\n";
 		m_isEnd = true; 
 		return;
 	}
 
 	if (m_isAreaSet)
 	{
+		//プレイヤーの処理
 		for (auto actor : m_scene->GetActors())
 		{
-			if (actor->GetState() == Actor::State::Active && (actor->GetType() == ActorType::Player || actor->GetType() == ActorType::Enemy))
+			if (actor->GetType() == ActorType::Player)
 			{
+				if (actor->GetState() == Actor::State::Dead)//まだ不完全 プレイヤーが死んでもDeadになっていない?
+				{
+					m_isPlayerInsideArea = false;
+					continue;
+				}
+
 				auto transform = actor->GetComponent<TransformComponent>();
 				if (!transform) continue;
 
 				Vector2d pos = transform->GetPosition();
 
-				// 左右の壁で押し戻す
-				if (pos.x > m_areaXMin - 25.0f && pos.x < m_areaXMax + 25.0f) //飛燕によるすり抜け防止で25.0fの猶予
+				if (!m_isPlayerInsideArea)
+				{
+					if (pos.x >= m_areaXMin && pos.x <= m_areaXMax)
+					{
+						m_isPlayerInsideArea = true; 
+					}
+				}
+				else
 				{
 					if (pos.x < m_areaXMin) pos.x = m_areaXMin;
 					if (pos.x > m_areaXMax) pos.x = m_areaXMax;
+
+					transform->SetPosition(pos);
 				}
+			}
+		}
+
+		//イベント内の敵を閉じ込める処理
+		auto clampInside = [this](Actor* actor)
+			{
+				if (!actor || actor->GetState() == Actor::State::Dead) return;
+
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (!transform) return;
+
+				Vector2d pos = transform->GetPosition();
+
+				if (pos.x < m_areaXMin) pos.x = m_areaXMin;
+				if (pos.x > m_areaXMax) pos.x = m_areaXMax;
 
 				transform->SetPosition(pos);
+			};
+
+		for (auto enemy : m_actors)
+		{
+			clampInside(enemy);
+		}
+
+		//エリア外部の敵を侵入させない処理
+		float areaCenter = (m_areaXMin + m_areaXMax) * 0.5f;
+
+		for (auto actor : m_scene->GetActors())
+		{
+			if (actor->GetType() == ActorType::Enemy && actor->GetState() != Actor::State::Dead)
+			{
+				if (std::find(m_actors.begin(), m_actors.end(), actor) != m_actors.end())
+				{
+					continue;
+				}
+
+				auto transform = actor->GetComponent<TransformComponent>();
+				if (!transform) continue;
+
+				Vector2d pos = transform->GetPosition();
+
+				if (pos.x >= m_areaXMin && pos.x <= m_areaXMax)
+				{
+					if (pos.x < areaCenter)
+					{
+						pos.x = m_areaXMin - 1.0f;
+					}
+					else
+					{
+						pos.x = m_areaXMax + 1.0f;
+					}
+
+					transform->SetPosition(pos);
+				}
 			}
 		}
 	}
@@ -615,63 +677,68 @@ void BattleEvent::EnemySpawn()
 	{
 		triggerPos = m_eventManager->GetTriggerPosition();
 	}
-	m_enemyPos += triggerPos;
+	Vector2d spawnPos = m_enemyPos + triggerPos;
 	
+	auto* playScene = dynamic_cast<PlayScene*>(m_scene);
+	if (!playScene)
+	{
+		std::cerr << "PlayScene 以外のシーンで EnemySpawn が実行されました。\n";
+		return;
+	}
+	Actor* spawnedEnemy = nullptr;
 
 	switch (m_enemyType)
 	{
 	case 1:
 	{
-		WhiteEnemyEntity* enemy = new WhiteEnemyEntity(m_scene, m_enemyPos);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<WhiteEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 2:
 	{
-		YellowEnemyEntity* enemy = new YellowEnemyEntity(m_scene, m_enemyPos);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<YellowEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 3:
 	{
-		ArrowEnemyEntity* enemy = new ArrowEnemyEntity(m_scene, m_enemyPos);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<ArrowEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 4:
 	{
-		HealerEnemyEntity* enemy = new HealerEnemyEntity(m_scene, m_enemyPos);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<HealerEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 5:
 	{
-		ArmorEnemyEntity* enemy = new ArmorEnemyEntity(m_scene, m_enemyPos);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<ArmorEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 6:
 	{
-		GunnerEnemyEntity* enemy = new GunnerEnemyEntity(m_scene, m_enemyPos);
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<GunnerEnemyEntity>(playScene, spawnPos);
 	}break;
 
 	case 7:
 	{
-		YoroiBossEntity* enemy = new YoroiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<YoroiBossEntity>(playScene, spawnPos,"assets/images/uies/HP_enemy_black.png", Vector2d(192, 192));
 	}break;
 
 	case 8:
 	{
-		SekienkiBossEntity* enemy = new SekienkiBossEntity(m_scene, m_enemyPos, Vector2d(192, 192));
-		m_scene->SpawnActor(enemy);
+		spawnedEnemy = EnemySpawner::SpawnEnemy<SekienkiBossEntity>(playScene, spawnPos, "assets/images/uies/HP_enemy_black.png", Vector2d(192, 192));
 	}break;
 
 	default:
 		std::cerr << "無効な値のため敵を生成できません。\n";
 		break;
 	}
+
+	if (spawnedEnemy)
+	{
+		m_actors.push_back(spawnedEnemy);
+	}
+
 
 }
 
@@ -701,11 +768,6 @@ void CutInEvent::Init()
 {
 	for (auto actor : m_scene->GetActors())
 	{
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(false);
-		}
 		actor->SetState(Actor::State::Paused);
 	}
 
@@ -809,11 +871,6 @@ void CutInEvent::End()
 	for (auto actor : m_scene->GetActors())
 	{
 		actor->SetState(Actor::State::Active);
-		if (actor->GetType() == ActorType::Player)
-		{
-			auto p = static_cast<PlayerEntity*>(actor);
-			p->SetCanMove(true);
-		}
 	}
 
 	if (m_eventManager)
@@ -853,6 +910,60 @@ void CutInEvent::Draw()
 	DrawString(m_jBossNameX, m_jBossNameY, m_jBossName.c_str(), m_jBossNameColor.ToDxColor());
 }
 
+
+ClearEvent::ClearEvent(Scene* scene, const std::string& filePath, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	LoadTexts(filePath);
+}
+
+ClearEvent::ClearEvent(Scene* scene, const std::vector<std::string>& texts, EventManager* eventManager)
+	: m_scene(scene)
+	, m_eventManager(eventManager)
+{
+	m_texts = texts;
+}
+
+ClearEvent::~ClearEvent() = default;
+
+void ClearEvent::Init()
+{
+	if (m_eventManager)
+	{
+		Game* game = m_eventManager->GetGame();
+		PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
+		if (game && playScene)
+		{
+			float time = playScene->GetPlayTime();
+
+			game->ChangeScene(std::make_unique<ClearScene>(game, time));
+			m_isEnd = true;
+		}
+	}
+
+
+}
+
+void ClearEvent::Update(float deltaTime)
+{
+	
+}
+
+void ClearEvent::End()
+{
+	DeleteTexts();
+}
+
+bool ClearEvent::IsEnd() const
+{
+	return m_isEnd;
+}
+
+void ClearEvent::Draw()
+{
+
+}
 
 EventTrigger::EventTrigger(Scene* scene, const Vector2d& pos, const Vector2d& size, int eventId, EventManager* eventManager)
 	:BlockActor(scene)

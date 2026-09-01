@@ -2,6 +2,7 @@
 #include "EnemyEntity.h"
 #include "EffectActor.h"
 #include "Scene.h"
+#include "PlayScene.h"
 #include "BlockActor.h"
 #include "KunaiActor.h"
 #include "TreasureBox.h"
@@ -15,7 +16,6 @@
 #include "KaryuTextUI.h"
 #include "Input.h"
 #include "Game.h"
-#include "PlayScene.h"
 #include <Windows.h>
 
 //                       offset, width, height, damage, metsu
@@ -41,6 +41,8 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
 
     , m_combo(0)
     , m_kunai(10)
+
+    , m_state(PlayerState::IDLE)
 
     , m_kunaiSpawnTimer(0.0f)
     , m_kunaiPending(false)
@@ -96,6 +98,21 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_maxHaku(100)
 
     , m_ignorePlatform(false)
+
+    //Sound
+
+    , m_kunaiSound(nullptr)
+    , m_excusionSound(nullptr)
+    , m_kamaeSound(nullptr)
+    , m_karyuSound(nullptr)
+    , m_weakAttackSound1(nullptr)
+    , m_weakAttackSound2(nullptr)
+    , m_weakAttackSound3(nullptr)
+    , m_weakAttackSound4(nullptr)
+    , m_strongAttackSound1(nullptr)
+    , m_strongAttackSound2(nullptr)
+    , m_hayabusaAttackSound(nullptr)
+    , m_karaburiSound(nullptr)
 {
 }
 
@@ -508,25 +525,88 @@ bool PlayerEntity::Init() {
     m_sprite->SetDrawOffset(0.0f, -34.0f);
 
     // HPが0になったときのコールバックを設定
-    if (m_hp) {
-        m_hp->OnDeath = [this]() {
-            std::cout << "Player died! Showing Game Over Menu..." << std::endl;
-            // PlaySceneを取得してゲームオーバーメニューを表示
-            PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
-            if (playScene) {
-                playScene->ShowGameOverMenu();
-            }
-            };
-    }
+    //if (m_hp) {
+    //    m_hp->OnDeath = [this]() {
+    //        std::cout << "Player died! Showing Game Over Menu..." << std::endl;
+    //        // PlaySceneを取得してゲームオーバーメニューを表示
+    //        PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
+    //        if (playScene) {
+    //            playScene->ShowGameOverMenu();
+    //        }
+    //        };
+    //}
 
     m_anim->Play("idle");
-    m_state = ActionState::IDLE;
+    m_state = PlayerState::IDLE;
+
+    m_kunaiSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/kunai.wav")
+    );
+    if (m_kunaiSound != nullptr) m_kunaiSound->SetVolume(180);
+    
+    m_excusionSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/excusion.wav")
+    );
+    if (m_excusionSound != nullptr) m_excusionSound->SetVolume(180);
+
+    m_kamaeSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/kamae.wav")
+    );
+    if (m_kamaeSound != nullptr) m_kamaeSound->SetVolume(180);
+
+    m_karyuSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/karyu.wav")
+    );
+    if (m_karyuSound != nullptr) m_karyuSound->SetVolume(180);
+
+    m_weakAttackSound1 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack1.wav")
+    );
+    if (m_weakAttackSound1 != nullptr) m_weakAttackSound1->SetVolume(140);
+
+    m_weakAttackSound2 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack2.wav")
+    );
+    if (m_weakAttackSound2 != nullptr) m_weakAttackSound2->SetVolume(140);
+
+    m_weakAttackSound3 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack3.wav")
+    );
+    if (m_weakAttackSound3 != nullptr) m_weakAttackSound3->SetVolume(140);
+
+    m_weakAttackSound4 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack4.wav")
+    );
+    if (m_weakAttackSound4 != nullptr) m_weakAttackSound4->SetVolume(140);
+
+    m_strongAttackSound1 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack4.wav")
+    );
+    if (m_strongAttackSound1 != nullptr) m_strongAttackSound1->SetVolume(140);
+
+    m_strongAttackSound2 = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/weakAttack4.wav")
+    );
+    if (m_strongAttackSound2 != nullptr) m_strongAttackSound2->SetVolume(140);
+
+    m_hayabusaAttackSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/hayabusa.wav")
+    );
+    if (m_hayabusaAttackSound != nullptr) m_hayabusaAttackSound->SetVolume(120);
+
+    m_karaburiSound = AddComponent<SoundComponent>(
+        _T("assets/sounds/player/karaburi.wav")
+    );
+    if (m_hayabusaAttackSound != nullptr) m_karaburiSound->SetVolume(90);
+
+   
 
 
     return true;
 }
 
 void PlayerEntity::Update(float deltaTime) {
+    EntityActor::Update(deltaTime);
     UpdateIgnorePlatform();
     UpdateInvincible(deltaTime);
 
@@ -536,7 +616,6 @@ void PlayerEntity::Update(float deltaTime) {
     UpdateKamae(deltaTime);
     UpdateExecution(deltaTime);
 
-    UpdateMove(deltaTime);
     UpdateSensor();
     UpdateJump(deltaTime);
     UpdateGravity(deltaTime);
@@ -544,10 +623,10 @@ void PlayerEntity::Update(float deltaTime) {
     CheckCanStand();
 
     UpdateAttack(deltaTime);
-    UpdateState();
+    UpdateScale();
+    UpdateState(deltaTime);
 
     if (m_anim) m_anim->Update(deltaTime);
-    EntityActor::Update(deltaTime);
 
     // デバッグ用：4キーを押すとHPが0になる
 #ifdef _DEBUG
@@ -587,6 +666,7 @@ void PlayerEntity::UpdateIgnorePlatform()
 
 void PlayerEntity::UpdateInvincible(float deltaTime)
 {
+    if (m_state == PlayerState::DEAD) return;
     if (m_getHit) {
         m_getHitTimer -= deltaTime;
         if (m_getHitTimer <= 0.0f) {
@@ -623,6 +703,14 @@ void PlayerEntity::UpdateJutsuKamae(float deltaTime) {
 
     if (input.IsDown(Action::G) && input.IsDown(Action::JUTSU_KAMAE))
     {
+        if (m_squat) {
+            if (!m_canStand) {
+                return;
+            }
+            else {
+                ExitSquat();
+            }
+        }
         m_isJutsuKamae = true;
         m_canMove = false;
     }
@@ -634,7 +722,7 @@ void PlayerEntity::UpdateJutsuKamae(float deltaTime) {
 }
 
 void PlayerEntity::UpdateKaryu(float deltaTime) {
-
+    if (m_state == PlayerState::DEAD) return;
     const Input& input = m_scene->GetGame()->GetInput();
 
     if (m_KaryuTimer <= 0.0f) {
@@ -684,6 +772,13 @@ void PlayerEntity::UpdateKamae(float deltaTime)
 
     if (input.IsDown(Action::KAMAE))
     {
+        if (m_squat) {
+            if (!m_canStand) {
+                return;
+            }else{
+                ExitSquat();
+            }
+        }
         m_isKamae = true;
         m_canMove = false;
     }
@@ -696,6 +791,7 @@ void PlayerEntity::UpdateKamae(float deltaTime)
 
 void PlayerEntity::UpdateExecution(float deltaTime)
 {
+    if (m_state == PlayerState::DEAD) return;
     if (!m_isExecution) {
         if (!m_isKamae) return;
     }
@@ -718,33 +814,66 @@ void PlayerEntity::UpdateExecution(float deltaTime)
         }
     }
 
-    if (m_executionTimer <= 0.0f) {
-        if (m_executionTargets.empty()) 
+    if (m_executionTimer <= 0.0f)
+    {
+        while (!m_executionTargets.empty())
         {
-            m_isExecution = false;
-            return;
-        }
-        EnemyEntity* target = m_executionTargets.back();
-        Vector2d prevPos = m_transform->GetPosition();
-        Vector2d lastPos = target->GetPos();
-        m_transform->SetPosition(lastPos);
-        target->MetsuAttacked();
-        m_combo++;
-        AddJutsuGauge();
-        m_executionTimer = m_invincibleTime  = 0.2f;
+            EnemyEntity* target = m_executionTargets.back();
+            m_executionTargets.pop_back();
 
-        m_executionTargets.pop_back();
+            if (target == nullptr)
+                continue;
+
+            PlayScene* play = static_cast<PlayScene*>(m_scene);
+
+            if (!play->IsActorAlive(target))
+                continue;
+
+            if (target->IsDead())
+                continue;
+
+            if (!target->IsMetsu())
+                continue;
+
+            Vector2d prevPos = m_transform->GetPosition();
+            Vector2d lastPos = target->GetPos();
+
+            m_transform->SetPosition(lastPos);
+
+            target->MetsuAttacked();
+
+            if (m_excusionSound != nullptr) {
+                m_excusionSound->Play();
+            }
+
+            m_combo++;
+            AddJutsuGauge();
+
+            m_executionTimer = m_invincibleTime = 0.2f;
+
+            if (m_executionTargets.empty())
+            {
+                m_isExecution = false;
+
+                Vector2d dir = lastPos - prevPos;
+
+                if (dir.length() > 0.0f)
+                {
+                    dir = dir.normalize();
+                    dir.y -= 0.3f;
+
+                    m_dir = dir.x > 0.0f ? 1.0f : 0.0f;
+                    m_velocity->Set(dir * m_dashSpeed);
+                }
+            }
+
+            break;
+        }
 
         if (m_executionTargets.empty())
         {
             m_isExecution = false;
-            Vector2d dir = lastPos - prevPos;
-            dir = dir.normalize();
-            dir.y -= 0.3f;
-            m_dir = dir.x > 0.0f ? 1.0f : 0.0f;
-            m_velocity->Set(dir * m_dashSpeed);
         }
-
     }
     else {
         m_executionTimer -= deltaTime;
@@ -784,109 +913,9 @@ std::vector<EnemyEntity*> PlayerEntity::CollectEnemiesInScreen()
     return enemies;
 }
 
-void PlayerEntity::UpdateMove(float deltaTime) {
-
-    const Input& input = m_scene->GetGame()->GetInput();
-    float dir = m_dir ? 1.0f : -1.0f;
-    m_prevDir = m_dir;
-
-    Vector2d move(0.0f, 0.0f);
-    if (m_canMove) {
-        if (input.IsDown(Action::DOWN)) {
-            if (input.IsDown(Action::LEFT)) {
-                move.x -= 0.5f;
-                m_dir = false;
-            }
-            if (input.IsDown(Action::RIGHT)) {
-                move.x += 0.5f;
-                m_dir = true;
-            }
-        }
-        else {
-            if (input.IsDown(Action::LEFT)) {
-                move.x -= 1.0f;
-                m_dir = false;
-            }
-            if (input.IsDown(Action::RIGHT)) {
-                move.x += 1.0f;
-                m_dir = true;
-            }
-        }
-
-        if (input.IsTrigger(Action::DASH)) {
-            if (m_isGround && m_sensor.frontBottom != nullptr && m_sensor.front == nullptr) {
-                m_canMove = false;
-                m_dashTimer = 0.35f;
-                move.y = -6400.0f;
-                move.x = dir * m_dashSpeed;
-                m_isSenten = true;
-            }
-            else {
-                if (!m_HienCount) {
-                    m_canMove = false;
-                    m_dashTimer = 0.35f;
-                    if (!m_isGround || (m_sensor.frontGround == nullptr)) {
-                        move.y = -300.0f;
-                        move.x = dir * m_dashAirSpeed;
-                        m_HienCount = 1;
-                        m_transform->SetAngle(0.0f);
-                    }
-                    else {
-                        move.x = dir * m_dashSpeed;
-                        m_anim->Play("roll", true);
-                    }
-                }
-            }
-        }
-    }
-    
-    if (m_dashTimer > 0.0f) {
-        if (m_isGround && (m_sensor.frontGround == nullptr)) {
-            move.x = 0.0f;
-        }
-        else {
-            move.x = dir * m_dashSpeed;
-        }
-        m_dashTimer -= deltaTime;
-        if (m_dashTimer <= 0.0f) {
-            m_dashTimer = 0.0f;
-            move.x = 0.0f;
-            m_canMove = true;
-            m_isSenten = false;
-        }
-    }else {
-        move.x *= m_moveSpeed;
-    }
-
-    if (m_attack) {
-        move.x = 0.0f;
-    }
-
-    // move.normalize();
-
-    Vector2d vel = m_velocity->Get();
-    
-    if (move.x != 0) {
-        vel.x = move.x;
-    }
-    else {
-        vel.x *= 0.8f;
-
-        if (std::abs(vel.x) < 1.0f) {
-            vel.x = 0.0f;
-        }
-    }
-    vel.y += move.y;
-    
-    m_velocity->Set(vel);
-
+void PlayerEntity::UpdateScale() {
     Vector2d scale = m_transform->GetScale();
-    if (m_state == ActionState::CHANGE_DIR_RUN) {
-        scale.x = m_dir ? -1.0f : 1.0f;
-    }
-    else {
-        scale.x = m_dir ? 1.0f : -1.0f;
-    }
+    scale.x = m_dir ? 1.0f : -1.0f;
 
     m_transform->SetScale(scale);
 }
@@ -896,6 +925,7 @@ void PlayerEntity::UpdateJump(float deltaTime) {
         return;
     }
     if (!m_canMove) return;
+    if (m_attack) return;
 
     const Input& input = m_scene->GetGame()->GetInput();
     Vector2d vel = m_velocity->Get();
@@ -1098,6 +1128,7 @@ void PlayerEntity::SpawnKunai()
 }
 
 void PlayerEntity::UpdateAttack(float deltaTime) {
+    if (m_state == PlayerState::DEAD) return;
     if (m_isKamae) return;
     if (m_isExecution) return;
     if (m_isJutsuKamae) return;
@@ -1164,7 +1195,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 switch (m_airAttackIdx) {
                 case 0: {
                     m_attackTimer = 0.2f;
-                    m_attackLockTimer = 0.1f;
+                    m_attackLockTimer = 0.2f;
                     CheckAttackHit(airWeak1);
                     if (m_hit) m_airAttackIdx++;
                     auto effect = new EffectActor(m_scene, GetPos(), EffectType::WeakAirAttack1, !m_dir);
@@ -1204,7 +1235,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                 m_attackType = AttackType::WEAK_ATTACK;
                 switch (m_weakAttackIdx) {
                 case 0:
-                    m_attackTimer = 0.8f;
+                    m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.13f;
                     CheckAttackHit(weak1);
                     pPos.x += (m_dir ? 100.0f : -100.0f);
@@ -1213,7 +1244,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_anim->Play("weakAttack1", true);
                     break;
                 case 1:
-                    m_attackTimer = 0.7f;
+                    m_attackTimer = 0.4f;
                     m_attackLockTimer = 0.2f;
                     CheckAttackHit(weak2);
                     pPos.x += (m_dir ? 30.0f : -30.0f);
@@ -1222,7 +1253,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_anim->Play("weakAttack2", true);
                     break;
                 case 2:
-                    m_attackTimer = 1.2f;
+                    m_attackTimer = 0.5f;
                     m_attackLockTimer = 0.25f;
                     CheckAttackHit(weak3);
                     pPos.y -= 50.0f;
@@ -1230,7 +1261,7 @@ void PlayerEntity::UpdateAttack(float deltaTime) {
                     m_anim->Play("weakAttack3", true);
                     break;
                 case 3:
-                    m_attackTimer = 1.3f;
+                    m_attackTimer = 1.0f;
                     m_attackLockTimer = 1.3f;
                     CheckAttackHit(weak4);
                     pPos.x += (m_dir ? 100.0f : -100.0f);
@@ -1401,7 +1432,7 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
                 enemy->Open();
                 continue;
             }
-            enemy->TakeDamage( hitbox.damage, { m_dir ? 300.0f : -300.0f, -150.0f });
+            enemy->TakeDamage( hitbox.damage, { m_dir ? 150.0f : -150.0f, -300.0f });
             enemy->TakeMetsu(hitbox.metsu);
             m_hit = true;
             m_combo++;
@@ -1414,17 +1445,34 @@ void PlayerEntity::CheckAttackHit(const AttackHitbox& hitbox)
     }
 }
 
-void PlayerEntity::UpdateState() {
+void PlayerEntity::UpdateState(float deltaTime) {
+    PlayScene* playScene = dynamic_cast<PlayScene*>(m_scene);
     if (m_hp->GetHP() <= 0) {
-        ChangeState(ActionState::DEAD);
+        if (m_state == PlayerState::DEAD) {
+            if (m_anim->IsFinished()) {
+                SetState(Actor::State::Paused);
+                if (playScene) {
+                    playScene->ShowGameOverMenu();
+                }
+                return;
+            }
+        }
+        ChangeState(PlayerState::DEAD);
         m_canMove = false;
         return;
     }
 
+    UpdateMove();
+
+    if (m_state == PlayerState::HIT_TRAP) {
+        
+        playScene->RespawnPlayer();
+    }
+
     if (m_getHit) {
         if (m_isGround) {
-            if (!(m_state == ActionState::HIT_AIR)) {
-                ChangeState(ActionState::HIT_GROUND);
+            if (!(m_state == PlayerState::HIT_AIR)) {
+                ChangeState(PlayerState::HIT_GROUND);
                 m_canMove = false;
                 printf("ground\n");
                 return;
@@ -1432,23 +1480,23 @@ void PlayerEntity::UpdateState() {
             return;
         }
         else {
-            ChangeState(ActionState::HIT_AIR);
+            ChangeState(PlayerState::HIT_AIR);
             m_canMove = false;
             printf("air\n");
             return;
         }
     }
 
-    if (m_state == ActionState::HIT_AIR) {
+    if (m_state == PlayerState::HIT_AIR) {
         if (!m_isGround) {
             return;
         }
 
-        ChangeState(ActionState::HIT_AIR_LANDING);
+        ChangeState(PlayerState::HIT_AIR_LANDING);
         return;
     }
 
-    if (m_state == ActionState::HIT_AIR_LANDING) {
+    if (m_state == PlayerState::HIT_AIR_LANDING) {
         if (!(m_anim->IsFinished())) {
             return;
         }
@@ -1457,54 +1505,54 @@ void PlayerEntity::UpdateState() {
     }
 
     if (m_isKaryu) {
-        if (m_state == ActionState::KARYU_END) {
+        if (m_state == PlayerState::KARYU_END) {
             if (!m_anim->IsFinished()) return;
             else { m_KaryuTimer = 0.0f; }
         }
-        if (m_state == ActionState::KARYU_MID) {
+        if (m_state == PlayerState::KARYU_MID) {
             if (m_KaryuTimer < 0.5f) {
-                ChangeState(ActionState::KARYU_END);
+                ChangeState(PlayerState::KARYU_END);
             }
             return;
         }
-        if (m_state == ActionState::KARYU_START) {
+        if (m_state == PlayerState::KARYU_START) {
             if (m_KaryuTimer < 3.0f) {
-                ChangeState(ActionState::KARYU_MID);
+                ChangeState(PlayerState::KARYU_MID);
             }
             return;
         }
         if (m_KaryuTimer > 0.0f) {
-            ChangeState(ActionState::KARYU_START);
+            ChangeState(PlayerState::KARYU_START);
             return;
         }
     }
 
     if (m_isJutsuKamae) {
-        ChangeState(ActionState::JUTSU_KAMAE);
+        ChangeState(PlayerState::JUTSU_KAMAE);
         return;
     }
 
     if (m_isExecution) {
-        if (m_state == ActionState::EXECUTION_START) {
+        if (m_state == PlayerState::EXECUTION_START) {
             if (m_anim->IsFinished()) {
-                ChangeState(ActionState::EXECUTION_HORIZON);
+                ChangeState(PlayerState::EXECUTION_HORIZON);
             }
             return;
         }
 
-        if (m_state != ActionState::EXECUTION_HORIZON && m_state != ActionState::EXECUTION_VERTICAL) {
-            ChangeState(ActionState::EXECUTION_START);
+        if (m_state != PlayerState::EXECUTION_HORIZON && m_state != PlayerState::EXECUTION_VERTICAL) {
+            ChangeState(PlayerState::EXECUTION_START);
             return;
         }
         return;
     }
 
-    if (m_state == ActionState::EXECUTION_HORIZON || m_state == ActionState::EXECUTION_VERTICAL) {
-        ChangeState(ActionState::EXECUTION_END);
+    if (m_state == PlayerState::EXECUTION_HORIZON || m_state == PlayerState::EXECUTION_VERTICAL) {
+        ChangeState(PlayerState::EXECUTION_END);
         return;
     }
 
-    if (m_state == ActionState::EXECUTION_END) {
+    if (m_state == PlayerState::EXECUTION_END) {
         if (!m_anim->IsFinished()) {
             m_canMove = true;
             return;
@@ -1515,10 +1563,10 @@ void PlayerEntity::UpdateState() {
 
     if (m_isKamae) {
         if (m_isGround) {
-            ChangeState(ActionState::KAMAE);
+            ChangeState(PlayerState::KAMAE);
         }
         else {
-            ChangeState(ActionState::AIR_KAMAE);
+            ChangeState(PlayerState::AIR_KAMAE);
         }
         return;
     }
@@ -1527,27 +1575,27 @@ void PlayerEntity::UpdateState() {
         if (input.IsTrigger(Action::KUNAI)) {
             switch (m_attackType) {
             case AttackType::SQUAT_KUNAI:
-                ChangeState(ActionState::KUNAI_SQUAT);
+                ChangeState(PlayerState::KUNAI_SQUAT);
                 break;
             case AttackType::AIR_KUNAI:
-                ChangeState(ActionState::KUNAI_AIR);
+                ChangeState(PlayerState::KUNAI_AIR);
                 break;
             case AttackType::KUNAI:
-                ChangeState(ActionState::KUNAI);
+                ChangeState(PlayerState::KUNAI);
                 break;
             }
             return;
         }
 
-        if (m_state == ActionState::SQUAT_ATTACK) {
+        if (m_state == PlayerState::SQUAT_ATTACK) {
             if (m_anim->IsFinished())
             {
-                ChangeState(ActionState::SQUAT);
+                ChangeState(PlayerState::SQUAT);
             }
         }
 
         if (m_squat && !(m_attackType == AttackType::SQUAT_KUNAI)) {
-            ChangeState(ActionState::SQUAT_ATTACK);
+            ChangeState(PlayerState::SQUAT_ATTACK);
             return;
         }
 
@@ -1557,16 +1605,16 @@ void PlayerEntity::UpdateState() {
             if (!m_isGround) {
                 switch (m_airAttackIdx) {
                 case 0:
-                    ChangeState(ActionState::WEAK_AIR_ATTACK1);
+                    ChangeState(PlayerState::WEAK_AIR_ATTACK1);
                     break;
                 case 1:
-                    ChangeState(ActionState::WEAK_AIR_ATTACK1);
+                    ChangeState(PlayerState::WEAK_AIR_ATTACK1);
                     break;
                 case 2:
-                    ChangeState(ActionState::WEAK_AIR_ATTACK2);
+                    ChangeState(PlayerState::WEAK_AIR_ATTACK2);
                     break;
                 case 3:
-                    ChangeState(ActionState::WEAK_AIR_ATTACK3);
+                    ChangeState(PlayerState::WEAK_AIR_ATTACK3);
                     break;
                 }
                 return;
@@ -1574,71 +1622,71 @@ void PlayerEntity::UpdateState() {
 
             switch (m_weakAttackIdx) {
             case 1:
-                ChangeState(ActionState::WEAK_ATTACK1);
+                ChangeState(PlayerState::WEAK_ATTACK1);
                 break;
             case 2:
-                ChangeState(ActionState::WEAK_ATTACK2);
+                ChangeState(PlayerState::WEAK_ATTACK2);
                 break;
             case 3:
-                ChangeState(ActionState::WEAK_ATTACK3);
+                ChangeState(PlayerState::WEAK_ATTACK3);
                 break;
             case 4:
-                ChangeState(ActionState::WEAK_ATTACK4);
+                ChangeState(PlayerState::WEAK_ATTACK4);
                 m_weakAttackIdx++;
                 break;
             }
         }
 
-        if ((m_state == ActionState::WEAK_ATTACK1) || (m_state == ActionState::WEAK_ATTACK2) || (m_state == ActionState::WEAK_ATTACK3)) {
+        if ((m_state == PlayerState::WEAK_ATTACK1) || (m_state == PlayerState::WEAK_ATTACK2) || (m_state == PlayerState::WEAK_ATTACK3)) {
             if (m_anim->IsFinished())
             {
-                ChangeState(ActionState::ATTACK_END);
+                ChangeState(PlayerState::ATTACK_END);
             }
             return;
         }
 
         if (input.IsTrigger(Action::STRONG_ATTACK)) {
             if (!m_isGround) {
-                ChangeState(ActionState::HAYABUSA);
+                ChangeState(PlayerState::HAYABUSA);
                 return;
             }
 
             switch (m_strongAttackIdx) {
             case 1:
-                ChangeState(ActionState::STRONG_ATTACK1);
+                ChangeState(PlayerState::STRONG_ATTACK1);
                 break;
             case 2:
-                ChangeState(ActionState::STRONG_ATTACK2);
+                ChangeState(PlayerState::STRONG_ATTACK2);
                 m_strongAttackIdx++;
                 break;
             }
         }
 
-        if (m_state == ActionState::STRONG_ATTACK1) {
+        if (m_state == PlayerState::STRONG_ATTACK1) {
             if (m_anim->IsFinished())
             {
-                ChangeState(ActionState::STRONG_ATTACK_END);
+                ChangeState(PlayerState::STRONG_ATTACK_END);
             }
             return;
         }
 
-        if (m_state == ActionState::HAYABUSA) {
+        if (m_state == PlayerState::HAYABUSA) {
             if (m_HayabusaHit) {
-                ChangeState(ActionState::HAYABUSA_HIT);
+                ChangeState(PlayerState::HAYABUSA_HIT);
                 return;
             }
             if (m_isGround) {
-                ChangeState(ActionState::HAYABUSA_GROUND);
+                ChangeState(PlayerState::HAYABUSA_GROUND);
                 m_attackTimer = 0;
                 return;
             }
             
         }
 
-        if (m_state == ActionState::HAYABUSA_HIT) {
+        if (m_state == PlayerState::HAYABUSA_HIT) {
             if (m_anim->IsFinished())
             {
-                ChangeState(ActionState::FALL);
+                ChangeState(PlayerState::FALL);
                 m_attackTimer = 0;
                 m_attackType = AttackType::WEAK_ATTACK;
             }
@@ -1649,37 +1697,68 @@ void PlayerEntity::UpdateState() {
         return;
     }
 
-    if (m_state == ActionState::HAYABUSA_GROUND) {
+    if (m_state == PlayerState::HAYABUSA_GROUND) {
         if (m_anim->IsFinished())
         {
-            ChangeState(ActionState::JUMP_LANDING);
+            ChangeState(PlayerState::JUMP_LANDING);
         }
         return;
     }
 
-    if (m_state == ActionState::ROLL) {
+    UpdateDash(deltaTime);
+    Vector2d move(0.0f, 0.0f);
+    float dir = m_dir ? 1.0f : -1.0f;
+
+    if (m_state == PlayerState::ROLL) {
         if (!(m_anim->IsFinished())) {
+            if (m_sensor.frontGround == nullptr) {
+                move.x = 0.0f;
+            }
+            else {
+                move.x = dir * m_dashSpeed;
+            }
+            m_velocity->SetX(move.x);
+            return;
+        }
+        ChangeState(PlayerState::ROLL_LANDING);
+        return;
+    }
+
+    if (m_state == PlayerState::HIEN) {
+        if (!(m_anim->IsFinished())) {
+            move.x = dir * m_dashAirSpeed;
+            m_velocity->SetX(move.x);
             return;
         }
     }
 
-    if (m_state == ActionState::HIEN) {
+    if (m_state == PlayerState::SENTEN) {
         if (!(m_anim->IsFinished())) {
+            move.x = dir * m_dashSpeed;
+            m_velocity->SetX(move.x);
             return;
         }
+        ChangeState(PlayerState::ROLL_LANDING);
+        return;
     }
 
-    if (m_dashTimer > 0.0f) {
-        if (m_isSenten) {
-            ChangeState(ActionState::SENTEN);
-            return;
+    UpdateDir(input);
+    dir = m_dir ? 1.0f : -1.0f;
+
+    if (input.IsTrigger(Action::DASH)) {
+        if (m_isGround) {
+            if (m_sensor.frontBottom != nullptr && m_sensor.front == nullptr) {
+                ChangeState(PlayerState::SENTEN);
+                return;
+            }
+            if (m_sensor.frontGround != nullptr) {
+                ChangeState(PlayerState::ROLL);
+                return;
+            }
         }
-        if (m_isGround && m_sensor.frontGround != nullptr) {
-            ChangeState(ActionState::ROLL);
-            return;
-        }
-        else {
-            ChangeState(ActionState::HIEN);
+        
+        if (!m_HienCount) {
+            ChangeState(PlayerState::HIEN);
             return;
         }
     }
@@ -1689,56 +1768,85 @@ void PlayerEntity::UpdateState() {
     if (!m_isGround) {
         if (input.IsTrigger(Action::JUMP)) {
             if (m_jumpCount == 1) {
-                ChangeState(ActionState::JUMP_START);
+                ChangeState(PlayerState::JUMP_START);
                 return;
             }
             else if (m_jumpCount == 2) {
-                ChangeState(ActionState::JUMP_SECOND);
+                ChangeState(PlayerState::JUMP_SECOND);
                 m_jumpCount++;
                 return;
             }
         }
-        if (m_state == ActionState::JUMP_START) {
+        if (m_state == PlayerState::JUMP_START) {
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+                if (input.IsDown(Action::LEFT)) {
+                    m_velocity->SetX(-m_moveSpeed);
+                }
+                if (input.IsDown(Action::RIGHT)) {
+                    m_velocity->SetX(m_moveSpeed);
+                }
+            }
             if (m_anim->IsFinished()) {
-                ChangeState(ActionState::JUMP);
+                ChangeState(PlayerState::JUMP);
             }
             return;
         }
 
-        if (m_state == ActionState::JUMP) {
+        if (m_state == PlayerState::JUMP) {
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+                if (input.IsDown(Action::LEFT)) {
+                    m_velocity->SetX(-m_moveSpeed);
+                }
+                if (input.IsDown(Action::RIGHT)) {
+                    m_velocity->SetX(m_moveSpeed);
+                }
+            }
             if (m_anim->IsFinished()) {
-                ChangeState(ActionState::FALL);
+                ChangeState(PlayerState::FALL);
             }
             return;
         }
 
-        if (m_state == ActionState::JUMP_SECOND) {
+        if (m_state == PlayerState::JUMP_SECOND) {
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+                if (input.IsDown(Action::LEFT)) {
+                    m_velocity->SetX(-m_moveSpeed);
+                }
+                if (input.IsDown(Action::RIGHT)) {
+                    m_velocity->SetX(m_moveSpeed);
+                }
+            }
             if (m_anim->IsFinished()) {
-                ChangeState(ActionState::FALL);
+                ChangeState(PlayerState::FALL);
             }
             return;
         }
-        ChangeState(ActionState::FALL);
+
+        if (m_state == PlayerState::FALL) {
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+                if (input.IsDown(Action::LEFT)) {
+                    m_velocity->SetX(-m_moveSpeed);
+                }
+                if (input.IsDown(Action::RIGHT)) {
+                    m_velocity->SetX(m_moveSpeed);
+                }
+            }
+            return;
+        }
+        ChangeState(PlayerState::FALL);
+        
         return;
     }
 
-    if (m_state == ActionState::JUMP || m_state == ActionState::FALL) {
-        ChangeState(ActionState::JUMP_LANDING);
+    if (m_state == PlayerState::JUMP || m_state == PlayerState::FALL) {
+        ChangeState(PlayerState::JUMP_LANDING);
         return;
     }
 
-    if (m_state == ActionState::JUMP_LANDING) {
+    if (m_state == PlayerState::JUMP_LANDING) {
         if (!(m_anim->IsFinished())) {
             return;
         }
-    }
-
-    if (m_state == ActionState::SQUAT_START) {
-        if (m_anim->IsFinished())
-        {
-            ChangeState(ActionState::SQUAT);
-        }
-        return;
     }
 
     if (input.IsDown(Action::DOWN)) {
@@ -1746,20 +1854,43 @@ void PlayerEntity::UpdateState() {
         if (!m_squat)
         {
             EnterSquat();
-            ChangeState(ActionState::SQUAT_START);
+            ChangeState(PlayerState::SQUAT_START);
+            return;
+        }
+
+        if (m_state == PlayerState::SQUAT_START) {
+            if (m_anim->IsFinished())
+            {
+                ChangeState(PlayerState::SQUAT);
+            }
+            return;
+        }
+
+        if (m_state == PlayerState::SQUAT) {
+            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+                ChangeState(PlayerState::SQUAT_WALK);
+                return;
+            }
             return;
         }
 
         // しゃがみながら移動
-        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
-        {
-            ChangeState(ActionState::SQUAT_WALK);
+        if (m_state == PlayerState::SQUAT_WALK) {
+            if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))) {
+                ChangeState(PlayerState::SQUAT);
+                return;
+            }
+
+            if (input.IsDown(Action::LEFT)) {
+                m_velocity->SetX(-m_moveSpeed * 0.5);
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                m_velocity->SetX(m_moveSpeed * 0.5);
+            }
             return;
         }
 
-        if (m_squat) {
-            ChangeState(ActionState::SQUAT);
-        }
+        ChangeState(PlayerState::SQUAT);
         return;
     }
     
@@ -1770,83 +1901,109 @@ void PlayerEntity::UpdateState() {
             ExitSquat();
         }
         else {
-            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
-            {
-                ChangeState(ActionState::SQUAT_WALK);
+            if (m_state == PlayerState::SQUAT) {
+                if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+                    ChangeState(PlayerState::SQUAT_WALK);
+                    return;
+                }
                 return;
             }
 
-            ChangeState(ActionState::SQUAT);
+            // しゃがみながら移動
+            if (m_state == PlayerState::SQUAT_WALK) {
+                if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))) {
+                    ChangeState(PlayerState::SQUAT);
+                    return;
+                }
+
+                if (input.IsDown(Action::LEFT)) {
+                    m_velocity->SetX(-m_moveSpeed * 0.5);
+                }
+                if (input.IsDown(Action::RIGHT)) {
+                    m_velocity->SetX(m_moveSpeed * 0.5);
+                }
+                return;
+            }
+
+            ChangeState(PlayerState::SQUAT);
             return;
         }
     }
-    
-    if (m_state == ActionState::RUN_START)
-    {
-        if (!(input.IsDown(Action::LEFT) || input.IsDown(Action::RIGHT)))
-        {
-            ChangeState(ActionState::STOP_SHORT);
+
+    if (m_state == PlayerState::CHANGE_DIR_RUN) {
+        if (!(m_anim->IsFinished())) {
+            m_velocity->Set(Vector2d(0.0f, 0.0f));
             return;
         }
-
-        if (m_anim->IsFinished())
-        {
-            ChangeState(ActionState::RUN);
-        }
+        ChangeState(PlayerState::RUN);
         return;
     }
 
-    if (m_state == ActionState::RUN)
+    if (m_state == PlayerState::RUN)
     {
         if (m_prevDir != m_dir)
         {
-            ChangeState(ActionState::CHANGE_DIR_RUN);
+            ChangeState(PlayerState::CHANGE_DIR_RUN);
             return;
         }
 
         // 移動キー離した
         if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
         {
-            ChangeState(ActionState::STOP_LONG);
+            ChangeState(PlayerState::STOP_LONG);
             return;
         }
+
+        m_velocity->SetX(m_moveSpeed* dir);
         return;
     }
 
-    if (m_state == ActionState::CHANGE_DIR_RUN) {
-        if (!(m_anim->IsFinished())) {
-            m_velocity->Set(Vector2d(0.0f, 0.0f));
+    if (m_state == PlayerState::RUN_START)
+    {
+        if (!(input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)))
+        {
+            ChangeState(PlayerState::STOP_SHORT);
             return;
         }
-        ChangeState(ActionState::RUN);
+
+        m_velocity->SetX(m_moveSpeed * dir);
+
+        if (m_anim->IsFinished())
+        {
+            ChangeState(PlayerState::RUN);
+        }
         return;
     }
 
     if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
     {
-        ChangeState(ActionState::RUN_START);
+        ChangeState(PlayerState::RUN_START);
         return;
     }
 
-    if ((m_state == ActionState::STOP_SHORT) || (m_state == ActionState::STOP_LONG))
+    if ((m_state == PlayerState::STOP_SHORT) || (m_state == PlayerState::STOP_LONG))
     {
-        if (m_prevDir != m_dir)
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT))
         {
-            ChangeState(ActionState::CHANGE_DIR_RUN);
+            ChangeState(PlayerState::RUN);
             return;
         }
 
         if (m_anim->IsFinished())
         {
-            ChangeState(ActionState::IDLE);
+            vel = { 0.0f, 0.0f };
+            m_velocity->Set(vel);
+            ChangeState(PlayerState::IDLE);
+            return;
         }
+
         return;
     }
 
-    ChangeState(ActionState::IDLE);
+    ChangeState(PlayerState::IDLE);
 }
 
-void PlayerEntity::ChangeState(ActionState newState)
+void PlayerEntity::ChangeState(PlayerState newState)
 {
     if (m_state == newState)
         return;
@@ -1855,261 +2012,469 @@ void PlayerEntity::ChangeState(ActionState newState)
 
     switch (m_state)
     {
-    case ActionState::IDLE:
+    case PlayerState::IDLE:
         m_anim->Play("idle");
         break;
 
-    case ActionState::RUN:
-        m_anim->Play("run");
-        break;
+    case PlayerState::RUN:
+    {
+        Vector2d move(0.0f, 0.0f); 
+        float dir = m_dir ? 1.0f : -1.0f;
+        move.x = 1.0f * dir;
+        move.x *= m_moveSpeed;
 
-    case ActionState::RUN_START:
+        Vector2d vel = m_velocity->Get();
+        vel.x = move.x;
+        m_velocity->Set(vel);
+
+        m_anim->Play("run");
+    }   break;
+
+    case PlayerState::RUN_START:
         m_anim->Play("runStart");
         break;
 
-    case ActionState::STOP_SHORT:
+    case PlayerState::STOP_SHORT:
+    {
+        Vector2d vel = m_velocity->Get();
+        vel.x *= 0.8f;
+        m_velocity->Set(vel);
+
         m_anim->Play("stopShort");
-        break;
+    }   break;
 
-    case ActionState::STOP_LONG:
+    case PlayerState::STOP_LONG:
+    {
+        Vector2d vel = m_velocity->Get();
+        vel.x *= 0.8f;
+        m_velocity->Set(vel);
         m_anim->Play("stopLong");
-        break;
+    }break;
 
-    case ActionState::CHANGE_DIR:
+    case PlayerState::CHANGE_DIR:
         m_anim->Play("changeDir");
         break;
 
-    case ActionState::CHANGE_DIR_RUN:
+    case PlayerState::CHANGE_DIR_RUN:
+    {
+        Vector2d scale = m_transform->GetScale();
+        scale.x = m_dir ? -1.0f : 1.0f;
+        m_transform->SetScale(scale);
+
         m_anim->Play("changeDirRun");
-        break;
+    }break;
     
-    case ActionState::SQUAT_START:
+    case PlayerState::SQUAT_START:
         m_anim->Play("squatStart");
         break;
 
-    case ActionState::SQUAT:
+    case PlayerState::SQUAT:
         m_anim->Play("squat");
         break;
 
-    case ActionState::SQUAT_IDLE:
+    case PlayerState::SQUAT_IDLE:
         m_anim->Play("squatIdle");
         break;
 
-    case ActionState::SQUAT_WALK:
-        m_anim->Play("squatWalk");
-        break;
+    case PlayerState::SQUAT_WALK:
+    {
+        Vector2d move(0.0f, 0.0f);
+        float dir = m_dir ? 1.0f : -1.0f;
+        move.x = 0.5f * dir;
+        move.x *= m_moveSpeed;
 
-    case ActionState::SQUAT_ATTACK:
+        Vector2d vel = m_velocity->Get();
+        vel.x = move.x;
+        m_velocity->Set(vel);
+
+        m_anim->Play("squatWalk");
+    }   break;
+
+    case PlayerState::SQUAT_ATTACK:
         m_anim->Play("squatAttack");
         break;
 
-    case ActionState::JUMP_START:
+    case PlayerState::JUMP_START:
         m_anim->Play("jumpStart");
         break;
 
-    case ActionState::JUMP:
+    case PlayerState::JUMP:
         m_anim->Play("jump");
         break;
 
-    case ActionState::JUMP_SECOND:
+    case PlayerState::JUMP_SECOND:
         m_anim->Play("jumpSecond");
         break;
 
-    case ActionState::FALL:
+    case PlayerState::FALL:
         m_anim->Play("fall");
         break;
 
-    case ActionState::JUMP_LANDING:
+    case PlayerState::JUMP_LANDING:
         m_anim->Play("jumpLanding");
         break;
 
-    case ActionState::ROLL:
+    case PlayerState::ROLL:
+    {
+        Vector2d move(0.0f, 0.0f);
+        float dir = m_dir ? 1.0f : -1.0f;
+        m_canMove = false;
+        m_dashTimer = 0.35f;
+
+        if (m_sensor.frontGround == nullptr){
+            move.x = 0.0f;
+        }
+        else {
+            move.x = dir * m_dashSpeed;
+        }
+
+        m_velocity->SetX(move.x);
+
         m_anim->Play("roll");
-        break;
+    }   break;
 
-    case ActionState::HIEN:
+    case PlayerState::HIEN:
+    {
+        Vector2d move(0.0f, 0.0f);
+        float dir = m_dir ? 1.0f : -1.0f;
+        m_canMove = false;
+        m_dashTimer = 0.35f;
+
+        move.x = dir * m_dashAirSpeed;
+        move.y = -300.0f;
+        m_HienCount = 1;
+        m_transform->SetAngle(0.0f);
+
+        Vector2d vel = m_velocity->Get();
+        vel.x = move.x;
+        vel.y += move.y;
+        m_velocity->Set(vel);
+
         m_anim->Play("Hien");
-        break;
+    }   break;
 
-    case ActionState::SENTEN:
+    case PlayerState::SENTEN:
+    {
+        Vector2d move(0.0f, 0.0f);
+        float dir = m_dir ? 1.0f : -1.0f;
+        m_canMove = false;
+        m_dashTimer = 0.35f;
+
+        move.x = dir * m_dashSpeed;
+        move.y = -4400.0f;
+        m_isSenten = true;
+
+        Vector2d vel = m_velocity->Get();
+        vel.x = move.x;
+        vel.y += move.y;
+        m_velocity->Set(vel);
+
         m_anim->Play("Senten");
-        break;
+    }   break;
 
-    case ActionState::ROLL_LANDING:
+    case PlayerState::ROLL_LANDING:
         m_anim->Play("rollLanding");
         break;
 
-    case ActionState::SOU_KUNAI_SENTEN:
+    case PlayerState::SOU_KUNAI_SENTEN:
         m_anim->Play("SouKunaiSenten");
         break;
 
-    case ActionState::WALL_HOLD:
+    case PlayerState::WALL_HOLD:
         m_anim->Play("wallHold");
         break;
 
-    case ActionState::WALL_JUMP:
+    case PlayerState::WALL_JUMP:
         m_anim->Play("wallJump");
         break;
 
-    case ActionState::WALL_CLIMB:
+    case PlayerState::WALL_CLIMB:
         m_anim->Play("wallClimb");
         break;
 
-    case ActionState::WALL_CLIMB_UP:
+    case PlayerState::WALL_CLIMB_UP:
         m_anim->Play("wallClimbUp");
         break;
 
-    case ActionState::PLATFORM_CLIMB:
+    case PlayerState::PLATFORM_CLIMB:
         m_anim->Play("platformClimb");
         break;
 
-    case ActionState::CLIMB_END:
+    case PlayerState::CLIMB_END:
         m_anim->Play("climbEnd");
         break;
 
-    case ActionState::WEAK_ATTACK1:
+    case PlayerState::WEAK_ATTACK1:
         m_anim->Play("weakAttack1");
+        if (m_weakAttackSound1 != nullptr && m_hit) {
+            m_weakAttackSound1->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::WEAK_ATTACK2:
+    case PlayerState::WEAK_ATTACK2:
         m_anim->Play("weakAttack2");
+        if (m_weakAttackSound2 != nullptr && m_hit) {
+            m_weakAttackSound2->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::WEAK_ATTACK3:
+    case PlayerState::WEAK_ATTACK3:
         m_anim->Play("weakAttack3");
+        if (m_weakAttackSound3 != nullptr && m_hit) {
+            m_weakAttackSound3->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::ATTACK_END:
+    case PlayerState::ATTACK_END:
         m_anim->Play("attackEnd");
         break;
 
-    case ActionState::WEAK_ATTACK4:
+    case PlayerState::WEAK_ATTACK4:
         m_anim->Play("weakAttack4");
+        if (m_weakAttackSound4 != nullptr && m_hit) {
+            m_weakAttackSound4->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::WEAK_AIR_ATTACK1:
+    case PlayerState::WEAK_AIR_ATTACK1:
         m_anim->Play("weakAirAttack1");
+        if (m_weakAttackSound1 != nullptr && m_hit) {
+            m_weakAttackSound1->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::WEAK_AIR_ATTACK2:
+    case PlayerState::WEAK_AIR_ATTACK2:
         m_anim->Play("weakAirAttack2");
+        if (m_weakAttackSound2 != nullptr && m_hit) {
+            m_weakAttackSound2->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::WEAK_AIR_ATTACK3:
+    case PlayerState::WEAK_AIR_ATTACK3:
         m_anim->Play("weakAirAttack3");
+        if (m_weakAttackSound3 != nullptr && m_hit) {
+            m_weakAttackSound3->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::STRONG_ATTACK1:
+    case PlayerState::STRONG_ATTACK1:
         m_anim->Play("strongAttack1");
+        if (m_strongAttackSound1 != nullptr && m_hit) {
+            m_strongAttackSound1->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::STRONG_ATTACK_END:
+    case PlayerState::STRONG_ATTACK_END:
         m_anim->Play("strongAttackEnd");
         break;
 
-    case ActionState::STRONG_ATTACK2:
+    case PlayerState::STRONG_ATTACK2:
         m_anim->Play("strongAttack2");
+        if (m_strongAttackSound2 != nullptr && m_hit) {
+            m_strongAttackSound2->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::HAYABUSA:
+    case PlayerState::HAYABUSA:
         m_anim->Play("Hayabusa");
+        if (m_hayabusaAttackSound != nullptr && m_hit) {
+            m_hayabusaAttackSound->Play();
+        }
+        else {
+            m_karaburiSound->Play();
+        }
         break;
 
-    case ActionState::HAYABUSA_HIT:
+    case PlayerState::HAYABUSA_HIT:
         m_anim->Play("HayabusaHit");
         break;
-
-    case ActionState::HAYABUSA_GROUND:
+        
+    case PlayerState::HAYABUSA_GROUND:
         m_anim->Play("HayabusaGround");
         break;
 
-    case ActionState::KUNAI:
+    case PlayerState::KUNAI:
         m_anim->Play("Kunai");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
-    case ActionState::KUNAI_AIR:
+    case PlayerState::KUNAI_AIR:
         m_anim->Play("KunaiAir");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
-    case ActionState::KUNAI_WALL:
+    case PlayerState::KUNAI_WALL:
         m_anim->Play("wallKunai");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
-    case ActionState::KUNAI_SQUAT:
+    case PlayerState::KUNAI_SQUAT:
         m_anim->Play("KunaiSquat");
+        if (m_kunaiSound != nullptr)
+        {
+            m_kunaiSound->Play();
+        }
         break;
 
-    case ActionState::HIT_TRAP:
-        m_anim->Play("hitTrap");
+    case PlayerState::HIT_TRAP:
+        m_anim->Play("trapHit");
         break;
 
-    case ActionState::HIT_GROUND:
+    case PlayerState::HIT_GROUND:
         m_anim->Play("hitGround");
         break;
 
-    case ActionState::HIT_AIR:
+    case PlayerState::HIT_AIR:
         m_anim->Play("hitAir");
         break;
 
-    case ActionState::HIT_AIR_LANDING:
+    case PlayerState::HIT_AIR_LANDING:
         m_anim->Play("hitAirLanding");
         break;
 
-    case ActionState::KAMAE:
+    case PlayerState::KAMAE:
         m_anim->Play("Kamae");
+        
         break;
 
-    case ActionState::KAMAE_END:
+    case PlayerState::KAMAE_END:
         m_anim->Play("KamaeEnd");
+        
         break;
 
-    case ActionState::AIR_KAMAE:
+    case PlayerState::AIR_KAMAE:
         m_anim->Play("KamaeAir");
         break;
 
-    case ActionState::AIR_KAMAE_END:
+    case PlayerState::AIR_KAMAE_END:
         m_anim->Play("KamaeAirEnd");
         break;
 
-    case ActionState::JUTSU_KAMAE:
+    case PlayerState::JUTSU_KAMAE:
         m_anim->Play("JutsuKamae");
         break;
 
-    case ActionState::JUTSU_KAMAE_END:
+    case PlayerState::JUTSU_KAMAE_END:
         m_anim->Play("JutsuKamaeEnd");
         break;
 
-    case ActionState::EXECUTION_START:
+    case PlayerState::EXECUTION_START:
         m_anim->Play("executionStart");
+        if (m_kamaeSound != nullptr && !m_kamaeSound->IsPlaying())
+        {
+            m_kamaeSound->Play();
+        }
         break;
 
-    case ActionState::EXECUTION_HORIZON:
+    case PlayerState::EXECUTION_HORIZON:
         m_anim->Play("executionHorizon");
         break;
 
-    case ActionState::EXECUTION_VERTICAL:
+    case PlayerState::EXECUTION_VERTICAL:
         m_anim->Play("executionVertical");
         break;
 
-    case ActionState::EXECUTION_END:
+    case PlayerState::EXECUTION_END:
         m_anim->Play("executionEnd");
+        
         break;
 
-    case ActionState::KARYU_START:
+    case PlayerState::KARYU_START:
         m_anim->Play("KaryuStart");
+        if (m_karyuSound != nullptr)
+        {
+            m_karyuSound->Play();
+        }
         break;
 
-    case ActionState::KARYU_MID:
+    case PlayerState::KARYU_MID:
         m_anim->Play("KaryuMid");
         break;
 
-    case ActionState::KARYU_END:
+    case PlayerState::KARYU_END:
         m_anim->Play("KaryuEnd");
         break;
 
-    case ActionState::DEAD:
+    case PlayerState::DEAD:
         m_anim->Play("dead");
         break;
+    }
+}
+
+void PlayerEntity::UpdateMove() {
+    Vector2d vel = m_velocity->Get();
+    if (vel.x != 0.0f) {
+        vel.x *= 0.8f;
+
+        if (std::abs(vel.x) < 1.0f) {
+            vel.x = 0.0f;
+        }
+        m_velocity->Set(vel);
+    }
+}
+
+void PlayerEntity::UpdateDir(const Input& input) {
+    if (m_canMove) {
+        m_prevDir = m_dir;
+        if (input.IsDown(Action::LEFT)) {
+            m_dir = false;
+        }
+        if (input.IsDown(Action::RIGHT)) {
+            m_dir = true;
+        }
+    }
+}
+
+void PlayerEntity::UpdateDash(float deltaTime) {
+    if (m_dashTimer > 0.0f) {
+        Vector2d vel = m_velocity->Get();
+
+        m_dashTimer -= deltaTime;
+
+        if (m_dashTimer <= 0.0f) {
+            m_dashTimer = 0.0f;
+            vel.x = 0.0f;
+            m_canMove = true;
+            m_isSenten = false;
+        }
+
+        m_velocity->Set(vel);
     }
 }
 
@@ -2127,17 +2492,16 @@ void PlayerEntity::TakeDamage(int damage, const Vector2d& knockback) {
     m_combo = 0;
 }
 
+void PlayerEntity::HitTrap() {
+    ChangeState(PlayerState::HIT_TRAP);
+    m_canMove = false;
+}
+
 void PlayerEntity::SetMoney(int amount)
 {
     int old = m_money;
     m_money = (amount >= 0) ? amount : 0;
     if (OnMoneyChanged) OnMoneyChanged(m_money, old);
-}
-
-void PlayerEntity::HitTrap() {
-    m_hp->Damage(10);
-
-    m_state = ActionState::HIT_TRAP;
 }
 
 void PlayerEntity::AddMoney(int delta)
@@ -2188,7 +2552,7 @@ void PlayerEntity::ResetStageState()
     m_canAttack = true;
     m_attack = false;
     m_dashTimer = 0.0f;
-    ChangeState(ActionState::IDLE);
+    ChangeState(PlayerState::IDLE);
 }
 
 //======================================

@@ -1,7 +1,9 @@
 #define NOMINMAX
 #include "PlayScene.h"
+#include "TitleScene.h"
 #include "TransformComponent.h"
 #include "VelocityComponent.h"
+#include "SoundComponent.h"
 #include "HPComponent.h"
 #include "GameOverMenuUI.h"
 #include "Game.h"
@@ -40,14 +42,11 @@
 #include "StructureBBlock.h"
 #include "Trap.h"
 #include "HPBarUI.h"
-#include "ShurikenUI.h"
 #include "BackGroundUI.h"
 #include "TreasureBox.h"
-
-#include "Camera.h"
-#include "MoneyUI.h"
+#include "JutsuChargeUI.h"
 #include "EnemyHPBar.h"
-#include "Menu.h"
+#include "EnemySpawner.h"
 
 //イベントのため変更
 #include "EventManager.h"
@@ -61,6 +60,7 @@ PlayScene::PlayScene(Game* game)
 	m_menu(this),
 	m_player(nullptr),
 	m_camera(static_cast<float>(game->GetWidth()), static_cast<float>(game->GetHeight())),
+	m_stageBgm(nullptr),
 	m_stageIndex(0),
 	m_comboCount(0),
 	m_currentStage(1),
@@ -85,15 +85,15 @@ bool PlayScene::Init() {
 	
 	// CSV からマップ読み込み
 	if (!m_mapData.LoadStage("assets/maps/stage1")) {
-		std::cerr << "マップ１読み込み失敗" << std::endl;
+		std::cerr << "Load error map1" << std::endl;
 		return false;
 	}
 	if (!m_mapData.LoadStage("assets/maps/stage2")) {
-		std::cerr << "マップ２読み込み失敗" << std::endl;
+		std::cerr << "Load error map2" << std::endl;
 		return false;
 	}
 	if (!m_mapData.LoadStage("assets/maps/stage3")) {
-		std::cerr << "マップ３読み込み失敗" << std::endl;
+		std::cerr << "Load error map3" << std::endl;
 		return false;
 	}
 
@@ -110,10 +110,11 @@ bool PlayScene::Init() {
 		m_player->GetHP()
 	);
 	AddUIActor(hpBar);
-
+	m_hpBarUI = hpBar;
 	
 	ShurikenUI* shuriken = new ShurikenUI(this, 18, 60);
 	AddUIActor(shuriken);
+	m_shurikenUI = shuriken;
 
 	// プレイヤー所持金 UI（左上に表示）
 	m_moneyUI = new MoneyUI(this, m_player, "assets/images/uies/money.png");
@@ -123,6 +124,12 @@ bool PlayScene::Init() {
 	m_moneyUI->SetTextOffset(46.0f);         // 画像右側に数字を表示する距離
 	m_moneyUI->SetAnchorTopRight(220.0f, 50.0f, -80.0f);// 右上に固定：右端から220px, 上から50px, 画像と数字の間隔を-60px にする
 	AddUIActor(m_moneyUI);
+
+	// 忍術チャージUI
+	m_jutsuChargeUI = new JutsuChargeUI(this);
+	m_jutsuChargeUI->SetNinImagePosition(52.0f, 0.0f);
+	m_jutsuChargeUI->SetNinImageScale(0.46f);  // 50%のサイズ（半分）
+	AddUIActor(m_jutsuChargeUI);
 
 	// プレイヤー金額変更時に MoneyUI を 3 秒表示（増えたときのみ）
 	if (m_player) {
@@ -141,6 +148,15 @@ bool PlayScene::Init() {
 	// Renderer に Camera をセット
 	m_game->GetRenderer()->SetCamera(&m_camera);
 
+	m_stageBgm = m_player->AddComponent<SoundComponent>(
+		_T("assets/sounds/bgm.wav")
+	);
+
+	if (m_stageBgm != nullptr)
+	{
+		m_stageBgm->SetVolume(90);
+		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
+	}
 	return true;
 }
 
@@ -318,212 +334,42 @@ bool PlayScene::StageInit(int stageNo) {
 
 			case 202:
 			{
-				WhiteEnemyEntity* enemy = new WhiteEnemyEntity(this, pos);
-				AddActor(enemy);
-
-				// HPBar を PlayScene 側で作成して登録（UI は AddUIActor で登録）
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったとき表示する
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* whiteEnemy = EnemySpawner::SpawnEnemy<WhiteEnemyEntity>(this, pos);
 			} break;
 
 			case 203:
 			{
-				YellowEnemyEntity* enemy = new YellowEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* yellowEnemy = EnemySpawner::SpawnEnemy<YellowEnemyEntity>(this, pos);
 			} break;
 
 			case 204:
 			{
-				ArrowEnemyEntity* enemy = new ArrowEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* arrowEnemy = EnemySpawner::SpawnEnemy<ArrowEnemyEntity>(this, pos);
 			} break;
 
 			case 208:
 			{
-				HealerEnemyEntity* enemy = new HealerEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* healereEnemy = EnemySpawner::SpawnEnemy<HealerEnemyEntity>(this, pos);
 			} break;
 
 			case 206:
 			{
-				ArmorEnemyEntity* enemy = new ArmorEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_armor.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* armorEnemy = EnemySpawner::SpawnEnemy<ArmorEnemyEntity>(this, pos);
 			} break;
 
 			case 207:
 			{
-				GunnerEnemyEntity* enemy = new GunnerEnemyEntity(this, pos);
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* gunnernemy = EnemySpawner::SpawnEnemy<GunnerEnemyEntity>(this, pos);
 			} break;
 
 			case 205:
 			{
-				YoroiBossEntity* enemy = new YoroiBossEntity(this, pos, Vector2d(192, 192));
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* yoroiBoss = EnemySpawner::SpawnEnemy<YoroiBossEntity>(this, pos, "assets/images/uies/HP_enemy_black.png", Vector2d(192, 192));
 			} break;
 
 			case 210:
 			{
-				SekienkiBossEntity* enemy = new SekienkiBossEntity(this, pos, Vector2d(192, 192));
-				AddActor(enemy);
-				EnemyHPBar* hpBar = new EnemyHPBar(this, enemy->GetHP(), "assets/images/uies/HP_enemy_black.png");
-				hpBar->SetPosIsCenter(false);          // transform は左上座標を使う（デフォルト）
-				hpBar->SetFrameOffset(80.0f, 50.0f);   // 少し上に出す
-				hpBar->SetGaugeScale(0.8f, 0.05f);     // 幅を小さめ, 高さ半分
-				hpBar->SetPadding(3.0f, 1.0f, 3.0f, 1.0f);
-				hpBar->SetGaugeOffset(10.0f, 0.0f);// 枠はそのまま、ゲージを右に +3px、下に +1px 移動
-				hpBar->SetGaugeOffset(0.0f, 0.0f);// ゲージを枠の中心より少し上に表示（上にずらすなら負の値）
-				AddUIActor(hpBar);
-				m_enemyToHPBarMap[enemy] = hpBar;
-
-				// ダメージで表示：HP が減ったときだけ表示する（2秒）
-				enemy->GetHP()->OnHPChanged = [hpBar](int newHP, int oldHP) {
-					if (hpBar && newHP < oldHP) {
-						hpBar->ShowFor(0.0f); // 表示継続時間は調整可
-					}
-					};
-				// 敵の死亡時にバーを消す（簡易）
-				enemy->GetHP()->OnDeath = [hpBar]() {
-					if (hpBar) hpBar->SetState(Actor::State::Dead);
-					};
+				auto* sekienkiBoss = EnemySpawner::SpawnEnemy<SekienkiBossEntity>(this, pos, "assets/images/uies/HP_enemy_black.png", Vector2d(192, 192));
 			} break;
 
 			default:
@@ -599,6 +445,11 @@ void PlayScene::ChangeStage(int index, int spawnIndex) {
 			m_camera.SetCenter(camPos);
 		}
 	}
+	if (m_stageBgm != nullptr)
+	{
+		m_stageBgm->Stop();
+		m_stageBgm->Play(DX_PLAYTYPE_LOOP, true);
+	}
 }
 
 void PlayScene::ClearStageActors()
@@ -669,6 +520,7 @@ void PlayScene::Update(float deltaTime) {
 	}
 
 	//イベントのため変更
+	m_playTimer += deltaTime; //クリアシーンのために追加
 	if (m_eventManager->IsRunning())
 	{
 		m_eventManager->Update(deltaTime);
@@ -685,7 +537,9 @@ void PlayScene::Update(float deltaTime) {
 
 	if (input.IsTrigger(Action::MENU))
 	{
+		if (m_player->GetState() != Actor::State::Paused)
 		m_menu.Toggle();
+
 		return;
 	}
 
@@ -693,6 +547,10 @@ void PlayScene::Update(float deltaTime) {
 	{
 		m_menu.Update(deltaTime);
 		return;
+	}
+
+	if (m_shurikenUI && m_player) {
+		m_shurikenUI->SetCount(m_player->GetKunai());
 	}
 
 	updateActors(m_backactors, deltaTime);
@@ -710,6 +568,15 @@ void PlayScene::Update(float deltaTime) {
 				m_isPaused = false;
 				m_isGameOver = false;
 				m_gameOverMenu->SetActive(false);
+				if (m_hpBarUI) {
+					m_hpBarUI->SetVisible(true);
+				}
+				if (m_shurikenUI) {
+					m_shurikenUI->SetVisible(true);
+				}
+				if (m_jutsuChargeUI) {
+					m_jutsuChargeUI->SetVisible(true);
+				}
 				RespawnPlayer();
 				break;
 
@@ -721,8 +588,13 @@ void PlayScene::Update(float deltaTime) {
 
 			case GameOverMenuUI::MenuItem::TITLE:
 				// タイトル画面へ移動
-				m_isRunning = false;  // PlaySceneを終了
-				break;
+			{
+				Game* game = m_eventManager->GetGame();
+				if (game)
+				{
+					game->ChangeScene(std::make_unique<TitleScene>(game));
+				}
+			}	break;
 
 			default:
 				break;
@@ -800,7 +672,7 @@ void PlayScene::Update(float deltaTime) {
 	{
 		m_shurikenUI->SetCount(m_player->GetShurikenCount());
 	}
-
+	std::cout << "canMove: " << m_player->GetCanMove() << std::endl;
 }
 		
 void PlayScene::Draw() {
@@ -847,10 +719,10 @@ void PlayScene::Draw() {
 	if (m_player->GetIsKaryu()) {
 		float timer = m_player->GetKaryuTimer();
 		if (timer > 4.9f) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (5.0f - timer) / 0.1f * 180); // 0～255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)((5.0f - timer) / 0.1f * 180)); // 0～255
 		}
 		else if (timer < 0.5f) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, timer / 0.5f * 180); // 0～255
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (int)(timer / 0.5f * 180)); // 0～255
 		}
 		else {
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 180); // 0～255
@@ -858,6 +730,14 @@ void PlayScene::Draw() {
 		DrawBox(0, 0, 1280, 720, GetColor(150, 20, 20), 1);
 
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	// コンボ表示（m_comboCount が 1 以上なら表示）
+	if (m_player->GetCombo() > 0) {
+		const std::string& debugFont = m_game->GatDebugFont();
+		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
+		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
+		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
 	}
 
 	drawActors(m_UIactors);
@@ -903,13 +783,6 @@ void PlayScene::Draw() {
 		{ (float)m_player->GetCombo(), 0 }
 	};
 
-	// コンボ表示（m_comboCount が 1 以上なら表示）
-	if (m_player->GetCombo() > 0) {
-		const std::string& debugFont = m_game->GatDebugFont();
-		// ここではフォントサイズを大きめ（例 48）で真ん中上に表示
-		std::string comboText = std::to_string(m_player->GetCombo()) + " Hits";
-		renderer->DrawTextL(Vector2d(20.0f, 120.0f), comboText, Color(0, 0, 0), debugFont, 60, false);
-	}
 
 	if (m_resultShown) {
 		const std::string& debugFont = m_game->GatDebugFont();
@@ -942,6 +815,18 @@ void PlayScene::Draw() {
 #endif
 }
 
+bool PlayScene::IsActorAlive(Actor* actor) const
+{
+	if (actor == nullptr)
+		return false;
+
+	return std::find(
+		m_actors.begin(),
+		m_actors.end(),
+		actor
+	) != m_actors.end();
+}
+
 void PlayScene::AddCombo() {
 	m_comboCount++;
 	std::cout << "Combo: " << m_comboCount << std::endl;
@@ -953,7 +838,7 @@ void PlayScene::RespawnPlayer() {
 	// プレイヤーの位置をリスポーン位置に戻す
 	TransformComponent* transform = m_player->GetComponent<TransformComponent>();
 	if (transform) {
-		transform->SetPosition(m_respawnPos);
+		transform->SetPosition(m_playerSpawnPoints[0]);
 	}
 
 	// プレイヤーの速度をリセット
@@ -967,12 +852,41 @@ void PlayScene::RespawnPlayer() {
 	if (hp) {
 		hp->Heal(hp->GetMaxHP());
 	}
-
-	std::cout << "Player respawned at: " << m_respawnPos.x << ", " << m_respawnPos.y << std::endl;
+	m_player->SetState(Actor::State::Active);
+	std::cout << "Player respawned at: " << m_playerSpawnPoints[0].x << ", " << m_playerSpawnPoints[0].y << std::endl;
 }
+
+void PlayScene::RegisterEnemyHPBar(EnemyEntity* enemy, EnemyHPBar* hpBar)
+{
+	if (enemy && hpBar)
+	{
+		m_enemyToHPBarMap[enemy] = hpBar;
+	}
+}
+
 void PlayScene::ShowGameOverMenu() {
 	m_isGameOver = true;
 	m_isPaused = true;
+
+	auto it = std::find(m_UIactors.begin(), m_UIactors.end(), m_gameOverMenu);
+	if (it != m_UIactors.end())
+	{
+		m_UIactors.erase(it);
+		m_UIactors.push_back(m_gameOverMenu);
+	}
+
+	if (m_hpBarUI) {
+		m_hpBarUI->SetVisible(false);
+	}
+
+	if (m_shurikenUI) {
+		m_shurikenUI->SetVisible(false);
+	}
+
+	if (m_jutsuChargeUI) {
+		m_jutsuChargeUI->SetVisible(false);
+		std::cout << "m_jutsuChargeUI = false;" << std::endl;
+	}
 
 	if (m_gameOverMenu) {
 		m_gameOverMenu->SetActive(true);
