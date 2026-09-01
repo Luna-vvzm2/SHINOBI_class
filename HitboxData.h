@@ -3,6 +3,7 @@
 #include "Vector2d.h"
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 struct Hitbox
 {

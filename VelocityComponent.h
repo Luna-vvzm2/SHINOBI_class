@@ -13,6 +13,7 @@ public:
 	void Update(float deltaTime) override;
 
 	void Set(const Vector2d& v) { m_velocity = v; }
+	void SetX(const float& v) { m_velocity.x = v; }
 	const Vector2d& Get() const { return m_velocity; }
 
 private:
