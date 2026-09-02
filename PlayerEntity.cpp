@@ -57,7 +57,7 @@ PlayerEntity::PlayerEntity(Scene* scene, const Vector2d& pos, const Vector2d& si
     , m_HienCount(0)
     , m_isSenten(false)
 
-    , m_jumpCount(0)
+    , m_jumpCount(false)
     , m_jumpTime(0.0f)
     , m_maxJumpTime(1.5f)
     , m_attack(false)
@@ -617,7 +617,6 @@ void PlayerEntity::Update(float deltaTime) {
     UpdateExecution(deltaTime);
 
     UpdateSensor();
-    UpdateJump(deltaTime);
     UpdateGravity(deltaTime);
 
     CheckCanStand();
@@ -920,61 +919,6 @@ void PlayerEntity::UpdateScale() {
     m_transform->SetScale(scale);
 }
 
-void PlayerEntity::UpdateJump(float deltaTime) {
-    if (!m_canStand) {
-        return;
-    }
-    if (!m_canMove) return;
-    if (m_attack) return;
-
-    const Input& input = m_scene->GetGame()->GetInput();
-    Vector2d vel = m_velocity->Get();
-
-    if (input.IsTrigger(Action::JUMP)) {
-        if (m_squat) {
-            ExitSquat();
-            m_sprite->SetDrawOffset(0.0f, -34.0f);
-            BlockActor* block = CheckSensor({0.0f, m_collision->GetHeight() * 0.5f + 2.0f });
-            if (block && block->GetBlockType() == BlockType::Platform)
-            {
-                SetIgnorePlatform(block);
-                return;
-            }
-        }
-
-        if (m_jumpCount == 0) {
-            vel.y = -600.0f;
-
-            m_isGround = false;
-            m_jumpCount++;
-            m_jumpTime = 0.0f;
-            m_collision->SetRect(85, 150);
-        }
-        else if (m_jumpCount == 1) {
-            vel.y = -800.0f;
-            m_jumpCount++;
-            m_jumpTime = 0.0f;
-        }
-    }
-
-    if (input.IsDown(Action::JUMP) && m_jumpCount == 1 && m_jumpTime < m_maxJumpTime) {
-        vel.y += -1500.0f * deltaTime;
-        m_jumpTime += deltaTime;
-    }
-
-    if (m_jumpCount >= 2) {
-        m_jumpTime += deltaTime;
-        if (m_jumpTime > 0.2f) {
-            float dir = m_dir ? 1.0f : -1.0f;
-            float angle = fabs(m_transform->GetAngle()) + deltaTime * 40;
-            if (angle >= 12.6f) angle = 12.6f;
-
-            m_transform->SetAngle(angle * dir);
-        }
-    }
-    m_velocity->Set(vel);
-}
-
 void PlayerEntity::UpdateGravity(float deltaTime) {
     if (m_isExecution) {
         m_velocity->SetVelocity({0.0f, 0.0f});
@@ -983,19 +927,12 @@ void PlayerEntity::UpdateGravity(float deltaTime) {
     MoveAndCollide(deltaTime);
     
     if (m_isGround) {
-        m_jumpCount = 0;
-        m_transform->SetAngle(0.0f);
+        m_jumpCount = false;
         if (!m_squat)
         {
             m_collision->SetRect(85, 152);
         }
         m_HienCount = 0;
-    }
-
-    if (m_dashTimer > 0.0f && !m_isGround) {
-        Vector2d vel = m_velocity->GetVelocity();
-        vel.y = -50.0f;
-        m_velocity->SetVelocity(vel);
     }
 }
 
@@ -1474,7 +1411,6 @@ void PlayerEntity::UpdateState(float deltaTime) {
             if (!(m_state == PlayerState::HIT_AIR)) {
                 ChangeState(PlayerState::HIT_GROUND);
                 m_canMove = false;
-                printf("ground\n");
                 return;
             }
             return;
@@ -1482,7 +1418,6 @@ void PlayerEntity::UpdateState(float deltaTime) {
         else {
             ChangeState(PlayerState::HIT_AIR);
             m_canMove = false;
-            printf("air\n");
             return;
         }
     }
@@ -1706,18 +1641,18 @@ void PlayerEntity::UpdateState(float deltaTime) {
     }
 
     UpdateDash(deltaTime);
-    Vector2d move(0.0f, 0.0f);
+    Vector2d vel = m_velocity->Get();
     float dir = m_dir ? 1.0f : -1.0f;
 
     if (m_state == PlayerState::ROLL) {
         if (!(m_anim->IsFinished())) {
             if (m_sensor.frontGround == nullptr) {
-                move.x = 0.0f;
+                vel.x = 0.0f;
             }
             else {
-                move.x = dir * m_dashSpeed;
+                vel.x = dir * m_dashSpeed;
             }
-            m_velocity->SetX(move.x);
+            m_velocity->SetX(vel.x);
             return;
         }
         ChangeState(PlayerState::ROLL_LANDING);
@@ -1726,16 +1661,17 @@ void PlayerEntity::UpdateState(float deltaTime) {
 
     if (m_state == PlayerState::HIEN) {
         if (!(m_anim->IsFinished())) {
-            move.x = dir * m_dashAirSpeed;
-            m_velocity->SetX(move.x);
+            vel.x = dir * m_dashSpeed;
+            vel.y = -m_gravity->GetGravity() * deltaTime;
+            m_velocity->Set(vel);
             return;
         }
     }
 
     if (m_state == PlayerState::SENTEN) {
         if (!(m_anim->IsFinished())) {
-            move.x = dir * m_dashSpeed;
-            m_velocity->SetX(move.x);
+            vel.x = dir * m_dashSpeed;
+            m_velocity->SetX(vel.x);
             return;
         }
         ChangeState(PlayerState::ROLL_LANDING);
@@ -1763,83 +1699,127 @@ void PlayerEntity::UpdateState(float deltaTime) {
         }
     }
 
-    Vector2d vel = m_velocity->Get();
+    if (input.IsTrigger(Action::JUMP)) {
+        if (m_squat) {
+            BlockActor* block = CheckSensor({ 0.0f, m_collision->GetHeight() * 0.5f + 2.0f });
+            if (block && block->GetBlockType() == BlockType::Platform)
+            {
+                ExitSquat();
+                SetIgnorePlatform(block);
+                ChangeState(PlayerState::FALL);
+                return;
+            }
 
-    if (!m_isGround) {
-        if (input.IsTrigger(Action::JUMP)) {
-            if (m_jumpCount == 1) {
+            if (m_canStand) {
+                ExitSquat();
                 ChangeState(PlayerState::JUMP_START);
                 return;
             }
-            else if (m_jumpCount == 2) {
-                ChangeState(PlayerState::JUMP_SECOND);
-                m_jumpCount++;
-                return;
-            }
         }
-        if (m_state == PlayerState::JUMP_START) {
-            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
-                if (input.IsDown(Action::LEFT)) {
-                    m_velocity->SetX(-m_moveSpeed);
-                }
-                if (input.IsDown(Action::RIGHT)) {
-                    m_velocity->SetX(m_moveSpeed);
-                }
-            }
-            if (m_anim->IsFinished()) {
-                ChangeState(PlayerState::JUMP);
-            }
+
+        if (m_isGround) {
+            ChangeState(PlayerState::JUMP_START);
+            return;
+        }
+        if (!m_isGround && !m_jumpCount) {
+            ChangeState(PlayerState::JUMP_SECOND);
+            return;
+        }
+    }
+
+    if (m_state == PlayerState::JUMP_START) {
+        if (m_isGround) {
+            ChangeState(PlayerState::JUMP_LANDING);
             return;
         }
 
-        if (m_state == PlayerState::JUMP) {
-            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
-                if (input.IsDown(Action::LEFT)) {
-                    m_velocity->SetX(-m_moveSpeed);
-                }
-                if (input.IsDown(Action::RIGHT)) {
-                    m_velocity->SetX(m_moveSpeed);
-                }
+        if (m_jumpTime < m_maxJumpTime) {
+            m_jumpTime += deltaTime;
+            if (input.IsDown(Action::JUMP)) {
+                vel.y += -1500.0f * deltaTime;
             }
-            if (m_anim->IsFinished()) {
-                ChangeState(PlayerState::FALL);
-            }
-            return;
         }
-
-        if (m_state == PlayerState::JUMP_SECOND) {
-            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
-                if (input.IsDown(Action::LEFT)) {
-                    m_velocity->SetX(-m_moveSpeed);
-                }
-                if (input.IsDown(Action::RIGHT)) {
-                    m_velocity->SetX(m_moveSpeed);
-                }
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+            if (input.IsDown(Action::LEFT)) {
+                vel.x = -m_moveSpeed;
             }
-            if (m_anim->IsFinished()) {
-                ChangeState(PlayerState::FALL);
+            if (input.IsDown(Action::RIGHT)) {
+                vel.x = m_moveSpeed;
             }
-            return;
         }
-
-        if (m_state == PlayerState::FALL) {
-            if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
-                if (input.IsDown(Action::LEFT)) {
-                    m_velocity->SetX(-m_moveSpeed);
-                }
-                if (input.IsDown(Action::RIGHT)) {
-                    m_velocity->SetX(m_moveSpeed);
-                }
-            }
-            return;
+        m_velocity->Set(vel);
+        if (m_anim->IsFinished()) {
+            ChangeState(PlayerState::JUMP);
         }
-        ChangeState(PlayerState::FALL);
-        
         return;
     }
 
-    if (m_state == PlayerState::JUMP || m_state == PlayerState::FALL) {
-        ChangeState(PlayerState::JUMP_LANDING);
+    if (m_state == PlayerState::JUMP) {
+        if (m_isGround) {
+            ChangeState(PlayerState::JUMP_LANDING);
+            return;
+        }
+
+        if (m_jumpTime < m_maxJumpTime) {
+            m_jumpTime += deltaTime;
+            if (input.IsDown(Action::JUMP)) {
+                vel.y += -1500.0f * deltaTime;
+            }
+        }
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+            if (input.IsDown(Action::LEFT)) {
+                vel.x = -m_moveSpeed;
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                vel.x = m_moveSpeed;
+            }
+        }
+        m_velocity->Set(vel);
+        if (m_anim->IsFinished()) {
+            ChangeState(PlayerState::FALL);
+        }
+        return;
+    }
+
+    if (m_state == PlayerState::JUMP_SECOND) {
+        if (m_isGround) {
+            ChangeState(PlayerState::JUMP_LANDING);
+            return;
+        }
+
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+            if (input.IsDown(Action::LEFT)) {
+                m_velocity->SetX(-m_moveSpeed);
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                m_velocity->SetX(m_moveSpeed);
+            }
+        }
+        if (m_anim->IsFinished()) {
+            ChangeState(PlayerState::FALL);
+        }
+        return;
+    }
+
+    if (m_state == PlayerState::FALL) {
+        if (m_isGround) {
+            ChangeState(PlayerState::JUMP_LANDING);
+            return;
+        }
+
+        if (input.IsDown(Action::LEFT) ^ input.IsDown(Action::RIGHT)) {
+            if (input.IsDown(Action::LEFT)) {
+                m_velocity->SetX(-m_moveSpeed);
+            }
+            if (input.IsDown(Action::RIGHT)) {
+                m_velocity->SetX(m_moveSpeed);
+            }
+        }
+        return;
+    }
+
+    if (!m_isGround) {
+        ChangeState(PlayerState::FALL);
         return;
     }
 
@@ -2095,16 +2075,32 @@ void PlayerEntity::ChangeState(PlayerState newState)
         break;
 
     case PlayerState::JUMP_START:
+    {
+        Vector2d vel = m_velocity->Get();
+        vel.y = -600.0f;
+
+        m_isGround = false;
+        m_jumpTime = 0.0f;
+        m_collision->SetRect(85, 150);
+        m_velocity->Set(vel);
+
         m_anim->Play("jumpStart");
-        break;
+    }   break;
 
     case PlayerState::JUMP:
         m_anim->Play("jump");
         break;
 
     case PlayerState::JUMP_SECOND:
+    {
+        Vector2d vel = m_velocity->Get();
+        vel.y = -800.0f;
+        m_jumpCount = true;
+        m_jumpTime = 0.0f;
+        m_velocity->Set(vel);
+
         m_anim->Play("jumpSecond");
-        break;
+    }   break;
 
     case PlayerState::FALL:
         m_anim->Play("fall");
@@ -2546,7 +2542,7 @@ void PlayerEntity::ResetStageState()
 {
     m_velocity->Set({ 0,0 });
 
-    m_jumpCount = 0;
+    m_jumpCount = false;
     m_isGround = false;
     m_canMove = true;
     m_canAttack = true;

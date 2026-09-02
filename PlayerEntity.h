@@ -157,7 +157,6 @@ public:
     std::vector<EnemyEntity*> CollectEnemiesInScreen();
 
     void UpdateScale();
-    void UpdateJump(float deltaTime);
     void UpdateGravity(float deltaTime);
     void UpdateAttack(float deltaTime);
     void UpdateState(float deltaTime);
@@ -260,7 +259,7 @@ private:
     bool m_isSenten;
 
     // EntityActor.bool m_isGround;          // Ú’nƒtƒ‰ƒO
-    int m_jumpCount;
+    bool m_jumpCount;
     float m_jumpTime;
     float m_maxJumpTime;
 
