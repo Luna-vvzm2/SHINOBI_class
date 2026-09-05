@@ -158,12 +158,13 @@ public:
 
     void UpdateScale();
     void UpdateGravity(float deltaTime);
-    void UpdateAttack(float deltaTime);
     void UpdateState(float deltaTime);
+
     void ChangeState(PlayerState newState);
     void UpdateMove();
     void UpdateDir(const Input& input);
     void UpdateDash(float deltaTime);
+    void StartAttack(int attackNum);
     void UpdateDead(float deltaTime); // 死亡時の専用アップデート
 
     ActorType GetType() const override { return ActorType::Player; }
